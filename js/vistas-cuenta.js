@@ -1,20 +1,6 @@
 /* ATHLETIX · Vistas de cuenta: ingreso, registro, verificación de correo, perfil y pedidos */
 'use strict';
 
-const botonGoogle = () => (CONFIG.googleActivo ? `
-  <button class="boton boton--google boton--bloque" type="button" id="con-google">${GOOGLE_LOGO}Continuar con Google</button>
-  <p class="separador-texto" style="margin-block:1.25rem">o con tu correo</p>` : '');
-
-function activarGoogle(main, volver) {
-  const b = $('#con-google', main);
-  if (!b) return;
-  b.addEventListener('click', async () => {
-    if (volver) guardarTemporal('volver', volver);
-    const r = await conEspera(b, 'Abriendo Google…', () => Api.auth.ingresarConGoogle());
-    if (r && r.error) aviso(r.error, 'error');
-  });
-}
-
 /* ======================= Ingresar ======================= */
 function vistaIngresar(partes, params) {
   if (estado.sesion) { ir(estado.cliente ? '#/perfil' : '#/completar-perfil'); return null; }
@@ -27,7 +13,6 @@ function vistaIngresar(partes, params) {
       <div class="panel formulario-centro">
         <h1 class="titulo-pagina">Inicia sesión</h1>
         <p class="subtitulo cabecera-pagina">${volver ? 'Ingresa con tu cuenta para finalizar tu compra.' : 'Ingresa para comprar y ver tus pedidos.'}</p>
-        ${botonGoogle()}
         <form class="formulario" id="form-ingresar" novalidate>
           <div class="alerta alerta-errores" tabindex="-1" role="alert" hidden></div>
           ${campo({ id: 'correo', etiqueta: 'Correo electrónico', tipo: 'email', extra: 'autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false"' })}
@@ -43,7 +28,7 @@ function vistaIngresar(partes, params) {
     </div>`,
     montar(main) {
       const form = $('#form-ingresar', main);
-      activarAtajosCorreo(form); activarEnlacesError(form); activarVerClave(form); activarGoogle(main, volver);
+      activarAtajosCorreo(form); activarEnlacesError(form); activarVerClave(form);
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const correo = $('#correo', form).value.trim().toLowerCase();
@@ -91,7 +76,6 @@ function vistaRegistro(partes, params) {
       <div class="panel formulario-centro" style="max-width:46rem">
         <h1 class="titulo-pagina">Crea tu cuenta</h1>
         <p class="subtitulo cabecera-pagina">Los campos con <span class="requerido">*</span> son obligatorios. Te enviaremos un correo para confirmar que es tuyo.</p>
-        ${botonGoogle()}
         <form class="formulario" id="form-registro" novalidate>
           <div class="alerta alerta-errores" tabindex="-1" role="alert" hidden></div>
           ${camposDatosPersonales({})}
@@ -108,7 +92,7 @@ function vistaRegistro(partes, params) {
     </div>`,
     montar(main) {
       const form = $('#form-registro', main);
-      activarAtajosCorreo(form); activarEnlacesError(form); activarVerClave(form); activarGoogle(main, volver);
+      activarAtajosCorreo(form); activarEnlacesError(form); activarVerClave(form);
       activarDatosPersonales(form);
       validarAlSalir(form, 'correo-r', (v) => Validar.correo(v));
       validarAlSalir(form, 'clave-r', (v) => Validar.clave(v));
@@ -223,7 +207,7 @@ function vistaVerificaCorreo() {
   };
 }
 
-/* ======================= Completar perfil (Google o primer ingreso) ======================= */
+/* ======================= Completar perfil (si faltan datos al primer ingreso) ======================= */
 function vistaCompletarPerfil(partes, params) {
   if (!estado.sesion) { ir('#/ingresar'); return null; }
   if (estado.cliente) { ir('#/perfil'); return null; }
@@ -421,14 +405,12 @@ async function vistaPerfil(partes) {
 }
 
 function vistaSeguridad() {
-  const conGoogle = (estado.sesion.user.app_metadata || {}).provider === 'google';
   return {
     titulo: 'Cambiar contraseña',
     seccion: 'perfil',
     html: marcoPerfil('seguridad', `
       <section class="panel" aria-labelledby="titulo-clave">
-        <h2 id="titulo-clave">${conGoogle ? 'Crear una contraseña' : 'Cambiar contraseña'}</h2>
-        ${conGoogle ? '<p class="texto-suave" style="margin-bottom:1rem">Ingresas con Google. Si creas una contraseña, también podrás entrar con tu correo.</p>' : ''}
+        <h2 id="titulo-clave">Cambiar contraseña</h2>
         ${formularioNuevaClave('form-clave')}
       </section>`),
     montar(main) { activarNuevaClave($('#form-clave', main), () => { aviso('Tu contraseña se cambió correctamente.'); anunciar('Tu contraseña se cambió correctamente.'); }); }

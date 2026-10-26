@@ -190,7 +190,7 @@ const BUSQUEDAS_POPULARES = ['calzado', 'reloj', 'audífonos', 'bandas', 'conos'
 
 const AYUDA = [
   ['¿Cómo compro?', 'Elige un producto (y tu talla si es calzado), agrégalo al carrito, inicia sesión, elige la tienda donde lo retiras y paga con tarjeta.'],
-  ['¿Qué necesito para crear mi cuenta?', 'Tu nombre, apellido, cédula ecuatoriana, celular y un correo al que tengas acceso. Te enviaremos un enlace para confirmar el correo antes de tu primera compra. También puedes ingresar con tu cuenta de Google.'],
+  ['¿Qué necesito para crear mi cuenta?', 'Tu nombre, apellido, cédula ecuatoriana, celular y un correo al que tengas acceso. Te enviaremos un enlace para confirmar el correo antes de tu primera compra.'],
   ['No me llega el correo de confirmación', 'Revisa la carpeta de spam o promociones. Si no aparece en unos minutos, en «Iniciar sesión» puedes pedir que te lo enviemos otra vez.'],
   ['¿Cómo puedo pagar?', 'Con tarjeta Visa o Mastercard. Esta es una tienda académica: usa solo las tarjetas de prueba que aparecen en la pantalla de pago, nunca tu tarjeta real. Solo guardamos los últimos 4 dígitos.'],
   ['¿Cómo recibo mi pedido?', 'Lo retiras sin costo en la tienda que elijas. Te enviamos un correo cuando esté listo, normalmente en 24 a 48 horas. Presenta tu cédula al retirarlo.'],

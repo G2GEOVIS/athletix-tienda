@@ -15,12 +15,10 @@ const CONFIG = {
     plantillaNuevoPedido: 'template_mjzl46j',
     clavePublica: 'byyIpSC8iBjJs4sU3'
   },
-  // Cambiar a true cuando el proveedor Google esté activado en Supabase (Authentication > Providers)
-  googleActivo: false,
   iva: 0.15,
   tiempoEsperaMs: 15000
 };
 
 /* Se guarda el fragmento de la URL antes de que Supabase lo procese
-   (enlaces de confirmación de correo, recuperación de contraseña o Google) */
+   (enlaces de confirmación de correo y de recuperación de contraseña) */
 window.HASH_INICIAL = location.hash;

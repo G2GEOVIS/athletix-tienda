@@ -243,7 +243,7 @@ async function render() {
   primeraCarga = false;
 }
 
-/* ======================= Regreso desde enlaces de correo o Google ======================= */
+/* ======================= Regreso desde los enlaces del correo ======================= */
 function revisarEnlaceDeRegreso() {
   const h = window.HASH_INICIAL || '';
   if (!/access_token=|error_description=|error=/.test(h)) return null;
@@ -277,7 +277,7 @@ async function iniciar() {
   }
   // El catálogo se muestra de inmediato y se actualiza cuando responde la base
   const catalogo = cargarCatalogo();
-  // Supabase lee primero los datos del enlace (correo o Google); después se limpia la dirección
+  // Supabase lee primero los datos del enlace del correo; después se limpia la dirección
   await alIniciarSesion(await Api.auth.sesion());
   if (regreso) history.replaceState(null, '', location.pathname + location.search + '#/');
 

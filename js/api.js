@@ -69,9 +69,6 @@ const Api = (() => {
       return ejecutar(sb.auth.signUp({ email: correo, password: clave, options: { data: perfil, emailRedirectTo: urlRegreso() } }));
     },
     ingresar(correo, clave) { return ejecutar(sb.auth.signInWithPassword({ email: correo, password: clave })); },
-    ingresarConGoogle() {
-      return ejecutar(sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: urlRegreso() } }));
-    },
     reenviarConfirmacion(correo) {
       return ejecutar(sb.auth.resend({ type: 'signup', email: correo, options: { emailRedirectTo: urlRegreso() } }));
     },

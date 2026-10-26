@@ -2,6 +2,14 @@
 'use strict';
 
 /* ======================= Panel de pedidos (administrador) ======================= */
+// Estados a los que puede pasar cada pedido (la base de datos aplica las mismas reglas)
+const SIGUIENTES = {
+  Recibido: ['Preparando', 'Listo', 'Cancelado'],
+  Preparando: ['Listo', 'Cancelado'],
+  Listo: ['Retirado', 'Cancelado'],
+  Retirado: [],
+  Cancelado: []
+};
 async function vistaAdmin(partes, params) {
   if (!protegerCuenta()) return null;
   if (!estado.esAdmin) return vistaNoEncontrada();
@@ -39,8 +47,8 @@ async function vistaAdmin(partes, params) {
           </dl>
           <form class="cambio-estado" data-form-estado="${p.id}">
             <label for="estado-${p.id}">Cambiar estado</label>
-            <select id="estado-${p.id}">${ESTADOS.concat('Cancelado').map((e) => `<option value="${e}" ${e === p.estado ? 'selected' : ''}>${NOMBRE_ESTADO[e]}</option>`).join('')}</select>
-            <button class="boton boton--principal" type="submit">Guardar</button>
+            <select id="estado-${p.id}" ${SIGUIENTES[p.estado].length ? '' : 'disabled'}>${[p.estado, ...SIGUIENTES[p.estado]].map((e) => `<option value="${e}" ${e === p.estado ? 'selected' : ''}>${e === p.estado ? 'Actual: ' : ''}${NOMBRE_ESTADO[e]}</option>`).join('')}</select>
+            <button class="boton boton--principal" type="submit" ${SIGUIENTES[p.estado].length ? '' : 'disabled'}>Guardar</button>
           </form>
           <p class="texto-suave resultado-estado" aria-live="polite"></p>
         </li>`).join('')}
@@ -54,7 +62,8 @@ async function vistaAdmin(partes, params) {
         const p = todos.find((x) => x.id === Number(form.dataset.formEstado));
         const nuevo = $('select', form).value;
         const salida = $('.resultado-estado', form.parentElement);
-        if (nuevo === p.estado) { salida.textContent = 'El pedido ya está en ese estado.'; return; }
+        if (nuevo === p.estado) { salida.textContent = 'Elige el nuevo estado del pedido.'; return; }
+        if (nuevo === 'Cancelado' && !(await confirmar('¿Cancelar este pedido?', `El pedido ${p.numero} se cancelará y sus productos volverán al stock. No se puede deshacer.`, 'Sí, cancelar'))) return;
         const r2 = await conEspera($('button', form), 'Guardando…', async () => {
           const rc = await Api.pedidos.cambiarEstado(p.id, nuevo);
           if (rc.error) return rc;
@@ -67,6 +76,10 @@ async function vistaAdmin(partes, params) {
         const etiqueta = $('.estado', form.parentElement);
         etiqueta.textContent = NOMBRE_ESTADO[nuevo];
         etiqueta.className = `estado estado--${nuevo.toLowerCase()}`;
+        const sel = $('select', form);
+        sel.innerHTML = [nuevo, ...SIGUIENTES[nuevo]].map((e) => `<option value="${e}">${e === nuevo ? 'Actual: ' : ''}${NOMBRE_ESTADO[e]}</option>`).join('');
+        sel.disabled = $('button', form).disabled = !SIGUIENTES[nuevo].length;
+        revisarPedidosNuevos();
         let texto = `Estado cambiado a "${NOMBRE_ESTADO[nuevo]}".`;
         if (r2.correo) texto += r2.correo.error ? ` ${r2.correo.error}` : ` Se envió un correo a ${p.correo}.`;
         salida.textContent = texto;

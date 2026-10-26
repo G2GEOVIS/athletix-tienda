@@ -12,6 +12,7 @@ const CONFIG = {
   emailjs: {
     servicio: 'service_n3b8qkn',
     plantillaPedidoListo: 'template_xgi77wu',
+    plantillaNuevoPedido: '', // Template ID del aviso al administrador (template_xxxxxxx)
     clavePublica: 'byyIpSC8iBjJs4sU3'
   },
   // Cambiar a true cuando el proveedor Google esté activado en Supabase (Authentication > Providers)

@@ -122,9 +122,16 @@ const Api = (() => {
 
   /* ---------- Pedidos ---------- */
   const pedidos = {
-    crear(tiendaId, metodoPagoId, items) {
-      return ejecutar(sb.rpc('crear_pedido', { p_tienda: tiendaId, p_metodo_pago: metodoPagoId, p_items: items }));
+    // "clave" identifica el intento de pago: si se reenvía (doble clic, recarga, red lenta) la base devuelve el mismo pedido
+    async crear(tiendaId, metodoPagoId, items, clave) {
+      const r = await ejecutar(sb.rpc('crear_pedido', { p_tienda: tiendaId, p_metodo_pago: metodoPagoId, p_items: items, p_clave: clave }));
+      // Compatibilidad: si la base todavía no tiene la versión con clave, se usa la anterior
+      if (r.error && r.tecnico && r.tecnico.code === 'PGRST202') {
+        return ejecutar(sb.rpc('crear_pedido', { p_tienda: tiendaId, p_metodo_pago: metodoPagoId, p_items: items }));
+      }
+      return r;
     },
+    async nuevos() { const r = await ejecutar(sb.rpc('pedidos_nuevos')); return r.error ? 0 : Number(r.datos) || 0; },
     mios() {
       return ejecutar(sb.from('pedidos')
         .select('id, numero, estado, subtotal, iva, total, creado_en, actualizado_en, tiendas(nombre, direccion, horario), metodos_pago(marca, ultimos4), detalle_pedido(producto_id, talla, cantidad, precio_unitario)')
@@ -166,6 +173,17 @@ const Api = (() => {
       } catch (e) {
         return { error: 'No se pudo enviar el correo' + (e && e.text ? ` (${e.text})` : '') + '. El estado sí se guardó.' };
       }
+    },
+    /* Aviso al administrador: llega a su correo cada vez que un cliente hace un pedido */
+    async nuevoPedido(p) {
+      if (!(window.emailjs && CONFIG.emailjs.plantillaNuevoPedido)) return { error: 'sin plantilla' };
+      try {
+        await window.emailjs.send(CONFIG.emailjs.servicio, CONFIG.emailjs.plantillaNuevoPedido, {
+          numero: p.numero, cliente: p.cliente, cedula: p.cedula, correo_cliente: p.correo, telefono: p.telefono,
+          tienda: p.tienda, productos: p.productos, total: Number(p.total).toFixed(2)
+        }, { publicKey: CONFIG.emailjs.clavePublica });
+        return { datos: true };
+      } catch (e) { return { error: 'No se pudo avisar al administrador' }; }
     }
   };
 

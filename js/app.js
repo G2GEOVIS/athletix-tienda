@@ -69,12 +69,15 @@ async function alIniciarSesion(sesion) {
     }
   }
   if (estado.cliente) estado.esAdmin = await Api.cliente.esAdmin();
+  estado.nuevos = undefined;
   renderCuenta();
+  vigilarPedidos();
 }
 
 async function cerrarSesion() {
   await Api.auth.salir();
   estado.sesion = null; estado.cliente = null; estado.esAdmin = false;
+  clearInterval(vigilanciaPedidos);
   guardarTemporal('tienda', null);
   renderCuenta();
   aviso('Cerraste sesión.');
@@ -98,11 +101,12 @@ function renderCuenta() {
   zona.innerHTML = `
     <button class="cuenta__boton" type="button" aria-expanded="false" aria-controls="menu-cuenta">
       ${icono('usuario')}<span class="cuenta__nombre cuenta__nombre-largo">Hola, ${esc(nombre)}</span>${icono('chevronAbajo')}
+      ${estado.esAdmin ? `<span class="insignia insignia--flotante" data-nuevos ${estado.nuevos ? '' : 'hidden'} aria-hidden="true">${estado.nuevos}</span>` : ''}
     </button>
     <ul class="cuenta__menu" id="menu-cuenta" hidden>
       <li><a href="#/perfil">${icono('usuario')}Mi perfil</a></li>
       <li><a href="#/pedidos">${icono('paquete')}Mis pedidos</a></li>
-      ${estado.esAdmin ? `<li><a href="#/admin">${icono('ajustes')}Panel de pedidos</a></li>` : ''}
+      ${estado.esAdmin ? `<li><a href="#/admin?estado=Recibido">${icono('ajustes')}Panel de pedidos<span class="insignia" data-nuevos ${estado.nuevos ? '' : 'hidden'}>${estado.nuevos}<span class="solo-lector"> pedidos nuevos</span></span></a></li>` : ''}
       <li><button type="button" data-accion="cerrar-sesion">${icono('salir')}Cerrar sesión</button></li>
     </ul>`;
   const boton = $('.cuenta__boton', zona);
@@ -117,6 +121,25 @@ function renderCuenta() {
     if (e.key === 'Escape') { cerrarMenuCuenta(); boton.focus(); }
   });
 }
+/* ======================= Aviso de pedidos nuevos (administrador) ======================= */
+let vigilanciaPedidos = null;
+async function revisarPedidosNuevos() {
+  if (!estado.esAdmin) return;
+  const n = await Api.pedidos.nuevos();
+  if (n > (estado.nuevos || 0) && estado.nuevos !== undefined) {
+    aviso(n - estado.nuevos === 1 ? '¡Tienes un pedido nuevo!' : `¡Tienes ${n - estado.nuevos} pedidos nuevos!`);
+    anunciar('Llegó un pedido nuevo. Revísalo en el panel de pedidos.');
+  }
+  estado.nuevos = n;
+  $$('[data-nuevos]').forEach((el) => { el.hidden = !n; el.firstChild.textContent = n; });
+}
+function vigilarPedidos() {
+  clearInterval(vigilanciaPedidos);
+  if (!estado.esAdmin) return;
+  revisarPedidosNuevos();
+  vigilanciaPedidos = setInterval(revisarPedidosNuevos, 60000);
+}
+
 function cerrarMenuCuenta() {
   const b = $('.cuenta__boton[aria-expanded]');
   if (b) { b.setAttribute('aria-expanded', 'false'); $('#menu-cuenta').hidden = true; }

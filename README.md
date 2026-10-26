@@ -14,6 +14,8 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - Perfil: editar datos, direcciones, métodos de pago (solo últimos 4 dígitos) y contraseña.
 - Compra con retiro en tienda (3 tiendas) y pago con tarjetas de prueba validadas con el algoritmo de Luhn. El total con IVA 15 % lo calcula la base de datos.
 - Mis pedidos con su estado. Panel de administración para cambiar estados; al marcar "Listo" se envía un correo al cliente (EmailJS).
+- Aviso al administrador de pedidos nuevos (contador en el encabezado y correo).
+- Compras seguras ante concurrencia: el stock se descuenta con bloqueo por fila en una sola transacción y cada intento de pago tiene una clave única para no duplicar pedidos.
 - Reseñas de compra verificada: solo opina quien compró y retiró el producto, una reseña por cliente y producto.
 
 ## Arquitectura
@@ -30,6 +32,8 @@ js/app.js                Arranque, sesión y enrutador
 bd/esquema.sql           Tablas (PostgreSQL)
 bd/seguridad.sql         Reglas de seguridad por fila y funciones del servidor
 bd/actualizacion.sql     Productos, stock y funciones del panel
+bd/actualizacion2.sql    Transacciones, concurrencia, idempotencia y estados del pedido
+bd/modelo_powerdesigner.sql  Tablas y relaciones para importar en PowerDesigner
 ```
 
 ## Accesibilidad

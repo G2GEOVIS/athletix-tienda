@@ -700,3 +700,8 @@ fieldset.panel { margin: 0; min-width: 0; }
 .cambio-estado label { font-weight: 700; }
 .cambio-estado select { width: auto; min-height: 2.75rem; }
 .resultado-estado { margin-top: .5rem; }
+
+/* Insignia de pedidos nuevos (administrador) */
+.insignia { display: inline-grid; place-items: center; min-width: 1.4rem; height: 1.4rem; padding: 0 .35rem; margin-left: .4rem; border-radius: 999px; background: var(--naranja); color: var(--azul); font-size: .8rem; font-weight: 800; }
+.cuenta__boton { position: relative; }
+.insignia--flotante { position: absolute; top: -.35rem; right: -.35rem; margin: 0; }

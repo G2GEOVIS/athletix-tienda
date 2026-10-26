@@ -128,6 +128,8 @@ async function vistaPago() {
     </div>`,
     montar(main) {
       const form = $('#form-pago', main);
+      // Una clave por intento de pago: si el envío se repite, la base devuelve el mismo pedido
+      const clavePago = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : null;
       activarCamposTarjeta(form);
       const cvvG = $('#cvv-g', form);
       if (cvvG) filtrarEntrada(cvvG, NO_DIGITOS, 3);
@@ -164,7 +166,7 @@ async function vistaPago() {
           const items = estado.carrito.map((l) => ({ producto_id: producto(l.id).dbId, talla: l.talla || '', cantidad: l.cantidad }));
           if (items.some((i) => !i.producto_id)) return { error: 'Algunos productos no están disponibles en este momento. Recarga la página.' };
           guardarPendiente();
-          const rp = await Api.pedidos.crear(tiendaId, metodoId, items);
+          const rp = await Api.pedidos.crear(tiendaId, metodoId, items, clavePago);
           if (rp.error) borrarPendiente();
           return rp;
         });
@@ -176,6 +178,13 @@ async function vistaPago() {
           return;
         }
         const fila = Array.isArray(r.datos) ? r.datos[0] : r.datos;
+        // Aviso al administrador (no detiene la compra si falla)
+        Api.correo.nuevoPedido({
+          numero: fila.numero, total: fila.total, tienda: tienda.nombre,
+          cliente: `${estado.cliente.nombres} ${estado.cliente.apellidos}`, cedula: estado.cliente.cedula,
+          correo: correoSesion(), telefono: estado.cliente.telefono,
+          productos: estado.carrito.map((l) => `${l.cantidad} × ${producto(l.id).nombre}${l.talla ? ' (talla ' + l.talla + ')' : ''}`).join(', ')
+        });
         terminarCompra({ numero: fila.numero, total: fila.total });
       });
     }

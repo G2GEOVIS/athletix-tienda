@@ -62,18 +62,6 @@ create table clientes (
   creado_en  timestamptz not null default now()
 );
 
-create table direcciones (
-  id                 int generated always as identity primary key,
-  cliente_id         uuid not null references clientes(id) on delete cascade,
-  alias              varchar(30) not null,              -- Casa, Trabajo…
-  provincia          varchar(40) not null,
-  ciudad             varchar(40) not null,
-  calle_principal    varchar(80) not null,
-  calle_secundaria   varchar(80),
-  referencia         varchar(120),
-  predeterminada     boolean not null default false
-);
-
 -- Solo se guardan los últimos 4 dígitos, nunca el número completo ni el CVV
 create table metodos_pago (
   id          int generated always as identity primary key,

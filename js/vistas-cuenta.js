@@ -355,7 +355,6 @@ function protegerCuenta(volver = '') {
 
 const SECCIONES_PERFIL = [
   ['', 'Mis datos', 'usuario'],
-  ['direcciones', 'Direcciones', 'ubicacion'],
   ['pagos', 'Métodos de pago', 'tarjeta'],
   ['seguridad', 'Contraseña', 'candado']
 ];
@@ -381,7 +380,6 @@ function marcoPerfil(actual, contenido) {
 async function vistaPerfil(partes) {
   if (!protegerCuenta()) return null;
   const sub = partes[1] || '';
-  if (sub === 'direcciones') return vistaDirecciones();
   if (sub === 'pagos') return vistaPagos();
   if (sub === 'seguridad') return vistaSeguridad();
   const c = estado.cliente;
@@ -435,99 +433,6 @@ function vistaSeguridad() {
       </section>`),
     montar(main) { activarNuevaClave($('#form-clave', main), () => { aviso('Tu contraseña se cambió correctamente.'); anunciar('Tu contraseña se cambió correctamente.'); }); }
   };
-}
-
-/* ---------- Direcciones ---------- */
-async function vistaDirecciones() {
-  const r = await Api.cliente.direcciones();
-  if (r.error) return { titulo: 'Direcciones', html: errorCargaHtml(r.error) };
-  const lista = r.datos || [];
-  return {
-    titulo: 'Mis direcciones',
-    seccion: 'perfil',
-    html: marcoPerfil('direcciones', `
-      <section class="panel" aria-labelledby="titulo-dir">
-        <div class="cabecera-seccion"><h2 id="titulo-dir">Mis direcciones</h2>
-          <button class="boton boton--principal" type="button" id="nueva-dir">${icono('mas')}Agregar dirección</button></div>
-        <p class="texto-suave" style="margin-bottom:1rem">Por ahora entregamos con retiro en tienda; tu dirección nos sirve para la factura y para contactarte.</p>
-        ${lista.length ? `<ul class="tarjetas-lista">${lista.map((d) => `
-          <li class="tarjeta-dato">
-            <div>
-              <p><strong>${esc(d.alias)}</strong>${d.predeterminada ? ' <span class="etiqueta">Principal</span>' : ''}</p>
-              <p>${esc(d.calle_principal)}${d.calle_secundaria ? ' y ' + esc(d.calle_secundaria) : ''}</p>
-              <p class="texto-suave">${esc(d.ciudad)}, ${esc(d.provincia)}${d.referencia ? ' · ' + esc(d.referencia) : ''}</p>
-            </div>
-            <div class="tarjeta-dato__acciones">
-              <button class="boton-icono" type="button" data-editar-dir="${d.id}">${icono('editar')}Editar<span class="solo-lector"> ${esc(d.alias)}</span></button>
-              <button class="boton-icono" type="button" data-borrar-dir="${d.id}">${icono('basura')}Borrar<span class="solo-lector"> ${esc(d.alias)}</span></button>
-            </div>
-          </li>`).join('')}</ul>` : `<div class="panel panel--gris vacio">${icono('ubicacion')}<p>Todavía no tienes direcciones guardadas.</p></div>`}
-      </section>`),
-    montar(main) {
-      $('#nueva-dir', main).addEventListener('click', () => abrirFormDireccion(null, lista.length === 0));
-      main.addEventListener('click', async (e) => {
-        const ed = e.target.closest('[data-editar-dir]');
-        if (ed) abrirFormDireccion(lista.find((d) => d.id === Number(ed.dataset.editarDir)));
-        const bo = e.target.closest('[data-borrar-dir]');
-        if (bo) {
-          const d = lista.find((x) => x.id === Number(bo.dataset.borrarDir));
-          if (!(await confirmar('¿Borrar dirección?', `Se borrará la dirección "${d.alias}".`, 'Sí, borrar'))) return;
-          const rb = await Api.cliente.borrarDireccion(d.id);
-          if (rb.error) { aviso(rb.error, 'error'); return; }
-          aviso('Dirección borrada.');
-          render();
-        }
-      });
-    }
-  };
-}
-
-function abrirFormDireccion(d, primera = false) {
-  const v = d || { alias: primera ? 'Casa' : '', provincia: 'Pichincha', ciudad: '', calle_principal: '', calle_secundaria: '', referencia: '', predeterminada: primera };
-  abrirDialogo(`
-    <h2 class="dialogo__titulo" id="dialogo-titulo">${d ? 'Editar dirección' : 'Nueva dirección'}</h2>
-    <form class="formulario" id="form-dir" novalidate>
-      <div class="alerta alerta-errores" tabindex="-1" role="alert" hidden></div>
-      ${campo({ id: 'alias', etiqueta: 'Nombre de la dirección', ayuda: 'Por ejemplo: Casa, Trabajo', valor: v.alias, max: 30 })}
-      <div class="formulario__fila formulario__fila--doble">
-        <div class="campo"><label for="provincia">Provincia <span class="requerido" aria-hidden="true">*</span></label>
-          <select id="provincia" name="provincia" aria-describedby="provincia-error">${PROVINCIAS.map((p) => `<option ${p === v.provincia ? 'selected' : ''}>${p}</option>`).join('')}</select>
-          <p class="campo__error" id="provincia-error" hidden>${icono('alerta')}<span></span></p></div>
-        ${campo({ id: 'ciudad', etiqueta: 'Ciudad', valor: v.ciudad, max: 40, extra: 'autocomplete="address-level2"' })}
-      </div>
-      ${campo({ id: 'calle1', etiqueta: 'Calle principal y número', valor: v.calle_principal, max: 80, extra: 'autocomplete="address-line1"' })}
-      ${campo({ id: 'calle2', etiqueta: 'Calle secundaria', valor: v.calle_secundaria || '', max: 80, opcional: true, extra: 'autocomplete="address-line2"' })}
-      ${campo({ id: 'referencia', etiqueta: 'Referencia', ayuda: 'Por ejemplo: frente al parque', valor: v.referencia || '', max: 120, opcional: true })}
-      <label class="opcion"><input type="checkbox" id="principal" ${v.predeterminada ? 'checked' : ''}> Usar como dirección principal</label>
-      <div class="dialogo__botones">
-        <button class="boton boton--secundario" type="button" data-cerrar-dialogo>Cancelar</button>
-        <button class="boton boton--principal" type="submit">Guardar dirección</button>
-      </div>
-    </form>`, {
-    alAbrir: (dlg) => {
-      const form = $('#form-dir', dlg);
-      activarEnlacesError(form);
-      filtrarEntrada($('#ciudad', form), NO_LETRAS, 40);
-      $('#alias', form).focus();
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const val = (id) => $('#' + id, form).value.trim().replace(/\s+/g, ' ');
-        const datos = { alias: val('alias'), provincia: val('provincia'), ciudad: val('ciudad'), calle_principal: val('calle1'), calle_secundaria: val('calle2') || null, referencia: val('referencia') || null, predeterminada: $('#principal', form).checked };
-        if (!validarFormulario(form, [
-          ['alias', Validar.texto(datos.alias, { campo: 'un nombre para la dirección', min: 1, max: 30 })],
-          ['provincia', PROVINCIAS.includes(datos.provincia) ? '' : 'Elige una provincia.'],
-          ['ciudad', Validar.texto(datos.ciudad, { campo: 'la ciudad', min: 1, max: 40 })],
-          ['calle1', datos.calle_principal.length < 3 ? 'Escribe la calle principal.' : '']
-        ], 'Revisa la dirección:')) return;
-        const r = await conEspera($('button[type="submit"]', form), 'Guardando…', () => Api.cliente.guardarDireccion(d && d.id, datos, estado.cliente.id));
-        if (!r) return;
-        if (r.error) { errorGeneral(form, r.error); return; }
-        cerrarDialogo();
-        aviso('Dirección guardada.');
-        render();
-      });
-    }
-  });
 }
 
 /* ---------- Métodos de pago ---------- */

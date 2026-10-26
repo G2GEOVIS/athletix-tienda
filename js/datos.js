@@ -8,8 +8,6 @@ const TIEMPO_LISTO = '24 a 48 horas';
 const ESTADOS = ['Recibido', 'Preparando', 'Listo', 'Retirado'];
 const NOMBRE_ESTADO = { Recibido: 'Recibido', Preparando: 'Preparando', Listo: 'Listo para retirar', Retirado: 'Retirado', Cancelado: 'Cancelado' };
 
-/* Provincias del Ecuador (para las direcciones) */
-const PROVINCIAS = ['Azuay', 'Bolívar', 'Cañar', 'Carchi', 'Chimborazo', 'Cotopaxi', 'El Oro', 'Esmeraldas', 'Galápagos', 'Guayas', 'Imbabura', 'Loja', 'Los Ríos', 'Manabí', 'Morona Santiago', 'Napo', 'Orellana', 'Pastaza', 'Pichincha', 'Santa Elena', 'Santo Domingo de los Tsáchilas', 'Sucumbíos', 'Tungurahua', 'Zamora Chinchipe'];
 
 const CATEGORIAS = {
   calzado: 'Calzado',

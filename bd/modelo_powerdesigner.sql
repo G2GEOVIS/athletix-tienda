@@ -96,23 +96,6 @@ create table PRODUCTO_TALLAS (
 comment on table PRODUCTO_TALLAS is 'Stock por talla; los productos sin talla usan la talla U (única)';
 
 /*==============================================================*/
-/* Table: DIRECCIONES                                            */
-/*==============================================================*/
-create table DIRECCIONES (
-   ID                   INT4                 not null,
-   CLIENTE_ID           UUID                 not null,
-   ALIAS                VARCHAR(30)          not null,
-   PROVINCIA            VARCHAR(40)          not null,
-   CIUDAD               VARCHAR(40)          not null,
-   CALLE_PRINCIPAL      VARCHAR(80)          not null,
-   CALLE_SECUNDARIA     VARCHAR(80)          null,
-   REFERENCIA           VARCHAR(120)         null,
-   PREDETERMINADA       BOOL                 not null,
-   constraint PK_DIRECCIONES primary key (ID)
-);
-comment on table DIRECCIONES is 'Direcciones del cliente para facturación y contacto';
-
-/*==============================================================*/
 /* Table: METODOS_PAGO                                           */
 /*==============================================================*/
 create table METODOS_PAGO (
@@ -219,10 +202,6 @@ alter table PRODUCTOS
 alter table PRODUCTO_TALLAS
    add constraint FK_TALLAS_PRODUCTOS foreign key (PRODUCTO_ID)
       references PRODUCTOS (ID) on delete cascade on update restrict;
-
-alter table DIRECCIONES
-   add constraint FK_DIRECCIONES_CLIENTES foreign key (CLIENTE_ID)
-      references CLIENTES (ID) on delete cascade on update restrict;
 
 alter table METODOS_PAGO
    add constraint FK_METODOS_PAGO_CLIENTES foreign key (CLIENTE_ID)

@@ -11,7 +11,7 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - Catálogo de 16 productos con filtros, orden y buscador. Precio y stock vienen de la base de datos.
 - Cuentas reales con Supabase: registro con cédula ecuatoriana validada (módulo 10), confirmación por correo, recuperar contraseña y botón para mostrar la contraseña.
 - No se permite registrar dos veces la misma cédula ni el mismo correo.
-- Perfil: editar datos, direcciones, métodos de pago (solo últimos 4 dígitos) y contraseña.
+- Perfil: editar datos, métodos de pago (solo últimos 4 dígitos) y contraseña.
 - Compra con retiro en tienda (3 tiendas) y pago con tarjetas de prueba validadas con el algoritmo de Luhn. El total con IVA 15 % lo calcula la base de datos.
 - Mis pedidos con su estado. Panel de administración para cambiar estados; al marcar "Listo" se envía un correo al cliente (EmailJS).
 - Aviso al administrador de pedidos nuevos (contador en el encabezado y correo).
@@ -33,6 +33,7 @@ bd/esquema.sql           Tablas (PostgreSQL)
 bd/seguridad.sql         Reglas de seguridad por fila y funciones del servidor
 bd/actualizacion.sql     Productos, stock y funciones del panel
 bd/actualizacion2.sql    Transacciones, concurrencia, idempotencia y estados del pedido
+bd/actualizacion3.sql    Quita la tabla de direcciones (solo hay retiro en tienda)
 bd/modelo_powerdesigner.sql  Tablas y relaciones para importar en PowerDesigner
 ```
 

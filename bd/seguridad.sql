@@ -19,7 +19,6 @@ alter table productos       enable row level security;
 alter table producto_tallas enable row level security;
 alter table tiendas         enable row level security;
 alter table clientes        enable row level security;
-alter table direcciones     enable row level security;
 alter table metodos_pago    enable row level security;
 alter table pedidos         enable row level security;
 alter table detalle_pedido  enable row level security;
@@ -36,9 +35,6 @@ create policy "catalogo visible" on tiendas         for select using (true);
 create policy "mi perfil ver"     on clientes for select using (id = auth.uid() or es_admin());
 create policy "mi perfil crear"   on clientes for insert with check (id = auth.uid());
 create policy "mi perfil editar"  on clientes for update using (id = auth.uid()) with check (id = auth.uid());
-
-create policy "mis direcciones" on direcciones for all
-  using (cliente_id = auth.uid()) with check (cliente_id = auth.uid());
 
 create policy "mis tarjetas" on metodos_pago for all
   using (cliente_id = auth.uid()) with check (cliente_id = auth.uid());
@@ -60,7 +56,7 @@ create policy "solo admin" on administradores for select using (id = auth.uid())
 alter view vista_calificaciones set (security_invoker = true);
 
 -- Los visitantes sin cuenta solo leen el catálogo y las reseñas
-revoke all on clientes, direcciones, metodos_pago, pedidos, detalle_pedido from anon;
+revoke all on clientes, metodos_pago, pedidos, detalle_pedido from anon;
 
 -- El correo del cliente siempre es el de su cuenta (no se puede falsificar)
 create or replace function copiar_correo_cuenta() returns trigger

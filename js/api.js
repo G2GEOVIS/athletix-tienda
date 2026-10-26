@@ -96,17 +96,6 @@ const Api = (() => {
     actualizar(id, datos) { return ejecutar(sb.from('clientes').update(datos).eq('id', id).select().single()); },
     async esAdmin() { const r = await ejecutar(sb.rpc('es_admin')); return !r.error && r.datos === true; },
 
-    direcciones() { return ejecutar(sb.from('direcciones').select('*').order('predeterminada', { ascending: false }).order('id')); },
-    async guardarDireccion(id, datos, clienteId) {
-      if (datos.predeterminada) {
-        const r = await ejecutar(sb.from('direcciones').update({ predeterminada: false }).eq('cliente_id', clienteId));
-        if (r.error) return r;
-      }
-      return id
-        ? ejecutar(sb.from('direcciones').update(datos).eq('id', id).select().single())
-        : ejecutar(sb.from('direcciones').insert({ ...datos, cliente_id: clienteId }).select().single());
-    },
-    borrarDireccion(id) { return ejecutar(sb.from('direcciones').delete().eq('id', id)); },
 
     tarjetas() { return ejecutar(sb.from('metodos_pago').select('*').order('id', { ascending: false })); },
     async guardarTarjeta(datos) {

@@ -443,6 +443,7 @@ async function vistaPagos() {
           <h2 class="dialogo__titulo" id="dialogo-titulo">Agregar tarjeta</h2>
           <form class="formulario" id="form-tarjeta-nueva" novalidate>
             <div class="alerta alerta-errores" tabindex="-1" role="alert" hidden></div>
+            ${avisoTarjetasPrueba()}
             ${camposTarjeta()}
             <div class="dialogo__botones">
               <button class="boton boton--secundario" type="button" data-cerrar-dialogo>Cancelar</button>
@@ -494,10 +495,14 @@ function camposTarjeta() {
     <div class="formulario__fila formulario__fila--doble">
       ${campo({ id: 'vence', etiqueta: 'Vencimiento', ayuda: 'MM/AA', max: 5, extra: 'autocomplete="cc-exp" inputmode="numeric" placeholder="MM/AA"' })}
       ${campo({ id: 'cvv', etiqueta: 'CVV', tipo: 'password', ayuda: '3 dígitos al reverso', max: 3, extra: 'autocomplete="cc-csc" inputmode="numeric"' })}
-    </div>
-    <details class="tarjetas-prueba">
-      <summary>${icono('info')}Ver tarjetas de prueba</summary>
-      <p>Esta es una tienda académica: no se cobra dinero real. Usa una de estas tarjetas, con cualquier nombre, una fecha futura y cualquier CVV de 3 números:</p>
+    </div>`;
+}
+/* Aviso siempre visible con las tarjetas de prueba (la tienda es académica: no se cobra dinero real) */
+function avisoTarjetasPrueba() {
+  return `
+    <section class="tarjetas-prueba" aria-labelledby="titulo-prueba">
+      <h3 id="titulo-prueba">${icono('info')}No uses tu tarjeta real</h3>
+      <p>Esta es una tienda académica: no se cobra dinero. Paga con una de estas tarjetas de prueba, con cualquier nombre, una fecha futura (por ejemplo 12/28) y cualquier CVV de 3 números:</p>
       <ul>
         <li><strong>4242 4242 4242 4242</strong> · Visa · pago aprobado</li>
         <li><strong>5555 5555 5555 4444</strong> · Mastercard · pago aprobado</li>
@@ -505,7 +510,7 @@ function camposTarjeta() {
         <li><strong>4000 0000 0000 0002</strong> · Visa · pago rechazado</li>
         <li><strong>4000 0000 0000 9995</strong> · Visa · fondos insuficientes</li>
       </ul>
-    </details>`;
+    </section>`;
 }
 function activarCamposTarjeta(form) {
   activarEnlacesError(form);

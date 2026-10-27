@@ -106,6 +106,7 @@ async function vistaPago() {
         <section class="panel" aria-labelledby="titulo-tarjeta" id="zona-pago">
           <h2 id="titulo-tarjeta">Pago con tarjeta</h2>
           <p class="texto-suave" style="margin:-.5rem 0 1.25rem">Aceptamos Visa y Mastercard.</p>
+          ${avisoTarjetasPrueba()}
           <form class="formulario" id="form-pago" novalidate>
             <div class="alerta alerta-errores" tabindex="-1" role="alert" hidden></div>
             ${tarjetas.length ? `

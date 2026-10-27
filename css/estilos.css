@@ -677,10 +677,11 @@ fieldset.panel { margin: 0; min-width: 0; }
 .opcion--caja { border: 1.5px solid var(--borde); border-radius: var(--radio-sm); padding: .6rem .9rem; }
 .opcion--caja:has(input:checked) { border-color: var(--verde); background: #E7F3F1; }
 .marca-tarjeta { margin-top: -.6rem; font-weight: 600; min-height: 1.2em; }
-.tarjetas-prueba { border: 1px dashed var(--borde-fuerte); border-radius: var(--radio-sm); padding: .75rem 1rem; background: var(--gris); }
-.tarjetas-prueba summary { cursor: pointer; font-weight: 700; display: flex; gap: .5rem; align-items: center; min-height: 2.25rem; }
+.tarjetas-prueba { border: 2px solid var(--verde); border-radius: var(--radio-sm); padding: 1rem 1.15rem; background: #E7F3F1; margin-bottom: 1.25rem; }
+.tarjetas-prueba h3 { display: flex; gap: .5rem; align-items: center; font-size: 1.05rem; margin: 0; }
 .tarjetas-prueba p { margin-block: .5rem; }
-.tarjetas-prueba ul { padding-left: 1.1rem; display: grid; gap: .3rem; }
+.tarjetas-prueba ul { padding-left: 1.1rem; display: grid; gap: .3rem; margin: 0; }
+.tarjetas-prueba strong { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 #zona-pago { position: relative; }
 .capa-pago { position: absolute; inset: 0; z-index: 5; background: rgba(255, 255, 255, .94); border-radius: var(--radio); display: grid; place-content: center; text-align: center; gap: .25rem; padding: 1rem; }
 

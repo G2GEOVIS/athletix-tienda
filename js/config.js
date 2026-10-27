@@ -11,7 +11,7 @@ const CONFIG = {
   },
   emailjs: {
     servicio: 'service_n3b8qkn',
-    plantillaPedidoListo: 'template_xgi77wu',
+    plantillaCliente: 'template_xgi77wu',     // correo al cliente: compra confirmada y pedido listo
     plantillaNuevoPedido: 'template_mjzl46j',
     clavePublica: 'byyIpSC8iBjJs4sU3'
   },

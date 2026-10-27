@@ -13,6 +13,7 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - No se permite registrar dos veces la misma cédula ni el mismo correo.
 - Perfil: editar datos, métodos de pago (solo últimos 4 dígitos) y contraseña.
 - Compra con retiro en tienda (3 tiendas) y pago con tarjetas de prueba validadas con el algoritmo de Luhn. El total con IVA 15 % lo calcula la base de datos.
+- Correo de confirmación al cliente cuando compra y cuando su pedido está listo.
 - Mis pedidos con su estado. Panel de administración para cambiar estados; al marcar "Listo" se envía un correo al cliente (EmailJS).
 - Aviso al administrador de pedidos nuevos (contador en el encabezado y correo).
 - Compras seguras ante concurrencia: el stock se descuenta con bloqueo por fila en una sola transacción y cada intento de pago tiene una clave única para no duplicar pedidos.
@@ -29,12 +30,11 @@ js/api.js                Acceso a Supabase y EmailJS con errores en español
 js/core.js               Estado, utilidades y componentes de formularios
 js/vistas-*.js           Pantallas: tienda, cuenta, compra y administración
 js/app.js                Arranque, sesión y enrutador
-bd/esquema.sql           Tablas (PostgreSQL)
-bd/seguridad.sql         Reglas de seguridad por fila y funciones del servidor
-bd/actualizacion.sql     Productos, stock y funciones del panel
-bd/actualizacion2.sql    Transacciones, concurrencia, idempotencia y estados del pedido
-bd/actualizacion3.sql    Quita la tabla de direcciones (solo hay retiro en tienda)
-bd/modelo_powerdesigner.sql  Tablas y relaciones para importar en PowerDesigner
+bd/01_tablas.sql          Tablas con la convención de la clase (CLIENTE, PRODUCTO, PEDIDOCLIENTE, PAGOS, PRODUCTO_PEDCLI...)
+bd/02_seguridad_y_funciones.sql  Seguridad por filas, compra en una transacción, reglas de estados y reseñas
+bd/03_datos.sql           Categorías, tiendas, productos y existencias
+bd/migracion_modelo_clase.sql    Paso del modelo anterior al actual (ya aplicado)
+bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner
 ```
 
 ## Accesibilidad

@@ -163,8 +163,8 @@ async function vistaPago() {
             if (rg.error) return rg;
             metodoId = rg.datos.id;
           }
-          const items = estado.carrito.map((l) => ({ producto_id: producto(l.id).dbId, talla: l.talla || '', cantidad: l.cantidad }));
-          if (items.some((i) => !i.producto_id)) return { error: 'Algunos productos no están disponibles en este momento. Recarga la página.' };
+          const items = estado.carrito.map((l) => ({ producto: producto(l.id).dbId, talla: l.talla || '', cantidad: l.cantidad }));
+          if (items.some((i) => !i.producto)) return { error: 'Algunos productos no están disponibles en este momento. Recarga la página.' };
           guardarPendiente();
           const rp = await Api.pedidos.crear(tiendaId, metodoId, items, clavePago);
           if (rp.error) borrarPendiente();
@@ -178,7 +178,8 @@ async function vistaPago() {
           return;
         }
         const fila = Array.isArray(r.datos) ? r.datos[0] : r.datos;
-        // Aviso al administrador (no detiene la compra si falla)
+        // Correos de confirmación al cliente y de aviso al administrador (no detienen la compra si fallan)
+        Api.correo.compraConfirmada({ correo: correoSesion(), nombre: estado.cliente.nombres, numero: fila.numero, total: fila.total, tienda: tienda.nombre, horario: tienda.horario });
         Api.correo.nuevoPedido({
           numero: fila.numero, total: fila.total, tienda: tienda.nombre,
           cliente: `${estado.cliente.nombres} ${estado.cliente.apellidos}`, cedula: estado.cliente.cedula,
@@ -236,7 +237,7 @@ function vistaConfirmacion() {
       <div class="panel centro">
         <div class="icono-exito"><span>${icono('check')}</span></div>
         <h1 class="titulo-pagina">¡Compra realizada con éxito!</h1>
-        <p class="subtitulo">Gracias por tu compra, ${esc(nombreCliente())}. Te escribiremos a <strong>${esc(correoSesion())}</strong> cuando tu pedido esté listo para retirar.</p>
+        <p class="subtitulo">Gracias por tu compra, ${esc(nombreCliente())}. Te enviamos la confirmación a <strong>${esc(correoSesion())}</strong> y te escribiremos otra vez cuando tu pedido esté listo para retirar.</p>
         <p class="numero-pedido">Pedido N.º ${esc(p.numero)}</p>
         <dl class="datos-lista panel panel--gris detalle-pedido">
           <dt>Productos</dt><dd>${plural(p.unidades, 'producto', 'productos')}</dd>

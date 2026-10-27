@@ -544,7 +544,7 @@ function leerTarjeta(form) {
   const [mm, aa] = vence.split('/');
   return {
     resultado: Validar.resultadoTarjeta(numero),
-    registro: { cliente_id: estado.cliente.id, marca: Validar.marcaTarjeta(numero), ultimos4: numero.slice(-4), titular: titular.toUpperCase(), mes_vence: Number(mm), anio_vence: 2000 + Number(aa) }
+    registro: { cedula: estado.cliente.cedula, marca: Validar.marcaTarjeta(numero), ultimos4: numero.slice(-4), titular: titular.toUpperCase(), mes_vence: Number(mm), anio_vence: 2000 + Number(aa) }
   };
 }
 

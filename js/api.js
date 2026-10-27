@@ -25,15 +25,15 @@ const Api = (() => {
     if (m.includes('invalid login credentials')) return 'Correo o contraseña incorrectos.';
     if (m.includes('email not confirmed')) return 'Todavía no confirmas tu correo. Revisa tu bandeja de entrada (y la carpeta de spam).';
     if (m.includes('user already registered') || m.includes('already been registered')) return 'Ya existe una cuenta con este correo. Inicia sesión.';
-    if (m.includes('clientes_cedula_key') || (m.includes('duplicate') && m.includes('cedula'))) return 'Ya existe una cuenta con esta cédula.';
-    if (m.includes('clientes_correo_key')) return 'Ya existe una cuenta con este correo.';
-    if (m.includes('cedula_valida') || m.includes('clientes_cedula_check')) return 'La cédula no es válida.';
+    if (m.includes('pk_cliente') || (m.includes('duplicate') && m.includes('cedula'))) return 'Ya existe una cuenta con esta cédula.';
+    if (m.includes('ak_cliente_correo') || m.includes('ak_cliente_usuario')) return 'Ya existe una cuenta con este correo.';
+    if (m.includes('cedula_valida') || m.includes('ckc_cli_cedula')) return 'La cédula no es válida.';
     if (m.includes('rate limit') || m.includes('too many') || m.includes('security purposes')) return 'Hiciste demasiados intentos seguidos. Espera un minuto y vuelve a intentarlo.';
     if (m.includes('password should be') || m.includes('weak')) return 'La contraseña es muy débil. Usa al menos 8 caracteres con letras y números.';
     if (m.includes('same password') || m.includes('should be different')) return 'La nueva contraseña debe ser diferente a la actual.';
     if (m.includes('jwt') || m.includes('not authenticated') || m.includes('inicia sesión') || m.includes('iniciar sesión')) return 'Tu sesión terminó. Vuelve a iniciar sesión.';
-    if (m.includes('metodos_pago_cliente_id_marca_ultimos4')) return 'Ya tienes guardada esta tarjeta.';
-    if (m.includes('resenas_cliente_id_producto_id_key')) return 'Ya dejaste una reseña de este producto. Puedes editarla.';
+    if (m.includes('ak_tarjeta_cliente')) return 'Ya tienes guardada esta tarjeta.';
+    if (m.includes('ak_resena_cliente_producto')) return 'Ya dejaste una reseña de este producto. Puedes editarla.';
     // Mensajes propios de la base de datos (ya vienen en español)
     const propio = String((error && error.message) || '');
     if (/^[A-ZÁÉÍÓÚ¿¡]/.test(propio) && /[áéíóúñ]|\b(el|la|de|para|debes|no)\b/i.test(propio)) return propio;
@@ -77,99 +77,136 @@ const Api = (() => {
     salir() { return ejecutar(sb.auth.signOut()); }
   };
 
+  /* ---------- Traducción entre la base (columnas CLI_, PRD_, PED_...) y la interfaz ---------- */
+  const mapear = (r, fn) => (r.error || !r.datos ? r : { datos: Array.isArray(r.datos) ? r.datos.map(fn) : fn(r.datos) });
+  const codigoPedido = (numero, fecha) => `AX-${new Date(fecha).getFullYear()}-${String(numero).padStart(5, '0')}`;
+  const aCliente = (c) => ({ id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_telefono, correo: c.cli_correo, creado_en: c.cli_fecha_registro });
+  const aTarjeta = (t) => ({ id: t.tar_codigo, marca: t.tar_marca, ultimos4: t.tar_ultimos4, titular: t.tar_titular, mes_vence: t.tar_mes_vence, anio_vence: t.tar_anio_vence });
+  const aTienda = (t) => ({ id: t.tie_codigo, nombre: t.tie_nombre, direccion: t.tie_direccion, ciudad: t.tie_ciudad, horario: t.tie_horario });
+  const aResena = (r) => ({ id: r.res_codigo, cedula: r.cli_cedula, autor: r.res_autor, estrellas: r.res_estrellas, comentario: r.res_comentario, creado_en: r.res_fecha });
+
   /* ---------- Catálogo ---------- */
   const catalogo = {
-    productos() { return ejecutar(sb.from('productos').select('id, codigo, precio, activo, usa_talla, producto_tallas(talla, stock)')); },
-    calificaciones() { return ejecutar(sb.from('vista_calificaciones').select('producto_id, promedio, opiniones')); },
-    tiendas() { return ejecutar(sb.from('tiendas').select('id, nombre, direccion, ciudad, horario').order('id')); }
+    async productos() {
+      const r = await ejecutar(sb.from('producto').select('prd_codigo, prd_precio, prd_activo, prd_usa_talla, producto_talla(pta_talla, pta_existencia)'));
+      return mapear(r, (p) => ({ id: p.prd_codigo, codigo: p.prd_codigo, precio: p.prd_precio, activo: p.prd_activo, usa_talla: p.prd_usa_talla,
+        producto_tallas: (p.producto_talla || []).map((t) => ({ talla: t.pta_talla, stock: t.pta_existencia })) }));
+    },
+    async calificaciones() {
+      const r = await ejecutar(sb.from('vista_calificaciones').select('prd_codigo, promedio, opiniones'));
+      return mapear(r, (c) => ({ producto_id: c.prd_codigo, promedio: c.promedio, opiniones: c.opiniones }));
+    },
+    async tiendas() { return mapear(await ejecutar(sb.from('tienda').select('*').order('tie_codigo')), aTienda); }
   };
 
   /* ---------- Cliente ---------- */
   const cliente = {
     async cedulaRegistrada(cedula) { const r = await ejecutar(sb.rpc('cedula_registrada', { p_cedula: cedula })); return r.error ? r : { datos: !!r.datos }; },
     async correoRegistrado(correo) { const r = await ejecutar(sb.rpc('correo_registrado', { p_correo: correo })); return r.error ? r : { datos: !!r.datos }; },
-    async perfil(id) { return ejecutar(sb.from('clientes').select('id, cedula, nombres, apellidos, telefono, correo, creado_en').eq('id', id).maybeSingle()); },
-    crear(datos) { return ejecutar(sb.from('clientes').insert(datos).select().single()); },
-    actualizar(id, datos) { return ejecutar(sb.from('clientes').update(datos).eq('id', id).select().single()); },
+    async perfil(usuario) { return mapear(await ejecutar(sb.from('cliente').select('*').eq('cli_usuario', usuario).maybeSingle()), aCliente); },
+    async crear(d) {
+      return mapear(await ejecutar(sb.from('cliente').insert({ cli_cedula: d.cedula, cli_usuario: d.id, cli_nombres: d.nombres, cli_apellidos: d.apellidos, cli_telefono: d.telefono, cli_correo: d.correo }).select().single()), aCliente);
+    },
+    async actualizar(usuario, d) {
+      return mapear(await ejecutar(sb.from('cliente').update({ cli_nombres: d.nombres, cli_apellidos: d.apellidos, cli_telefono: d.telefono }).eq('cli_usuario', usuario).select().single()), aCliente);
+    },
     async esAdmin() { const r = await ejecutar(sb.rpc('es_admin')); return !r.error && r.datos === true; },
 
-
-    tarjetas() { return ejecutar(sb.from('metodos_pago').select('*').order('id', { ascending: false })); },
-    async guardarTarjeta(datos) {
-      const existente = await ejecutar(sb.from('metodos_pago').select('id')
-        .eq('cliente_id', datos.cliente_id).eq('marca', datos.marca).eq('ultimos4', datos.ultimos4)
-        .eq('mes_vence', datos.mes_vence).eq('anio_vence', datos.anio_vence).maybeSingle());
+    async tarjetas() { return mapear(await ejecutar(sb.from('tarjeta').select('*').order('tar_codigo', { ascending: false })), aTarjeta); },
+    async guardarTarjeta(d) {
+      const fila = { cli_cedula: d.cedula, tar_marca: d.marca, tar_ultimos4: d.ultimos4, tar_titular: d.titular, tar_mes_vence: d.mes_vence, tar_anio_vence: d.anio_vence };
+      const existente = await ejecutar(sb.from('tarjeta').select('tar_codigo').match(fila).maybeSingle());
       if (existente.error) return existente;
-      if (existente.datos) return existente;
-      return ejecutar(sb.from('metodos_pago').insert(datos).select('id').single());
+      if (existente.datos) return { datos: { id: existente.datos.tar_codigo } };
+      return mapear(await ejecutar(sb.from('tarjeta').insert(fila).select('tar_codigo').single()), (t) => ({ id: t.tar_codigo }));
     },
-    borrarTarjeta(id) { return ejecutar(sb.from('metodos_pago').delete().eq('id', id)); }
+    borrarTarjeta(id) { return ejecutar(sb.from('tarjeta').delete().eq('tar_codigo', id)); }
   };
 
   /* ---------- Pedidos ---------- */
   const pedidos = {
     // "clave" identifica el intento de pago: si se reenvía (doble clic, recarga, red lenta) la base devuelve el mismo pedido
-    async crear(tiendaId, metodoPagoId, items, clave) {
-      const r = await ejecutar(sb.rpc('crear_pedido', { p_tienda: tiendaId, p_metodo_pago: metodoPagoId, p_items: items, p_clave: clave }));
-      // Compatibilidad: si la base todavía no tiene la versión con clave, se usa la anterior
-      if (r.error && r.tecnico && r.tecnico.code === 'PGRST202') {
-        return ejecutar(sb.rpc('crear_pedido', { p_tienda: tiendaId, p_metodo_pago: metodoPagoId, p_items: items }));
-      }
-      return r;
+    async crear(tiendaId, tarjetaId, items, clave) {
+      const r = await ejecutar(sb.rpc('crear_pedido', { p_tienda: tiendaId, p_tarjeta: tarjetaId, p_items: items, p_clave: clave }));
+      return mapear(r, (f) => ({ numero: f.ped_codigo, total: f.ped_total }));
     },
     async nuevos() { const r = await ejecutar(sb.rpc('pedidos_nuevos')); return r.error ? 0 : Number(r.datos) || 0; },
-    mios() {
-      return ejecutar(sb.from('pedidos')
-        .select('id, numero, estado, subtotal, iva, total, creado_en, actualizado_en, tiendas(nombre, direccion, horario), metodos_pago(marca, ultimos4), detalle_pedido(producto_id, talla, cantidad, precio_unitario)')
-        .order('creado_en', { ascending: false }));
+    async mios() {
+      const r = await ejecutar(sb.from('pedidocliente')
+        .select('ped_numero, ped_estado, ped_subtotal, ped_iva, ped_total, ped_fecha, tienda(tie_nombre, tie_direccion, tie_horario), pagos(tarjeta(tar_marca, tar_ultimos4)), producto_pedcli(prd_codigo, ppc_talla, ppc_cantidad, ppc_precio)')
+        .order('ped_fecha', { ascending: false }));
+      return mapear(r, (p) => {
+        const pago = (p.pagos || [])[0];
+        return {
+          id: p.ped_numero, numero: codigoPedido(p.ped_numero, p.ped_fecha), estado: p.ped_estado,
+          subtotal: p.ped_subtotal, iva: p.ped_iva, total: p.ped_total, creado_en: p.ped_fecha,
+          tiendas: p.tienda ? { nombre: p.tienda.tie_nombre, direccion: p.tienda.tie_direccion, horario: p.tienda.tie_horario } : null,
+          metodos_pago: pago && pago.tarjeta ? { marca: pago.tarjeta.tar_marca, ultimos4: pago.tarjeta.tar_ultimos4 } : null,
+          detalle_pedido: (p.producto_pedcli || []).map((d) => ({ producto_id: d.prd_codigo, talla: d.ppc_talla === 'U' ? null : d.ppc_talla, cantidad: d.ppc_cantidad, precio_unitario: d.ppc_precio }))
+        };
+      });
     },
-    async comproYRetiro(productoId) {
-      const r = await ejecutar(sb.from('detalle_pedido').select('id, pedidos!inner(estado)')
-        .eq('producto_id', productoId).eq('pedidos.estado', 'Retirado').limit(1));
+    async comproYRetiro(codigo) {
+      const r = await ejecutar(sb.from('producto_pedcli').select('ped_numero, pedidocliente!inner(ped_estado)')
+        .eq('prd_codigo', codigo).eq('pedidocliente.ped_estado', 'Retirado').limit(1));
       return r.error ? r : { datos: r.datos.length > 0 };
     },
-    todos() { return ejecutar(sb.rpc('pedidos_admin')); },
-    cambiarEstado(id, estado) { return ejecutar(sb.rpc('cambiar_estado_pedido', { p_pedido: id, p_estado: estado })); }
+    async todos() {
+      return mapear(await ejecutar(sb.rpc('pedidos_admin')), (p) => ({
+        id: p.ped_numero, numero: p.ped_codigo, estado: p.ped_estado, total: p.ped_total, creado_en: p.ped_fecha,
+        cliente: p.cliente, correo: p.cli_correo, telefono: p.cli_telefono, cedula: p.cli_cedula, tienda: p.tie_nombre, horario: p.tie_horario, productos: p.productos
+      }));
+    },
+    cambiarEstado(numero, estado) { return ejecutar(sb.rpc('cambiar_estado_pedido', { p_numero: numero, p_estado: estado })); }
   };
 
   /* ---------- Reseñas ---------- */
   const resenas = {
-    deProducto(productoId) {
-      return ejecutar(sb.from('resenas').select('id, cliente_id, autor, estrellas, comentario, creado_en')
-        .eq('producto_id', productoId).order('creado_en', { ascending: false }).limit(50));
+    async deProducto(codigo) {
+      return mapear(await ejecutar(sb.from('resena').select('*').eq('prd_codigo', codigo).order('res_fecha', { ascending: false }).limit(50)), aResena);
     },
-    guardar(id, datos) {
+    async guardar(id, d) {
       return id
-        ? ejecutar(sb.from('resenas').update({ estrellas: datos.estrellas, comentario: datos.comentario }).eq('id', id).select().single())
-        : ejecutar(sb.from('resenas').insert(datos).select().single());
+        ? mapear(await ejecutar(sb.from('resena').update({ res_estrellas: d.estrellas, res_comentario: d.comentario }).eq('res_codigo', id).select().single()), aResena)
+        : mapear(await ejecutar(sb.from('resena').insert({ cli_cedula: d.cedula, prd_codigo: d.producto, res_estrellas: d.estrellas, res_comentario: d.comentario }).select().single()), aResena);
     },
-    borrar(id) { return ejecutar(sb.from('resenas').delete().eq('id', id)); }
+    borrar(id) { return ejecutar(sb.from('resena').delete().eq('res_codigo', id)); }
   };
 
-  /* ---------- Correo de "pedido listo" ---------- */
+  /* ---------- Correos (EmailJS) ---------- */
+  const enviar = async (plantilla, datos) => {
+    if (!(window.emailjs && CONFIG.emailjs.servicio && plantilla && CONFIG.emailjs.clavePublica)) return { error: 'El envío de correos no está configurado.' };
+    try {
+      await window.emailjs.send(CONFIG.emailjs.servicio, plantilla, datos, { publicKey: CONFIG.emailjs.clavePublica });
+      return { datos: true };
+    } catch (e) {
+      return { error: 'No se pudo enviar el correo' + (e && e.text ? ` (${e.text})` : '') + '.' };
+    }
+  };
   const correo = {
-    configurado() { return !!(window.emailjs && CONFIG.emailjs.servicio && CONFIG.emailjs.plantillaPedidoListo && CONFIG.emailjs.clavePublica); },
-    async pedidoListo(p) {
-      if (!correo.configurado()) return { error: 'Falta configurar la plantilla de EmailJS (Template ID).' };
-      try {
-        await window.emailjs.send(CONFIG.emailjs.servicio, CONFIG.emailjs.plantillaPedidoListo, {
-          to_email: p.correo, nombre: p.cliente, numero: p.numero, tienda: p.tienda, horario: p.horario, total: Number(p.total).toFixed(2)
-        }, { publicKey: CONFIG.emailjs.clavePublica });
-        return { datos: true };
-      } catch (e) {
-        return { error: 'No se pudo enviar el correo' + (e && e.text ? ` (${e.text})` : '') + '. El estado sí se guardó.' };
-      }
+    configurado() { return !!(window.emailjs && CONFIG.emailjs.servicio && CONFIG.emailjs.plantillaCliente && CONFIG.emailjs.clavePublica); },
+    /* Al cliente, apenas paga: confirma que su pedido se recibió */
+    compraConfirmada(p) {
+      return enviar(CONFIG.emailjs.plantillaCliente, {
+        to_email: p.correo, nombre: p.nombre, numero: p.numero, tienda: p.tienda, horario: p.horario, total: Number(p.total).toFixed(2),
+        asunto: `Recibimos tu pedido ${p.numero}`,
+        mensaje: `Gracias por tu compra. Tu pago fue aprobado y ya estamos preparando tu pedido ${p.numero}. Te enviaremos otro correo cuando esté listo para retirar.`
+      });
     },
-    /* Aviso al administrador: llega a su correo cada vez que un cliente hace un pedido */
-    async nuevoPedido(p) {
-      if (!(window.emailjs && CONFIG.emailjs.plantillaNuevoPedido)) return { error: 'sin plantilla' };
-      try {
-        await window.emailjs.send(CONFIG.emailjs.servicio, CONFIG.emailjs.plantillaNuevoPedido, {
-          numero: p.numero, cliente: p.cliente, cedula: p.cedula, correo_cliente: p.correo, telefono: p.telefono,
-          tienda: p.tienda, productos: p.productos, total: Number(p.total).toFixed(2)
-        }, { publicKey: CONFIG.emailjs.clavePublica });
-        return { datos: true };
-      } catch (e) { return { error: 'No se pudo avisar al administrador' }; }
+    /* Al cliente, cuando el administrador marca el pedido como "Listo" */
+    pedidoListo(p) {
+      return enviar(CONFIG.emailjs.plantillaCliente, {
+        to_email: p.correo, nombre: p.cliente, numero: p.numero, tienda: p.tienda, horario: p.horario, total: Number(p.total).toFixed(2),
+        asunto: `Tu pedido ${p.numero} está listo para retirar`,
+        mensaje: `Tu pedido ${p.numero} ya está listo. Puedes retirarlo en la tienda que elegiste.`
+      }).then((r) => (r.error ? { error: r.error + ' El estado sí se guardó.' } : r));
+    },
+    /* Al administrador, cada vez que un cliente hace un pedido */
+    nuevoPedido(p) {
+      return enviar(CONFIG.emailjs.plantillaNuevoPedido, {
+        numero: p.numero, cliente: p.cliente, cedula: p.cedula, correo_cliente: p.correo, telefono: p.telefono,
+        tienda: p.tienda, productos: p.productos, total: Number(p.total).toFixed(2)
+      });
     }
   };
 

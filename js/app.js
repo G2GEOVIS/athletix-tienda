@@ -250,7 +250,7 @@ function revisarEnlaceDeRegreso() {
   const p = new URLSearchParams(h.replace(/^#/, ''));
   if (p.get('error_description') || p.get('error')) {
     const vencido = /expired|invalid/i.test(p.get('error_code') + ' ' + p.get('error_description'));
-    return { error: vencido ? 'El enlace ya venció o ya fue usado. Inicia sesión o pide un correo nuevo.' : 'No pudimos completar el ingreso. Inténtalo de nuevo.' };
+    return { error: vencido ? 'Ese enlace ya se usó o venció. Si ya pulsaste "Confirmar mi correo" antes, tu cuenta ya está confirmada: inicia sesión con tu correo y contraseña.' : 'No pudimos completar el ingreso. Inténtalo de nuevo.' };
   }
   return { tipo: p.get('type') || 'login' };
 }

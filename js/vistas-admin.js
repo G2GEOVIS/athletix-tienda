@@ -33,7 +33,7 @@ async function vistaAdmin(partes, params) {
       </nav>
       ${!lista.length ? `<div class="panel panel--gris vacio">${icono('paquete')}<p>No hay pedidos${filtro ? ' en este estado' : ''}.</p></div>` : `
       <ul class="pedidos">${lista.map((p) => `
-        <li class="pedido" data-pedido="${p.id}">
+        <li class="pedido${estado.pedidoResaltado === p.id ? ' pedido--resaltado' : ''}" data-pedido="${p.id}" tabindex="-1">
           <div class="pedido__cabecera">
             <h2 class="pedido__numero">${esc(p.numero)}</h2>
             <span class="estado estado--${p.estado.toLowerCase()}">${NOMBRE_ESTADO[p.estado]}</span>
@@ -45,45 +45,49 @@ async function vistaAdmin(partes, params) {
             <dt>Productos</dt><dd>${esc(p.productos)}</dd>
             <dt>Total</dt><dd>${dinero(p.total)}</dd>
           </dl>
-          <form class="cambio-estado" data-form-estado="${p.id}">
-            <label for="estado-${p.id}">Cambiar estado</label>
-            <select id="estado-${p.id}" ${SIGUIENTES[p.estado].length ? '' : 'disabled'}>${[p.estado, ...SIGUIENTES[p.estado]].map((e) => `<option value="${e}" ${e === p.estado ? 'selected' : ''}>${e === p.estado ? 'Actual: ' : ''}${NOMBRE_ESTADO[e]}</option>`).join('')}</select>
-            <button class="boton boton--principal" type="submit" ${SIGUIENTES[p.estado].length ? '' : 'disabled'}>Guardar</button>
-          </form>
+          ${SIGUIENTES[p.estado].length ? `
+          <div class="cambio-estado" role="group" aria-labelledby="cambiar-${p.id}">
+            <p id="cambiar-${p.id}" class="cambio-estado__titulo">Pasar a:</p>
+            ${SIGUIENTES[p.estado].map((e) => `<button class="boton ${e === 'Cancelado' ? 'boton--peligro' : 'boton--principal'}" type="button" data-pedido-id="${p.id}" data-nuevo-estado="${e}">${e === 'Cancelado' ? 'Cancelar pedido' : NOMBRE_ESTADO[e]}</button>`).join('')}
+          </div>` : `<p class="texto-suave" style="margin-top:1rem">${p.estado === 'Retirado' ? 'Pedido entregado: ya no cambia de estado.' : 'Pedido cancelado: ya no cambia de estado.'}</p>`}
           <p class="texto-suave resultado-estado" aria-live="polite"></p>
         </li>`).join('')}
       </ul>`}
     </div>`,
     montar(main) {
-      main.addEventListener('submit', async (e) => {
-        const form = e.target.closest('[data-form-estado]');
-        if (!form) return;
-        e.preventDefault();
-        const p = todos.find((x) => x.id === Number(form.dataset.formEstado));
-        const nuevo = $('select', form).value;
-        const salida = $('.resultado-estado', form.parentElement);
-        if (nuevo === p.estado) { salida.textContent = 'Elige el nuevo estado del pedido.'; return; }
+      // Si se acaba de cambiar un pedido, se muestra resaltado en su nueva pestaña
+      const resaltado = estado.pedidoResaltado && $(`[data-pedido="${estado.pedidoResaltado}"]`, main);
+      if (resaltado) { resaltado.scrollIntoView({ block: 'center' }); resaltado.focus({ preventScroll: true }); }
+      estado.pedidoResaltado = null;
+
+      main.addEventListener('click', async (e) => {
+        const boton = e.target.closest('[data-nuevo-estado]');
+        if (!boton) return;
+        const p = todos.find((x) => x.id === Number(boton.dataset.pedidoId));
+        const nuevo = boton.dataset.nuevoEstado;
         if (nuevo === 'Cancelado' && !(await confirmar('¿Cancelar este pedido?', `El pedido ${p.numero} se cancelará y sus productos volverán al stock. No se puede deshacer.`, 'Sí, cancelar'))) return;
-        const r2 = await conEspera($('button', form), 'Guardando…', async () => {
+        $$('[data-nuevo-estado]', boton.parentElement).forEach((b) => { if (b !== boton) b.disabled = true; });
+        const r2 = await conEspera(boton, 'Guardando…', async () => {
           const rc = await Api.pedidos.cambiarEstado(p.id, nuevo);
           if (rc.error) return rc;
           p.estado = nuevo;
           if (nuevo === 'Listo') return { correo: await Api.correo.pedidoListo(p) };
           return {};
         });
-        if (!r2) return;
-        if (r2.error) { salida.textContent = r2.error; aviso(r2.error, 'error'); return; }
-        const etiqueta = $('.estado', form.parentElement);
-        etiqueta.textContent = NOMBRE_ESTADO[nuevo];
-        etiqueta.className = `estado estado--${nuevo.toLowerCase()}`;
-        const sel = $('select', form);
-        sel.innerHTML = [nuevo, ...SIGUIENTES[nuevo]].map((e) => `<option value="${e}">${e === nuevo ? 'Actual: ' : ''}${NOMBRE_ESTADO[e]}</option>`).join('');
-        sel.disabled = $('button', form).disabled = !SIGUIENTES[nuevo].length;
-        revisarPedidosNuevos();
-        let texto = `Estado cambiado a "${NOMBRE_ESTADO[nuevo]}".`;
+        if (!r2 || r2.error) {
+          $$('[data-nuevo-estado]', boton.parentElement).forEach((b) => { b.disabled = false; });
+          if (r2) aviso(r2.error, 'error');
+          return;
+        }
+        let texto = `El pedido ${p.numero} pasó a "${NOMBRE_ESTADO[nuevo]}".`;
         if (r2.correo) texto += r2.correo.error ? ` ${r2.correo.error}` : ` Se envió un correo a ${p.correo}.`;
-        salida.textContent = texto;
         aviso(texto, r2.correo && r2.correo.error ? 'error' : 'ok');
+        anunciar(texto);
+        revisarPedidosNuevos();
+        // El pedido aparece de inmediato en la pestaña de su nuevo estado
+        estado.pedidoResaltado = p.id;
+        const destino = filtro ? `#/admin?estado=${nuevo}` : '#/admin';
+        if (location.hash === destino) render(); else location.hash = destino;
       });
     }
   };

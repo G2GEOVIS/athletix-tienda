@@ -1,236 +1,188 @@
 /*==============================================================*/
-/* ATHLETIX - Modelo físico para PowerDesigner                 */
-/* DBMS: PostgreSQL                                              */
-/* Uso: File > Reverse Engineer > Database...                    */
-/*      DBMS: PostgreSQL 9.x (o la versión más alta disponible)  */
-/*      Pestaña "Using script files" > agregar este archivo > OK */
-/* Contiene solo tablas, claves y relaciones (sin funciones),    */
-/* para que PowerDesigner dibuje el diagrama completo.          */
+/* ATHLETIX - Modelo para PowerDesigner (DBMS: PostgreSQL)       */
+/* File > Reverse Engineer > Database > Using script files       */
+/* Convención de la clase: tablas en singular y columnas con     */
+/* prefijo de 3 letras de su tabla. CLI_USUARIO y ADM_USUARIO    */
+/* guardan el identificador de la cuenta de acceso (Supabase).   */
 /*==============================================================*/
 
 /*==============================================================*/
-/* Table: USUARIOS  (cuenta de acceso que administra Supabase)   */
+/* Table: CATEGORIA                                              */
 /*==============================================================*/
-create table USUARIOS (
-   ID                   UUID                 not null,
-   EMAIL                VARCHAR(120)         not null,
-   EMAIL_CONFIRMADO_EN  TIMESTAMP            null,
-   CREADO_EN            TIMESTAMP            not null,
-   constraint PK_USUARIOS primary key (ID),
-   constraint AK_USUARIOS_EMAIL unique (EMAIL)
+create table CATEGORIA (
+   CAT_CODIGO           INT2           not null,
+   CAT_NOMBRE           VARCHAR(40)    not null,
+   CAT_SLUG             VARCHAR(20)    not null,
+   constraint PK_CATEGORIA primary key (CAT_CODIGO),
+   constraint AK_CATEGORIA_NOMBRE unique (CAT_NOMBRE),
+   constraint AK_CATEGORIA_SLUG unique (CAT_SLUG)
 );
-comment on table USUARIOS is 'Cuentas de acceso (auth.users de Supabase): correo, contraseña cifrada y confirmación';
 
 /*==============================================================*/
-/* Table: CLIENTES                                               */
+/* Table: PRODUCTO                                               */
 /*==============================================================*/
-create table CLIENTES (
-   ID                   UUID                 not null,
-   CEDULA               CHAR(10)             not null,
-   NOMBRES              VARCHAR(60)          not null,
-   APELLIDOS            VARCHAR(60)          not null,
-   TELEFONO             CHAR(10)             not null,
-   CORREO               VARCHAR(120)         not null,
-   CREADO_EN            TIMESTAMP            not null,
-   constraint PK_CLIENTES primary key (ID),
-   constraint AK_CLIENTES_CEDULA unique (CEDULA),
-   constraint AK_CLIENTES_CORREO unique (CORREO),
-   constraint CKC_CLIENTES_TELEFONO check (TELEFONO like '09%')
+create table PRODUCTO (
+   PRD_CODIGO           VARCHAR(10)    not null,
+   CAT_CODIGO           INT2           not null,
+   PRD_NOMBRE           VARCHAR(80)    not null,
+   PRD_DESCRIPCION      TEXT           not null,
+   PRD_PUBLICO          VARCHAR(6)     not null,
+   PRD_PRECIO           NUMERIC(12,2)  not null,
+   PRD_IMAGEN           VARCHAR(120)   not null,
+   PRD_USA_TALLA        BOOL           not null,
+   PRD_ACTIVO           BOOL           not null,
+   PRD_FECHA_CREACION   TIMESTAMPTZ    not null,
+   constraint PK_PRODUCTO primary key (PRD_CODIGO),
+   constraint CKC_PRD_PUBLICO check (PRD_PUBLICO in ('Hombre', 'Mujer', 'Unisex')),
+   constraint CKC_PRD_PRECIO check (PRD_PRECIO > 0)
 );
-comment on table CLIENTES is 'Datos personales del cliente; la cédula se valida con el algoritmo módulo 10';
 
 /*==============================================================*/
-/* Table: ADMINISTRADORES                                        */
+/* Table: PRODUCTO_TALLA  (existencia por talla; U = única)      */
 /*==============================================================*/
-create table ADMINISTRADORES (
-   ID                   UUID                 not null,
-   constraint PK_ADMINISTRADORES primary key (ID)
+create table PRODUCTO_TALLA (
+   PRD_CODIGO           VARCHAR(10)    not null,
+   PTA_TALLA            VARCHAR(5)     not null,
+   PTA_EXISTENCIA       INT4           not null,
+   constraint PK_PRODUCTO_TALLA primary key (PRD_CODIGO, PTA_TALLA),
+   constraint CKC_PTA_EXISTENCIA check (PTA_EXISTENCIA >= 0)
 );
-comment on table ADMINISTRADORES is 'Usuarios que pueden ver todos los pedidos y cambiar su estado';
 
 /*==============================================================*/
-/* Table: CATEGORIAS                                             */
+/* Table: CLIENTE                                                */
 /*==============================================================*/
-create table CATEGORIAS (
-   ID                   INT2                 not null,
-   NOMBRE               VARCHAR(40)          not null,
-   SLUG                 VARCHAR(40)          not null,
-   constraint PK_CATEGORIAS primary key (ID),
-   constraint AK_CATEGORIAS_NOMBRE unique (NOMBRE),
-   constraint AK_CATEGORIAS_SLUG unique (SLUG)
+create table CLIENTE (
+   CLI_CEDULA           CHAR(10)       not null,
+   CLI_USUARIO          UUID           not null,
+   CLI_NOMBRES          VARCHAR(60)    not null,
+   CLI_APELLIDOS        VARCHAR(60)    not null,
+   CLI_TELEFONO         CHAR(10)       not null,
+   CLI_CORREO           VARCHAR(120)   not null,
+   CLI_FECHA_REGISTRO   TIMESTAMPTZ    not null,
+   constraint PK_CLIENTE primary key (CLI_CEDULA),
+   constraint AK_CLIENTE_USUARIO unique (CLI_USUARIO),
+   constraint AK_CLIENTE_CORREO unique (CLI_CORREO),
+   constraint CKC_CLI_NOMBRES check (CLI_NOMBRES ~ '^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ'' -]{2,60}$'),
+   constraint CKC_CLI_APELLIDOS check (CLI_APELLIDOS ~ '^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ'' -]{2,60}$'),
+   constraint CKC_CLI_TELEFONO check (CLI_TELEFONO ~ '^09[0-9]{8}$')
 );
-comment on table CATEGORIAS is 'Calzado deportivo, tecnología deportiva y equipo de entrenamiento';
 
 /*==============================================================*/
-/* Table: PRODUCTOS                                              */
+/* Table: ADMINISTRADOR                                          */
 /*==============================================================*/
-create table PRODUCTOS (
-   ID                   INT4                 not null,
-   CATEGORIA_ID         INT2                 not null,
-   PUBLICO              VARCHAR(6)           not null,
-   CODIGO               VARCHAR(12)          not null,
-   NOMBRE               VARCHAR(80)          not null,
-   DESCRIPCION          TEXT                 not null,
-   PRECIO               NUMERIC(10,2)        not null,
-   IMAGEN_URL           TEXT                 not null,
-   USA_TALLA            BOOL                 not null,
-   ACTIVO               BOOL                 not null,
-   CREADO_EN            TIMESTAMP            not null,
-   constraint PK_PRODUCTOS primary key (ID),
-   constraint AK_PRODUCTOS_CODIGO unique (CODIGO),
-   constraint CKC_PRODUCTOS_PUBLICO check (PUBLICO in ('Hombre','Mujer','Unisex')),
-   constraint CKC_PRODUCTOS_PRECIO check (PRECIO > 0)
+create table ADMINISTRADOR (
+   ADM_USUARIO          UUID           not null,
+   constraint PK_ADMINISTRADOR primary key (ADM_USUARIO)
 );
-comment on table PRODUCTOS is 'Catálogo; el precio oficial que se cobra está aquí';
 
 /*==============================================================*/
-/* Table: PRODUCTO_TALLAS                                        */
+/* Table: TIENDA                                                 */
 /*==============================================================*/
-create table PRODUCTO_TALLAS (
-   PRODUCTO_ID          INT4                 not null,
-   TALLA                VARCHAR(5)           not null,
-   STOCK                INT4                 not null,
-   constraint PK_PRODUCTO_TALLAS primary key (PRODUCTO_ID, TALLA),
-   constraint CKC_PRODUCTO_TALLAS_STOCK check (STOCK >= 0)
+create table TIENDA (
+   TIE_CODIGO           INT2           not null,
+   TIE_NOMBRE           VARCHAR(60)    not null,
+   TIE_DIRECCION        VARCHAR(120)   not null,
+   TIE_CIUDAD           VARCHAR(40)    not null,
+   TIE_HORARIO          VARCHAR(60)    not null,
+   constraint PK_TIENDA primary key (TIE_CODIGO),
+   constraint AK_TIENDA_NOMBRE unique (TIE_NOMBRE)
 );
-comment on table PRODUCTO_TALLAS is 'Stock por talla; los productos sin talla usan la talla U (única)';
 
 /*==============================================================*/
-/* Table: METODOS_PAGO                                           */
+/* Table: TARJETA  (solo últimos 4 dígitos, nunca el número)     */
 /*==============================================================*/
-create table METODOS_PAGO (
-   ID                   INT4                 not null,
-   CLIENTE_ID           UUID                 not null,
-   MARCA                VARCHAR(12)          not null,
-   ULTIMOS4             CHAR(4)              not null,
-   TITULAR              VARCHAR(60)          not null,
-   MES_VENCE            INT2                 not null,
-   ANIO_VENCE           INT2                 not null,
-   constraint PK_METODOS_PAGO primary key (ID),
-   constraint AK_METODOS_PAGO_TARJETA unique (CLIENTE_ID, MARCA, ULTIMOS4, MES_VENCE, ANIO_VENCE),
-   constraint CKC_METODOS_PAGO_MARCA check (MARCA in ('Visa','Mastercard')),
-   constraint CKC_METODOS_PAGO_MES check (MES_VENCE between 1 and 12)
+create table TARJETA (
+   TAR_CODIGO           INT4           not null,
+   CLI_CEDULA           CHAR(10)       not null,
+   TAR_MARCA            VARCHAR(12)    not null,
+   TAR_ULTIMOS4         CHAR(4)        not null,
+   TAR_TITULAR          VARCHAR(60)    not null,
+   TAR_MES_VENCE        INT2           not null,
+   TAR_ANIO_VENCE       INT2           not null,
+   constraint PK_TARJETA primary key (TAR_CODIGO),
+   constraint AK_TARJETA_CLIENTE unique (CLI_CEDULA, TAR_MARCA, TAR_ULTIMOS4, TAR_MES_VENCE, TAR_ANIO_VENCE),
+   constraint CKC_TAR_MARCA check (TAR_MARCA in ('Visa', 'Mastercard')),
+   constraint CKC_TAR_ULTIMOS4 check (TAR_ULTIMOS4 ~ '^[0-9]{4}$'),
+   constraint CKC_TAR_MES check (TAR_MES_VENCE between 1 and 12),
+   constraint CKC_TAR_ANIO check (TAR_ANIO_VENCE >= 2026)
 );
-comment on table METODOS_PAGO is 'Solo últimos 4 dígitos y vencimiento; nunca el número completo ni el CVV';
 
 /*==============================================================*/
-/* Table: TIENDAS                                                */
+/* Table: PEDIDOCLIENTE                                          */
 /*==============================================================*/
-create table TIENDAS (
-   ID                   INT2                 not null,
-   NOMBRE               VARCHAR(60)          not null,
-   DIRECCION            VARCHAR(120)         not null,
-   CIUDAD               VARCHAR(40)          not null,
-   HORARIO              VARCHAR(60)          not null,
-   constraint PK_TIENDAS primary key (ID),
-   constraint AK_TIENDAS_NOMBRE unique (NOMBRE)
+create table PEDIDOCLIENTE (
+   PED_NUMERO           NUMERIC(12) not null,
+   CLI_CEDULA           CHAR(10)       not null,
+   TIE_CODIGO           INT2           not null,
+   PED_FECHA            TIMESTAMPTZ    not null,
+   PED_ESTADO           VARCHAR(20)    not null,
+   PED_SUBTOTAL         NUMERIC(12,2)  not null,
+   PED_IVA              NUMERIC(12,2)  not null,
+   PED_TOTAL            NUMERIC(12,2)  not null,
+   PED_CLAVE            UUID           null,
+   PED_FECHA_ACTUALIZACION TIMESTAMPTZ not null,
+   constraint PK_PEDIDOCLIENTE primary key (PED_NUMERO),
+   constraint AK_PEDIDOCLIENTE_CLAVE unique (PED_CLAVE),
+   constraint CKC_PED_ESTADO check (PED_ESTADO in ('Recibido', 'Preparando', 'Listo', 'Retirado', 'Cancelado')),
+   constraint CKC_PED_VALORES check (PED_SUBTOTAL >= 0 and PED_IVA >= 0 and PED_TOTAL = PED_SUBTOTAL + PED_IVA)
 );
-comment on table TIENDAS is 'Locales donde el cliente retira su pedido';
 
 /*==============================================================*/
-/* Table: PEDIDOS                                                */
+/* Table: PAGOS                                                  */
 /*==============================================================*/
-create table PEDIDOS (
-   ID                   INT4                 not null,
-   NUMERO               VARCHAR(16)          not null,
-   CLAVE                UUID                 null,
-   CLIENTE_ID           UUID                 not null,
-   TIENDA_ID            INT2                 not null,
-   METODO_PAGO_ID       INT4                 not null,
-   ESTADO               VARCHAR(12)          not null,
-   SUBTOTAL             NUMERIC(10,2)        not null,
-   IVA                  NUMERIC(10,2)        not null,
-   TOTAL                NUMERIC(10,2)        not null,
-   CREADO_EN            TIMESTAMP            not null,
-   ACTUALIZADO_EN       TIMESTAMP            not null,
-   constraint PK_PEDIDOS primary key (ID),
-   constraint AK_PEDIDOS_NUMERO unique (NUMERO),
-   constraint AK_PEDIDOS_CLAVE unique (CLAVE),
-   constraint CKC_PEDIDOS_ESTADO check (ESTADO in ('Recibido','Preparando','Listo','Retirado','Cancelado')),
-   constraint CKC_PEDIDOS_TOTAL check (TOTAL = SUBTOTAL + IVA)
+create table PAGOS (
+   PAG_CODIGO           VARCHAR(15)    not null,
+   PED_NUMERO           NUMERIC(12)    not null,
+   TAR_CODIGO           INT4           not null,
+   PAG_MONTO            NUMERIC(12,2)  not null,
+   PAG_FECHA            TIMESTAMPTZ    not null,
+   constraint PK_PAGOS primary key (PAG_CODIGO),
+   constraint CKC_PAG_MONTO check (PAG_MONTO > 0)
 );
-comment on table PEDIDOS is 'Cabecera del pedido; CLAVE evita pedidos duplicados por reintentos de pago';
 
 /*==============================================================*/
-/* Table: DETALLE_PEDIDO                                         */
+/* Table: PRODUCTO_PEDCLI  (detalle del pedido)                  */
 /*==============================================================*/
-create table DETALLE_PEDIDO (
-   ID                   INT4                 not null,
-   PEDIDO_ID            INT4                 not null,
-   PRODUCTO_ID          INT4                 not null,
-   TALLA                VARCHAR(5)           null,
-   CANTIDAD             INT2                 not null,
-   PRECIO_UNITARIO      NUMERIC(10,2)        not null,
-   constraint PK_DETALLE_PEDIDO primary key (ID),
-   constraint AK_DETALLE_LINEA unique (PEDIDO_ID, PRODUCTO_ID, TALLA),
-   constraint CKC_DETALLE_CANTIDAD check (CANTIDAD between 1 and 10)
+create table PRODUCTO_PEDCLI (
+   PED_NUMERO           NUMERIC(12)    not null,
+   PRD_CODIGO           VARCHAR(10)    not null,
+   PPC_TALLA            VARCHAR(5)     not null,
+   PPC_CANTIDAD         INT2           not null,
+   PPC_PRECIO           NUMERIC(12,2)  not null,
+   constraint PK_PRODUCTO_PEDCLI primary key (PED_NUMERO, PRD_CODIGO, PPC_TALLA),
+   constraint CKC_PPC_CANTIDAD check (PPC_CANTIDAD between 1 and 10),
+   constraint CKC_PPC_PRECIO check (PPC_PRECIO > 0)
 );
-comment on table DETALLE_PEDIDO is 'Productos de cada pedido con el precio del momento de la compra';
 
 /*==============================================================*/
-/* Table: RESENAS                                                */
+/* Table: RESENA  (solo de clientes que compraron y retiraron)   */
 /*==============================================================*/
-create table RESENAS (
-   ID                   INT4                 not null,
-   CLIENTE_ID           UUID                 not null,
-   PRODUCTO_ID          INT4                 not null,
-   AUTOR                VARCHAR(40)          null,
-   ESTRELLAS            INT2                 not null,
-   COMENTARIO           VARCHAR(500)         not null,
-   CREADO_EN            TIMESTAMP            not null,
-   constraint PK_RESENAS primary key (ID),
-   constraint AK_RESENAS_CLIENTE_PRODUCTO unique (CLIENTE_ID, PRODUCTO_ID),
-   constraint CKC_RESENAS_ESTRELLAS check (ESTRELLAS between 1 and 5)
+create table RESENA (
+   RES_CODIGO           INT4           not null,
+   CLI_CEDULA           CHAR(10)       not null,
+   PRD_CODIGO           VARCHAR(10)    not null,
+   RES_ESTRELLAS        INT2           not null,
+   RES_COMENTARIO       VARCHAR(500)   not null,
+   RES_AUTOR            VARCHAR(40)    null,
+   RES_FECHA            TIMESTAMPTZ    not null,
+   constraint PK_RESENA primary key (RES_CODIGO),
+   constraint AK_RESENA_CLIENTE_PRODUCTO unique (CLI_CEDULA, PRD_CODIGO),
+   constraint CKC_RES_ESTRELLAS check (RES_ESTRELLAS between 1 and 5),
+   constraint CKC_RES_COMENTARIO check (length(trim(RES_COMENTARIO)) >= 10)
 );
-comment on table RESENAS is 'Reseñas de compra verificada: solo de clientes que compraron y retiraron el producto';
 
 /*==============================================================*/
-/* Relaciones (claves foráneas)                                  */
+/* Relaciones                                                    */
 /*==============================================================*/
-alter table CLIENTES
-   add constraint FK_CLIENTES_USUARIOS foreign key (ID)
-      references USUARIOS (ID) on delete cascade on update restrict;
+alter table PRODUCTO add constraint FK_CATEGORIA_PRODUCTO foreign key (CAT_CODIGO) references CATEGORIA (CAT_CODIGO) on delete restrict;
+alter table PRODUCTO_TALLA add constraint FK_PRODUCTO_PRODUCTOTALLA foreign key (PRD_CODIGO) references PRODUCTO (PRD_CODIGO) on delete cascade;
+alter table TARJETA add constraint FK_CLIENTE_TARJETA foreign key (CLI_CEDULA) references CLIENTE (CLI_CEDULA) on delete cascade;
+alter table PEDIDOCLIENTE add constraint FK_CLIENTE_PEDIDOCLIENTE foreign key (CLI_CEDULA) references CLIENTE (CLI_CEDULA) on delete restrict;
+alter table PEDIDOCLIENTE add constraint FK_TIENDA_PEDIDOCLIENTE foreign key (TIE_CODIGO) references TIENDA (TIE_CODIGO) on delete restrict;
+alter table PAGOS add constraint FK_PEDIDOCLIENTE_PAGO foreign key (PED_NUMERO) references PEDIDOCLIENTE (PED_NUMERO) on delete cascade;
+alter table PAGOS add constraint FK_TARJETA_PAGO foreign key (TAR_CODIGO) references TARJETA (TAR_CODIGO) on delete restrict;
+alter table PRODUCTO_PEDCLI add constraint FK_PEDCLI_PRODPEDCLI foreign key (PED_NUMERO) references PEDIDOCLIENTE (PED_NUMERO) on delete cascade;
+alter table PRODUCTO_PEDCLI add constraint FK_PRODUCTO_PRDPEDCLI foreign key (PRD_CODIGO) references PRODUCTO (PRD_CODIGO) on delete restrict;
+alter table RESENA add constraint FK_CLIENTE_RESENA foreign key (CLI_CEDULA) references CLIENTE (CLI_CEDULA) on delete cascade;
+alter table RESENA add constraint FK_PRODUCTO_RESENA foreign key (PRD_CODIGO) references PRODUCTO (PRD_CODIGO) on delete cascade;
 
-alter table ADMINISTRADORES
-   add constraint FK_ADMINISTRADORES_USUARIOS foreign key (ID)
-      references USUARIOS (ID) on delete cascade on update restrict;
-
-alter table PRODUCTOS
-   add constraint FK_PRODUCTOS_CATEGORIAS foreign key (CATEGORIA_ID)
-      references CATEGORIAS (ID) on delete restrict on update restrict;
-
-alter table PRODUCTO_TALLAS
-   add constraint FK_TALLAS_PRODUCTOS foreign key (PRODUCTO_ID)
-      references PRODUCTOS (ID) on delete cascade on update restrict;
-
-alter table METODOS_PAGO
-   add constraint FK_METODOS_PAGO_CLIENTES foreign key (CLIENTE_ID)
-      references CLIENTES (ID) on delete cascade on update restrict;
-
-alter table PEDIDOS
-   add constraint FK_PEDIDOS_CLIENTES foreign key (CLIENTE_ID)
-      references CLIENTES (ID) on delete restrict on update restrict;
-
-alter table PEDIDOS
-   add constraint FK_PEDIDOS_TIENDAS foreign key (TIENDA_ID)
-      references TIENDAS (ID) on delete restrict on update restrict;
-
-alter table PEDIDOS
-   add constraint FK_PEDIDOS_METODOS_PAGO foreign key (METODO_PAGO_ID)
-      references METODOS_PAGO (ID) on delete restrict on update restrict;
-
-alter table DETALLE_PEDIDO
-   add constraint FK_DETALLE_PEDIDOS foreign key (PEDIDO_ID)
-      references PEDIDOS (ID) on delete cascade on update restrict;
-
-alter table DETALLE_PEDIDO
-   add constraint FK_DETALLE_PRODUCTOS foreign key (PRODUCTO_ID)
-      references PRODUCTOS (ID) on delete restrict on update restrict;
-
-alter table RESENAS
-   add constraint FK_RESENAS_CLIENTES foreign key (CLIENTE_ID)
-      references CLIENTES (ID) on delete cascade on update restrict;
-
-alter table RESENAS
-   add constraint FK_RESENAS_PRODUCTOS foreign key (PRODUCTO_ID)
-      references PRODUCTOS (ID) on delete cascade on update restrict;

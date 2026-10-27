@@ -103,7 +103,7 @@ function vistaAyuda() {
       </div>
       <div class="panel panel--gris" style="margin-top:2rem;max-width:48rem">
         <h2>¿Necesitas más ayuda?</h2>
-        <p>Escríbenos a <a href="mailto:ayuda@athletix.ec">ayuda@athletix.ec</a> o llama al <a href="tel:1800284538">1800 284 538</a>, de lunes a sábado de 09:00 a 18:00.</p>
+        <p>Escríbenos a <a href="mailto:geovannymorocho621@gmail.com?subject=Consulta%20ATHLETIX">geovannymorocho621@gmail.com</a> y te respondemos de lunes a sábado, de 09:00 a 18:00.</p>
       </div>
     </div>`
   };

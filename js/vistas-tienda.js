@@ -450,7 +450,7 @@ async function cargarResenas(p, main) {
           <p class="texto-suave">Basado en ${plural(total, 'opinión', 'opiniones')} de clientes que compraron</p>
           <ul class="barras" aria-label="Distribución de calificaciones">
             ${[5, 4, 3, 2, 1].map((n) => { const c = lista.filter((x) => x.estrellas === n).length; const pct = Math.round((c / total) * 100); return `<li class="barra"><span>${plural(n, 'estrella', 'estrellas')}</span><span class="barra__pista" aria-hidden="true"><span class="barra__relleno" style="width:${pct}%"></span></span><span>${c}</span></li>`; }).join('')}
-          </ul>` : `<p class="resumen-opiniones__nota" style="font-size:1.5rem">Aún no hay opiniones</p><p class="texto-suave">Las opiniones solo las pueden dejar clientes que compraron y retiraron este producto.</p>`}
+          </ul>` : `<p class="resumen-opiniones__nota" style="font-size:1.5rem">Aún no hay opiniones</p><p class="texto-suave">Las opiniones solo las pueden dejar clientes que compraron este producto.</p>`}
         <div id="zona-escribir" style="margin-top:1.25rem"></div>
       </div>
       <ul class="resenas">
@@ -470,21 +470,29 @@ async function pintarZonaEscribir(p, main, mia) {
     return;
   }
   if (!estado.cliente) { zona.innerHTML = ''; return; }
-  const r = await Api.pedidos.comproYRetiro(p.dbId);
-  if (!zona.isConnected) return;
-  if (r.error) { zona.innerHTML = ''; return; }
-  if (!r.datos) {
-    zona.innerHTML = `<p class="alerta alerta--info">${icono('info')}<span>Podrás dejar tu opinión cuando compres este producto y lo retires en la tienda.</span></p>`;
-    return;
-  }
-  zona.innerHTML = `<button class="boton boton--secundario boton--bloque" type="button" id="escribir-resena">${icono(mia ? 'editar' : 'estrella')}${mia ? 'Editar mi reseña' : 'Escribir reseña'}</button>`;
-  $('#escribir-resena', zona).addEventListener('click', () => abrirFormularioResena(p, main, mia));
+  zona.innerHTML = `<button class="boton boton--secundario boton--bloque" type="button" id="escribir-resena">${icono(mia ? 'editar' : 'estrella')}${mia ? 'Editar mi reseña' : 'Escribir reseña'}</button>
+    <div id="resultado-compra" aria-live="polite"></div>`;
+  $('#escribir-resena', zona).addEventListener('click', async (e) => {
+    const salida = $('#resultado-compra', zona);
+    salida.innerHTML = '';
+    if (mia) { abrirFormularioResena(p, main, mia); return; }
+    // Antes de abrir el formulario se busca en la base una compra de este producto hecha con esta cuenta
+    const r = await conEspera(e.currentTarget, 'Verificando tu compra…', () => Api.pedidos.compro(p.dbId));
+    if (!r) return;
+    if (r.error) { salida.innerHTML = `<p class="alerta" style="margin-top:.75rem">${icono('alerta')}<span>${esc(r.error)}</span></p>`; return; }
+    if (!r.datos) {
+      salida.innerHTML = `<p class="alerta alerta--error" style="margin-top:.75rem" role="alert">${icono('alerta')}<span><strong>No encontramos una compra de este producto en tu cuenta.</strong> Solo los clientes que compraron este producto pueden dejar una reseña.</span></p>`;
+      return;
+    }
+    abrirFormularioResena(p, main, null, r.datos);
+  });
 }
 
-function abrirFormularioResena(p, main, mia) {
+function abrirFormularioResena(p, main, mia, pedidoVerificado) {
   abrirDialogo(`
     <h2 class="dialogo__titulo" id="dialogo-titulo">${mia ? 'Editar mi reseña' : 'Escribir reseña'}</h2>
-    <p class="texto-suave" style="margin-bottom:1rem">${esc(p.nombre)}</p>
+    <p class="texto-suave" style="margin-bottom:${pedidoVerificado ? '.5rem' : '1rem'}">${esc(p.nombre)}</p>
+    ${pedidoVerificado ? `<p class="verificada" style="margin-bottom:1rem">${icono('check')}Compra verificada · pedido ${esc(pedidoVerificado)}</p>` : ''}
     <form class="formulario" id="form-resena" novalidate>
       <div class="alerta alerta-errores" tabindex="-1" role="alert" hidden></div>
       <fieldset class="selector-estrellas" aria-describedby="estrellas-error">

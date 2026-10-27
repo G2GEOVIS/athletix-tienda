@@ -146,10 +146,13 @@ const Api = (() => {
         };
       });
     },
-    async comproYRetiro(codigo) {
-      const r = await ejecutar(sb.from('detalle_pedido').select('ped_numero, pedido!inner(ped_estado)')
-        .eq('prd_codigo', codigo).eq('pedido.ped_estado', 'Retirado').limit(1));
-      return r.error ? r : { datos: r.datos.length > 0 };
+    /* Verifica en la base si el cliente compró este producto (cualquier pedido que no esté cancelado) */
+    async compro(codigo) {
+      const r = await ejecutar(sb.from('detalle_pedido').select('ped_numero, pedido!inner(ped_estado, ped_fecha)')
+        .eq('prd_codigo', codigo).neq('pedido.ped_estado', 'Cancelado').order('ped_numero', { ascending: false }).limit(1));
+      if (r.error) return r;
+      const f = r.datos[0];
+      return { datos: f ? codigoPedido(f.ped_numero, f.pedido.ped_fecha) : null };
     },
     async todos() {
       return mapear(await ejecutar(sb.rpc('pedidos_admin')), (p) => ({

@@ -41,15 +41,15 @@ end $$;
 create trigger tib_cliente before insert or update on cliente
   for each row execute function tib_cliente();
 
--- Solo opina quien compró y retiró el producto
+-- Solo opina quien compró el producto (un pedido suyo con ese producto que no esté cancelado)
 create or replace function tib_resena() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
   if not exists (
     select 1 from pedido p join detalle_pedido d on d.ped_numero = p.ped_numero
-     where p.cli_cedula = new.cli_cedula and d.prd_codigo = new.prd_codigo and p.ped_estado = 'Retirado'
+     where p.cli_cedula = new.cli_cedula and d.prd_codigo = new.prd_codigo and p.ped_estado <> 'Cancelado'
   ) then
-    raise exception 'Solo los clientes que compraron y retiraron este producto pueden dejar una reseña';
+    raise exception 'No encontramos una compra de este producto en tu cuenta. Solo los clientes que compraron este producto pueden dejar una reseña';
   end if;
   if tg_op = 'UPDATE' then
     new.cli_cedula := old.cli_cedula; new.prd_codigo := old.prd_codigo;

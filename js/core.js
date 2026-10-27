@@ -44,6 +44,15 @@ const productoPorDbId = (dbId) => PRODUCTOS.find((p) => p.dbId === dbId);
 const normalizar = (t) => String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
 const img = (p, vista = 1) => `img/productos/${p.id}-${vista}.jpg`;
+// Si una foto no carga (archivo faltante o red lenta), se muestra una imagen de respaldo en vez de un hueco roto
+const FOTO_RESPALDO = 'img/sin-foto.svg';
+document.addEventListener('error', (e) => {
+  const el = e.target;
+  if (el && el.tagName === 'IMG' && !el.dataset.respaldo && !el.src.endsWith(FOTO_RESPALDO)) {
+    el.dataset.respaldo = '1';
+    el.src = FOTO_RESPALDO;
+  }
+}, true);
 const etiquetaCategoria = (p) => CATEGORIAS[p.categoria] + (p.publico ? ' · ' + p.publico : '');
 const unidadesCarrito = () => estado.carrito.reduce((s, i) => s + i.cantidad, 0);
 const subtotalCarrito = () => estado.carrito.reduce((s, i) => s + i.cantidad * ((producto(i.id) || {}).precio || 0), 0);

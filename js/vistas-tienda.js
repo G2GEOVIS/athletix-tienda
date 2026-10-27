@@ -439,7 +439,7 @@ async function cargarResenas(p, main) {
   $('#calificacion-producto', main).innerHTML = total
     ? `<p class="calificacion">${estrellas(promedio)}<span>${promedio.toFixed(1)}<span class="solo-lector"> de 5</span> · <button class="enlace-boton" type="button" data-ir-opiniones>Ver ${plural(total, 'opinión', 'opiniones')}</button></span></p>`
     : '<p class="calificacion texto-suave">Sin opiniones todavía</p>';
-  const mia = estado.cliente ? lista.find((x) => x.cedula === estado.cliente.cedula) : null;
+  const mia = estado.cliente ? lista.find((x) => x.mia) : null;
 
   zona.innerHTML = `
     <div class="opiniones">
@@ -520,7 +520,7 @@ function abrirFormularioResena(p, main, mia) {
       texto.addEventListener('input', () => { $('#contador-comentario', form).textContent = `${texto.value.length} / 500`; });
       if (mia) {
         $('#borrar-resena', form).addEventListener('click', async (e) => {
-          const r = await conEspera(e.currentTarget, 'Borrando…', () => Api.resenas.borrar(mia.id));
+          const r = await conEspera(e.currentTarget, 'Borrando…', () => Api.resenas.borrar(estado.cliente.cedula, p.dbId));
           if (!r) return;
           if (r.error) { errorGeneral(form, r.error); return; }
           cerrarDialogo();
@@ -539,7 +539,7 @@ function abrirFormularioResena(p, main, mia) {
         if (errEstrellas) reglas.unshift([radios[0].id = 'estrella-1', errEstrellas]);
         if (!validarFormulario(form, reglas, 'Revisa tu reseña:')) return;
         const r = await conEspera($('button[type="submit"]', form), 'Publicando…', () =>
-          Api.resenas.guardar(mia && mia.id, { cedula: estado.cliente.cedula, producto: p.dbId, estrellas: valor, comentario }));
+          Api.resenas.guardar(!!mia, { cedula: estado.cliente.cedula, producto: p.dbId, estrellas: valor, comentario }));
         if (!r) return;
         if (r.error) { errorGeneral(form, r.error); return; }
         cerrarDialogo();

@@ -586,7 +586,7 @@ async function vistaPedidos() {
               <dt>IVA</dt><dd>${dinero(p.iva)}</dd>
               <dt>Total</dt><dd>${dinero(p.total)}</dd>
               <dt>Retiro en</dt><dd>${esc(p.tiendas ? p.tiendas.nombre : '')}</dd>
-              <dt>Pago</dt><dd>${p.metodos_pago ? `${p.metodos_pago.marca} •••• ${p.metodos_pago.ultimos4}` : ''}</dd>
+              <dt>Pago</dt><dd>${p.metodos_pago ? `${p.metodos_pago.marca} •••• ${p.metodos_pago.ultimos4}` : 'Tarjeta (ya no está guardada)'}</dd>
             </dl>
             ${seguimiento(p.estado)}
           </li>`).join('')}

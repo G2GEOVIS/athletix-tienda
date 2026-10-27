@@ -32,8 +32,8 @@ const Api = (() => {
     if (m.includes('password should be') || m.includes('weak')) return 'La contraseña es muy débil. Usa al menos 8 caracteres con letras y números.';
     if (m.includes('same password') || m.includes('should be different')) return 'La nueva contraseña debe ser diferente a la actual.';
     if (m.includes('jwt') || m.includes('not authenticated') || m.includes('inicia sesión') || m.includes('iniciar sesión')) return 'Tu sesión terminó. Vuelve a iniciar sesión.';
-    if (m.includes('ak_tarjeta_cliente')) return 'Ya tienes guardada esta tarjeta.';
-    if (m.includes('ak_resena_cliente_producto')) return 'Ya dejaste una reseña de este producto. Puedes editarla.';
+    if (m.includes('ak_metodo_pago_cliente')) return 'Ya tienes guardada esta tarjeta.';
+    if (m.includes('pk_resena')) return 'Ya dejaste una reseña de este producto. Puedes editarla.';
     // Mensajes propios de la base de datos (ya vienen en español)
     const propio = String((error && error.message) || '');
     if (/^[A-ZÁÉÍÓÚ¿¡]/.test(propio) && /[áéíóúñ]|\b(el|la|de|para|debes|no)\b/i.test(propio)) return propio;
@@ -81,16 +81,16 @@ const Api = (() => {
   const mapear = (r, fn) => (r.error || !r.datos ? r : { datos: Array.isArray(r.datos) ? r.datos.map(fn) : fn(r.datos) });
   const codigoPedido = (numero, fecha) => `AX-${new Date(fecha).getFullYear()}-${String(numero).padStart(5, '0')}`;
   const aCliente = (c) => ({ id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_telefono, correo: c.cli_correo, creado_en: c.cli_fecha_registro });
-  const aTarjeta = (t) => ({ id: t.tar_codigo, marca: t.tar_marca, ultimos4: t.tar_ultimos4, titular: t.tar_titular, mes_vence: t.tar_mes_vence, anio_vence: t.tar_anio_vence });
+  const aTarjeta = (t) => ({ id: t.mpa_codigo, marca: t.mpa_marca, ultimos4: t.mpa_ultimos4, titular: t.mpa_titular, mes_vence: t.mpa_mes_vence, anio_vence: t.mpa_anio_vence });
   const aTienda = (t) => ({ id: t.tie_codigo, nombre: t.tie_nombre, direccion: t.tie_direccion, ciudad: t.tie_ciudad, horario: t.tie_horario });
-  const aResena = (r) => ({ id: r.res_codigo, cedula: r.cli_cedula, autor: r.res_autor, estrellas: r.res_estrellas, comentario: r.res_comentario, creado_en: r.res_fecha });
+  const aResena = (r) => ({ id: r.prd_codigo, mia: !!r.es_mia, autor: r.autor, estrellas: r.res_estrellas, comentario: r.res_comentario, creado_en: r.res_fecha });
 
   /* ---------- Catálogo ---------- */
   const catalogo = {
     async productos() {
-      const r = await ejecutar(sb.from('producto').select('prd_codigo, prd_precio, prd_activo, prd_usa_talla, producto_talla(pta_talla, pta_existencia)'));
+      const r = await ejecutar(sb.from('producto').select('prd_codigo, prd_precio, prd_activo, prd_usa_talla, producto_talla(pta_talla, pta_stock)'));
       return mapear(r, (p) => ({ id: p.prd_codigo, codigo: p.prd_codigo, precio: p.prd_precio, activo: p.prd_activo, usa_talla: p.prd_usa_talla,
-        producto_tallas: (p.producto_talla || []).map((t) => ({ talla: t.pta_talla, stock: t.pta_existencia })) }));
+        producto_tallas: (p.producto_talla || []).map((t) => ({ talla: t.pta_talla, stock: t.pta_stock })) }));
     },
     async calificaciones() {
       const r = await ejecutar(sb.from('vista_calificaciones').select('prd_codigo, promedio, opiniones'));
@@ -112,43 +112,43 @@ const Api = (() => {
     },
     async esAdmin() { const r = await ejecutar(sb.rpc('es_admin')); return !r.error && r.datos === true; },
 
-    async tarjetas() { return mapear(await ejecutar(sb.from('tarjeta').select('*').order('tar_codigo', { ascending: false })), aTarjeta); },
+    async tarjetas() { return mapear(await ejecutar(sb.from('metodo_pago').select('*').order('mpa_codigo', { ascending: false })), aTarjeta); },
     async guardarTarjeta(d) {
-      const fila = { cli_cedula: d.cedula, tar_marca: d.marca, tar_ultimos4: d.ultimos4, tar_titular: d.titular, tar_mes_vence: d.mes_vence, tar_anio_vence: d.anio_vence };
-      const existente = await ejecutar(sb.from('tarjeta').select('tar_codigo').match(fila).maybeSingle());
+      const fila = { cli_cedula: d.cedula, mpa_marca: d.marca, mpa_ultimos4: d.ultimos4, mpa_titular: d.titular, mpa_mes_vence: d.mes_vence, mpa_anio_vence: d.anio_vence };
+      const existente = await ejecutar(sb.from('metodo_pago').select('mpa_codigo').match(fila).maybeSingle());
       if (existente.error) return existente;
-      if (existente.datos) return { datos: { id: existente.datos.tar_codigo } };
-      return mapear(await ejecutar(sb.from('tarjeta').insert(fila).select('tar_codigo').single()), (t) => ({ id: t.tar_codigo }));
+      if (existente.datos) return { datos: { id: existente.datos.mpa_codigo } };
+      return mapear(await ejecutar(sb.from('metodo_pago').insert(fila).select('mpa_codigo').single()), (t) => ({ id: t.mpa_codigo }));
     },
-    borrarTarjeta(id) { return ejecutar(sb.from('tarjeta').delete().eq('tar_codigo', id)); }
+    borrarTarjeta(id) { return ejecutar(sb.from('metodo_pago').delete().eq('mpa_codigo', id)); }
   };
 
   /* ---------- Pedidos ---------- */
   const pedidos = {
     // "clave" identifica el intento de pago: si se reenvía (doble clic, recarga, red lenta) la base devuelve el mismo pedido
     async crear(tiendaId, tarjetaId, items, clave) {
-      const r = await ejecutar(sb.rpc('crear_pedido', { p_tienda: tiendaId, p_tarjeta: tarjetaId, p_items: items, p_clave: clave }));
+      const r = await ejecutar(sb.rpc('crear_pedido', { p_tienda: tiendaId, p_metodo_pago: tarjetaId, p_items: items, p_clave: clave }));
       return mapear(r, (f) => ({ numero: f.ped_codigo, total: f.ped_total }));
     },
     async nuevos() { const r = await ejecutar(sb.rpc('pedidos_nuevos')); return r.error ? 0 : Number(r.datos) || 0; },
     async mios() {
-      const r = await ejecutar(sb.from('pedidocliente')
-        .select('ped_numero, ped_estado, ped_subtotal, ped_iva, ped_total, ped_fecha, tienda(tie_nombre, tie_direccion, tie_horario), pagos(tarjeta(tar_marca, tar_ultimos4)), producto_pedcli(prd_codigo, ppc_talla, ppc_cantidad, ppc_precio)')
+      const r = await ejecutar(sb.from('pedido')
+        .select('ped_numero, ped_estado, ped_subtotal, ped_iva, ped_total, ped_fecha, tienda(tie_nombre, tie_direccion, tie_horario), metodo_pago(mpa_marca, mpa_ultimos4), detalle_pedido(prd_codigo, dpe_talla, dpe_cantidad, dpe_precio_unitario)')
         .order('ped_fecha', { ascending: false }));
       return mapear(r, (p) => {
-        const pago = (p.pagos || [])[0];
+        const pago = p.metodo_pago;
         return {
           id: p.ped_numero, numero: codigoPedido(p.ped_numero, p.ped_fecha), estado: p.ped_estado,
           subtotal: p.ped_subtotal, iva: p.ped_iva, total: p.ped_total, creado_en: p.ped_fecha,
           tiendas: p.tienda ? { nombre: p.tienda.tie_nombre, direccion: p.tienda.tie_direccion, horario: p.tienda.tie_horario } : null,
-          metodos_pago: pago && pago.tarjeta ? { marca: pago.tarjeta.tar_marca, ultimos4: pago.tarjeta.tar_ultimos4 } : null,
-          detalle_pedido: (p.producto_pedcli || []).map((d) => ({ producto_id: d.prd_codigo, talla: d.ppc_talla === 'U' ? null : d.ppc_talla, cantidad: d.ppc_cantidad, precio_unitario: d.ppc_precio }))
+          metodos_pago: pago ? { marca: pago.mpa_marca, ultimos4: pago.mpa_ultimos4 } : null,
+          detalle_pedido: (p.detalle_pedido || []).map((d) => ({ producto_id: d.prd_codigo, talla: d.dpe_talla === 'U' ? null : d.dpe_talla, cantidad: d.dpe_cantidad, precio_unitario: d.dpe_precio_unitario }))
         };
       });
     },
     async comproYRetiro(codigo) {
-      const r = await ejecutar(sb.from('producto_pedcli').select('ped_numero, pedidocliente!inner(ped_estado)')
-        .eq('prd_codigo', codigo).eq('pedidocliente.ped_estado', 'Retirado').limit(1));
+      const r = await ejecutar(sb.from('detalle_pedido').select('ped_numero, pedido!inner(ped_estado)')
+        .eq('prd_codigo', codigo).eq('pedido.ped_estado', 'Retirado').limit(1));
       return r.error ? r : { datos: r.datos.length > 0 };
     },
     async todos() {
@@ -163,14 +163,16 @@ const Api = (() => {
   /* ---------- Reseñas ---------- */
   const resenas = {
     async deProducto(codigo) {
-      return mapear(await ejecutar(sb.from('resena').select('*').eq('prd_codigo', codigo).order('res_fecha', { ascending: false }).limit(50)), aResena);
+      return mapear(await ejecutar(sb.from('vista_resenas').select('*').eq('prd_codigo', codigo).order('res_fecha', { ascending: false }).limit(50)), aResena);
     },
-    async guardar(id, d) {
-      return id
-        ? mapear(await ejecutar(sb.from('resena').update({ res_estrellas: d.estrellas, res_comentario: d.comentario }).eq('res_codigo', id).select().single()), aResena)
-        : mapear(await ejecutar(sb.from('resena').insert({ cli_cedula: d.cedula, prd_codigo: d.producto, res_estrellas: d.estrellas, res_comentario: d.comentario }).select().single()), aResena);
+    /* Una reseña por cliente y producto: si ya existe se edita, si no se crea */
+    async guardar(existe, d) {
+      const r = existe
+        ? await ejecutar(sb.from('resena').update({ res_estrellas: d.estrellas, res_comentario: d.comentario }).eq('cli_cedula', d.cedula).eq('prd_codigo', d.producto))
+        : await ejecutar(sb.from('resena').insert({ cli_cedula: d.cedula, prd_codigo: d.producto, res_estrellas: d.estrellas, res_comentario: d.comentario }));
+      return r.error ? r : { datos: true };
     },
-    borrar(id) { return ejecutar(sb.from('resena').delete().eq('res_codigo', id)); }
+    borrar(cedula, producto) { return ejecutar(sb.from('resena').delete().eq('cli_cedula', cedula).eq('prd_codigo', producto)); }
   };
 
   /* ---------- Correos (EmailJS) ---------- */

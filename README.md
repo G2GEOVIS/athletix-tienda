@@ -30,10 +30,12 @@ js/api.js                Acceso a Supabase y EmailJS con errores en español
 js/core.js               Estado, utilidades y componentes de formularios
 js/vistas-*.js           Pantallas: tienda, cuenta, compra y administración
 js/app.js                Arranque, sesión y enrutador
-bd/01_tablas.sql          Tablas con la convención de la clase (CLIENTE, PRODUCTO, PEDIDOCLIENTE, PAGOS, PRODUCTO_PEDCLI...)
+bd/01_tablas.sql          Mis tablas con la forma de modelar de la clase (CATEGORIA, PRODUCTO, PRODUCTO_TALLA, CLIENTE,
+                          ADMINISTRADOR, TIENDA, METODO_PAGO, PEDIDO, DETALLE_PEDIDO, RESENA)
 bd/02_seguridad_y_funciones.sql  Seguridad por filas, compra en una transacción, reglas de estados y reseñas
 bd/03_datos.sql           Categorías, tiendas, productos y existencias
-bd/migracion_modelo_clase.sql    Paso del modelo anterior al actual (ya aplicado)
+bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
+bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner
 ```
 

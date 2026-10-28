@@ -19,6 +19,7 @@ async function vistaAdmin(partes, params) {
   const todos = r.datos || [];
   const lista = filtro ? todos.filter((p) => p.estado === filtro) : todos;
   const cuenta = (e) => todos.filter((p) => p.estado === e).length;
+  const resaltar = leerTemporal('pedido-resaltado');
   return {
     titulo: 'Panel de pedidos',
     seccion: 'admin',
@@ -28,12 +29,12 @@ async function vistaAdmin(partes, params) {
       <p class="subtitulo cabecera-pagina">Cambia el estado de cada pedido. Al marcarlo como <strong>Listo para retirar</strong>, el cliente recibe un correo automáticamente.</p>
       ${Api.correo.configurado() ? '' : `<p class="alerta" style="margin-bottom:1rem">${icono('alerta')}<span>El envío de correos no está configurado (falta la plantilla de EmailJS).</span></p>`}
       <nav class="filtro-estados" aria-label="Filtrar pedidos por estado">
-        <a href="#/admin" ${!filtro ? 'aria-current="page"' : ''}>Todos (${todos.length})</a>
-        ${ESTADOS.concat('Cancelado').map((e) => `<a href="#/admin?estado=${e}" ${filtro === e ? 'aria-current="page"' : ''}>${NOMBRE_ESTADO[e]} (${cuenta(e)})</a>`).join('')}
+        <a href="admin.html" ${!filtro ? 'aria-current="page"' : ''}>Todos (${todos.length})</a>
+        ${ESTADOS.concat('Cancelado').map((e) => `<a href="admin.html?estado=${e}" ${filtro === e ? 'aria-current="page"' : ''}>${NOMBRE_ESTADO[e]} (${cuenta(e)})</a>`).join('')}
       </nav>
       ${!lista.length ? `<div class="panel panel--gris vacio">${icono('paquete')}<p>No hay pedidos${filtro ? ' en este estado' : ''}.</p></div>` : `
       <ul class="pedidos">${lista.map((p) => `
-        <li class="pedido${estado.pedidoResaltado === p.id ? ' pedido--resaltado' : ''}" data-pedido="${p.id}" tabindex="-1">
+        <li class="pedido${resaltar === p.id ? ' pedido--resaltado' : ''}" data-pedido="${p.id}" tabindex="-1">
           <div class="pedido__cabecera">
             <h2 class="pedido__numero">${esc(p.numero)}</h2>
             <span class="estado estado--${p.estado.toLowerCase()}">${NOMBRE_ESTADO[p.estado]}</span>
@@ -56,9 +57,9 @@ async function vistaAdmin(partes, params) {
     </div>`,
     montar(main) {
       // Si se acaba de cambiar un pedido, se muestra resaltado en su nueva pestaña
-      const resaltado = estado.pedidoResaltado && $(`[data-pedido="${estado.pedidoResaltado}"]`, main);
+      const resaltado = resaltar && $(`[data-pedido="${resaltar}"]`, main);
       if (resaltado) { resaltado.scrollIntoView({ block: 'center' }); resaltado.focus({ preventScroll: true }); }
-      estado.pedidoResaltado = null;
+      guardarTemporal('pedido-resaltado', null);
 
       main.addEventListener('click', async (e) => {
         const boton = e.target.closest('[data-nuevo-estado]');
@@ -85,9 +86,9 @@ async function vistaAdmin(partes, params) {
         anunciar(texto);
         revisarPedidosNuevos();
         // El pedido aparece de inmediato en la pestaña de su nuevo estado
-        estado.pedidoResaltado = p.id;
-        const destino = filtro ? `#/admin?estado=${nuevo}` : '#/admin';
-        if (location.hash === destino) render(); else location.hash = destino;
+        guardarTemporal('pedido-resaltado', p.id);
+        const destino = filtro ? `admin.html?estado=${nuevo}` : 'admin.html';
+        ir(destino);
       });
     }
   };
@@ -121,7 +122,7 @@ function vistaNoEncontrada() {
     <div class="contenedor pagina centro">
       <h1 class="titulo-pagina">No encontramos esta página</h1>
       <p class="subtitulo">Puede que el enlace esté incompleto.</p>
-      <a class="boton boton--principal" style="margin-top:1.5rem" href="#/">Ir al inicio</a>
+      <a class="boton boton--principal" style="margin-top:1.5rem" href="index.html">Ir al inicio</a>
     </div>`
   };
 }

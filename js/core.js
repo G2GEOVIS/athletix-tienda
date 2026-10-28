@@ -125,8 +125,16 @@ function aviso(texto, tipo = 'ok') {
   clearTimeout(temporizadorAviso);
   temporizadorAviso = setTimeout(() => { caja.hidden = true; }, tipo === 'error' ? 6000 : 3500);
 }
-function ir(hash) {
-  if (location.hash === hash) render(); else location.hash = hash;
+/* Va a otra página de la tienda. Si hay un aviso en pantalla, se muestra también en la página siguiente. */
+function ir(destino) {
+  const caja = $('#aviso-flotante');
+  if (caja && !caja.hidden) guardarTemporal('aviso-pendiente', { texto: caja.textContent, tipo: caja.dataset.tipo });
+  const actual = location.pathname.split('/').pop() + location.search;
+  if (actual === destino || (destino === 'index.html' && actual === '')) render(); else location.href = destino;
+}
+function mostrarAvisoPendiente() {
+  const a = leerTemporal('aviso-pendiente');
+  if (a) { guardarTemporal('aviso-pendiente', null); aviso(a.texto, a.tipo); }
 }
 
 /* ======================= Diálogo reutilizable ======================= */

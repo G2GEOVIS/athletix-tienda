@@ -81,7 +81,7 @@ async function cerrarSesion() {
   guardarTemporal('tienda', null);
   renderCuenta();
   aviso('Cerraste sesión.');
-  ir('#/');
+  ir('index.html');
 }
 
 /* ======================= Encabezado ======================= */
@@ -94,7 +94,7 @@ function actualizarContador() {
 function renderCuenta() {
   const zona = $('#zona-cuenta');
   if (!estado.sesion) {
-    zona.innerHTML = `<a class="cuenta__boton" href="#/ingresar" data-ruta="ingresar">${icono('usuario')}<span class="cuenta__nombre-largo">Ingresar</span></a>`;
+    zona.innerHTML = `<a class="cuenta__boton" href="login.html" data-ruta="ingresar">${icono('usuario')}<span class="cuenta__nombre-largo">Ingresar</span></a>`;
     return;
   }
   const nombre = estado.cliente ? nombreCliente() : 'Mi cuenta';
@@ -104,9 +104,9 @@ function renderCuenta() {
       ${estado.esAdmin ? `<span class="insignia insignia--flotante" data-nuevos ${estado.nuevos ? '' : 'hidden'} aria-hidden="true">${estado.nuevos}</span>` : ''}
     </button>
     <ul class="cuenta__menu" id="menu-cuenta" hidden>
-      <li><a href="#/perfil">${icono('usuario')}Mi perfil</a></li>
-      <li><a href="#/pedidos">${icono('paquete')}Mis pedidos</a></li>
-      ${estado.esAdmin ? `<li><a href="#/admin?estado=Recibido">${icono('ajustes')}Panel de pedidos<span class="insignia" data-nuevos ${estado.nuevos ? '' : 'hidden'}>${estado.nuevos}<span class="solo-lector"> pedidos nuevos</span></span></a></li>` : ''}
+      <li><a href="perfil.html">${icono('usuario')}Mi perfil</a></li>
+      <li><a href="pedidos.html">${icono('paquete')}Mis pedidos</a></li>
+      ${estado.esAdmin ? `<li><a href="admin.html?estado=Recibido">${icono('ajustes')}Panel de pedidos<span class="insignia" data-nuevos ${estado.nuevos ? '' : 'hidden'}>${estado.nuevos}<span class="solo-lector"> pedidos nuevos</span></span></a></li>` : ''}
       <li><button type="button" data-accion="cerrar-sesion">${icono('salir')}Cerrar sesión</button></li>
     </ul>`;
   const boton = $('.cuenta__boton', zona);
@@ -156,7 +156,7 @@ function iniciarEncabezado() {
   $('.buscador').addEventListener('submit', (e) => {
     e.preventDefault();
     const q = $('#buscar-texto').value.trim().slice(0, 80);
-    ir(q ? '#/productos?q=' + encodeURIComponent(q) : '#/productos');
+    ir(q ? 'productos.html?q=' + encodeURIComponent(q) : 'productos.html');
   });
   document.addEventListener('click', (e) => {
     if (e.target === dialogo()) cerrarDialogo(); // clic en el fondo del diálogo
@@ -168,11 +168,19 @@ function iniciarEncabezado() {
 }
 
 /* ======================= Enrutador ======================= */
+/* Cada archivo HTML indica qué pantalla es con <body data-pagina="...">; los datos extra van en la dirección (?id=vx) */
 function leerRuta() {
-  const h = location.hash.replace(/^#/, '') || '/';
-  const [camino, consulta] = h.split('?');
-  return { partes: camino.split('/').filter(Boolean).map((x) => { try { return decodeURIComponent(x); } catch (e) { return x; } }), params: new URLSearchParams(consulta || '') };
+  const params = new URLSearchParams(location.search);
+  const pagina = document.body.dataset.pagina || '';
+  const partes = pagina.split('/').filter(Boolean);
+  if (partes[0] === 'producto') partes[1] = params.get('id') || '';
+  return { partes, params };
 }
+
+const ARCHIVOS = { '': 'index.html', productos: 'productos.html', producto: 'producto.html', carrito: 'carrito.html', ingresar: 'login.html',
+  registro: 'registro.html', 'verifica-correo': 'confirmar-correo.html', 'completar-perfil': 'completar-perfil.html', recuperar: 'recuperar.html',
+  'nueva-clave': 'nueva-clave.html', retiro: 'retiro.html', pago: 'pago.html', confirmacion: 'confirmacion.html', pedidos: 'pedidos.html',
+  perfil: 'perfil.html', admin: 'admin.html', ayuda: 'ayuda.html' };
 
 const VISTAS = {
   '': vistaInicio,
@@ -269,7 +277,7 @@ async function iniciar() {
   const regreso = revisarEnlaceDeRegreso();
 
   if (!Api.disponible()) {
-    if (regreso) history.replaceState(null, '', location.pathname + location.search + '#/');
+    if (regreso) history.replaceState(null, '', location.pathname + location.search);
     estado.errorCatalogo = 'No se pudo cargar la conexión con la tienda.';
     pintarBannerConexion();
     render();
@@ -279,11 +287,11 @@ async function iniciar() {
   const catalogo = cargarCatalogo();
   // Supabase lee primero los datos del enlace del correo; después se limpia la dirección
   await alIniciarSesion(await Api.auth.sesion());
-  if (regreso) history.replaceState(null, '', location.pathname + location.search + '#/');
+  if (regreso) history.replaceState(null, '', location.pathname + location.search);
 
   let esRecuperacion = false;
   Api.auth.alCambiar(async (evento, sesion) => {
-    if (evento === 'PASSWORD_RECOVERY') { esRecuperacion = true; estado.sesion = sesion; ir('#/nueva-clave'); return; }
+    if (evento === 'PASSWORD_RECOVERY') { esRecuperacion = true; estado.sesion = sesion; ir('nueva-clave.html'); return; }
     if (evento === 'SIGNED_OUT') { estado.sesion = null; estado.cliente = null; estado.esAdmin = false; renderCuenta(); return; }
     if (evento === 'TOKEN_REFRESHED' || evento === 'USER_UPDATED') { estado.sesion = sesion; return; }
     if (evento === 'SIGNED_IN' && sesion && (!estado.sesion || estado.sesion.user.id !== sesion.user.id)) {
@@ -294,22 +302,33 @@ async function iniciar() {
 
   if (regreso && regreso.error) {
     aviso(regreso.error, 'error');
-    location.hash = '#/ingresar';
+    ir('login.html'); return;
   } else if (regreso && regreso.tipo === 'recovery') {
-    location.hash = '#/nueva-clave';
+    ir('nueva-clave.html'); return;
   } else if (regreso && estado.sesion && !esRecuperacion) {
     guardarTemporal('correo-pendiente', null);
     const volver = leerTemporal('volver');
     aviso(estado.cliente ? `¡Bienvenido, ${nombreCliente()}! Tu correo está confirmado.` : '¡Correo confirmado! Completa tu perfil.');
-    if (!estado.cliente) location.hash = '#/completar-perfil';
-    else if (volver === 'retiro' && estado.carrito.length) { guardarTemporal('volver', null); location.hash = '#/retiro'; } else location.hash = '#/';
+    if (!estado.cliente) { ir('completar-perfil.html'); return; }
+    if (volver === 'retiro' && estado.carrito.length) { guardarTemporal('volver', null); ir('retiro.html'); return; }
   }
   render();
+  mostrarAvisoPendiente();
   await catalogo;
   // Si la vista depende del stock o los precios, se vuelve a pintar con los datos reales
   const ruta = leerRuta().partes[0] || '';
   if (['', 'productos', 'producto', 'carrito'].includes(ruta) && !$('#dialogo').open) render();
 }
 
-window.addEventListener('hashchange', render);
-iniciar();
+// Enlaces antiguos con # (por ejemplo index.html#/carrito) se llevan a su página nueva
+(function redirigirEnlaceAntiguo() {
+  const m = location.hash.match(/^#\/([^?]*)(\?.*)?$/);
+  if (!m) { iniciar(); return; }
+  const [ruta, sub] = m[1].split('/');
+  const consulta = (m[2] || '').replace(/^\?/, '');
+  let destino = ARCHIVOS[ruta] || 'index.html';
+  if (ruta === 'producto' && sub) destino = 'producto.html?id=' + encodeURIComponent(sub);
+  else if (ruta === 'perfil' && sub) destino = ARCHIVO_PERFIL[sub] || 'perfil.html';
+  if (consulta) destino += (destino.includes('?') ? '&' : '?') + consulta;
+  location.replace(destino);
+})();

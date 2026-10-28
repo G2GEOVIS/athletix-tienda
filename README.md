@@ -2,7 +2,7 @@
 
 👉 **Abrir la tienda:** https://g2geovis.github.io/athletix-tienda/
 
-Sitio web de la tienda ATHLETIX, hecho en HTML, CSS y JavaScript, sin librerías. Se adapta a celular, tablet y laptop.
+Sitio web de la tienda ATHLETIX, hecho en HTML, CSS y JavaScript, con una página HTML por pantalla. Se adapta a celular, tablet y laptop.
 
 Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sistemas de Información, PUCE).
 
@@ -17,19 +17,50 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - Mis pedidos con su estado. Panel de administración para cambiar estados; al marcar "Listo" se envía un correo al cliente (EmailJS).
 - Aviso al administrador de pedidos nuevos (contador en el encabezado y correo).
 - Compras seguras ante concurrencia: el stock se descuenta con bloqueo por fila en una sola transacción y cada intento de pago tiene una clave única para no duplicar pedidos.
-- Reseñas de compra verificada: solo opina quien compró y retiró el producto, una reseña por cliente y producto.
+- Reseñas de compra verificada: la tienda verifica en la base que el cliente compró el producto; una reseña por cliente y producto.
 
-## Arquitectura
+## Estructura
+
+Cada pantalla es un archivo HTML. Todos comparten el mismo encabezado, pie de página, estilos y scripts;
+la etiqueta `<body data-pagina="...">` indica qué pantalla dibuja cada archivo.
 
 ```
-index.html               Página única
+index.html               Inicio
+productos.html           Catálogo con filtros, orden y buscador (?cat=calzado, ?q=reloj)
+producto.html            Detalle de un producto (?id=vx): fotos, tallas, ficha y reseñas
+carrito.html             Carrito
+login.html               Iniciar sesión
+registro.html            Crear cuenta
+confirmar-correo.html    Aviso para confirmar el correo
+completar-perfil.html    Datos que faltan después de confirmar
+recuperar.html           Recuperar contraseña
+nueva-clave.html         Crear nueva contraseña
+retiro.html              Paso 2: tienda de retiro
+pago.html                Paso 3: pago con tarjeta
+confirmacion.html        Paso 4: compra realizada
+pedidos.html             Mis pedidos
+perfil.html              Mi perfil: mis datos
+metodos-pago.html        Mi perfil: tarjetas guardadas
+cambiar-clave.html       Mi perfil: cambiar contraseña
+admin.html               Panel de pedidos (administrador)
+ayuda.html               Centro de ayuda
+404.html                 Página no encontrada
+
+plantilla.html           Base común de todas las páginas
+herramientas/generar_paginas.py  Crea los HTML desde la plantilla (si cambias el encabezado o el pie)
+
 css/estilos.css          Estilos (primero celular)
+img/                     Logo y fotos de productos (img/productos/<código>-1.jpg)
 js/config.js             Claves públicas de Supabase y EmailJS
 js/validaciones.js       Cédula, nombres, celular, correo, contraseña y tarjeta
 js/api.js                Acceso a Supabase y EmailJS con errores en español
 js/core.js               Estado, utilidades y componentes de formularios
-js/vistas-*.js           Pantallas: tienda, cuenta, compra y administración
-js/app.js                Arranque, sesión y enrutador
+js/vistas-tienda.js      Inicio, catálogo, producto, reseñas y carrito
+js/vistas-cuenta.js      Ingreso, registro, perfil, tarjetas y pedidos
+js/vistas-compra.js      Retiro en tienda, pago y confirmación
+js/vistas-admin.js       Panel de pedidos y ayuda
+js/app.js                Arranque, sesión y elección de la pantalla según el archivo
+
 bd/01_tablas.sql          Mis tablas con la forma de modelar de la clase (CATEGORIA, PRODUCTO, PRODUCTO_TALLA, CLIENTE,
                           ADMINISTRADOR, TIENDA, METODO_PAGO, PEDIDO, DETALLE_PEDIDO, RESENA)
 bd/02_seguridad_y_funciones.sql  Seguridad por filas, compra en una transacción, reglas de estados y reseñas

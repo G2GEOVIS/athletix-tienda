@@ -3,7 +3,7 @@
 
 /* ======================= Ingresar ======================= */
 function vistaIngresar(partes, params) {
-  if (estado.sesion) { ir(estado.cliente ? '#/perfil' : '#/completar-perfil'); return null; }
+  if (estado.sesion) { ir(estado.cliente ? 'perfil.html' : 'completar-perfil.html'); return null; }
   const volver = params.get('volver') === 'retiro' ? 'retiro' : '';
   return {
     titulo: 'Inicia sesión',
@@ -19,11 +19,11 @@ function vistaIngresar(partes, params) {
           ${atajosCorreo('correo')}
           ${campoClave({ id: 'clave', etiqueta: 'Contraseña' })}
           <button class="boton boton--principal boton--bloque" type="submit">Ingresar</button>
-          <a class="boton boton--texto" href="#/recuperar">¿Olvidaste tu contraseña?</a>
+          <a class="boton boton--texto" href="recuperar.html">¿Olvidaste tu contraseña?</a>
         </form>
         <div id="zona-reenviar"></div>
         <p class="separador-texto" style="margin-block:1.25rem">¿No tienes cuenta?</p>
-        <a class="boton boton--secundario boton--bloque" href="#/registro${volver ? '?volver=' + volver : ''}">Crear cuenta</a>
+        <a class="boton boton--secundario boton--bloque" href="registro.html${volver ? '?volver=' + volver : ''}">Crear cuenta</a>
       </div>
     </div>`,
     montar(main) {
@@ -47,8 +47,8 @@ function vistaIngresar(partes, params) {
         }
         await alIniciarSesion(r.datos.session);
         aviso(estado.cliente ? `Hola, ${nombreCliente()}. Iniciaste sesión.` : 'Iniciaste sesión. Completa tu perfil para comprar.');
-        if (!estado.cliente) { ir('#/completar-perfil' + (volver ? '?volver=' + volver : '')); return; }
-        ir(volver && estado.carrito.length ? '#/retiro' : '#/');
+        if (!estado.cliente) { ir('completar-perfil.html' + (volver ? '?volver=' + volver : '')); return; }
+        ir(volver && estado.carrito.length ? 'retiro.html' : 'index.html');
       });
     }
   };
@@ -66,7 +66,7 @@ function mostrarReenviar(zona, correo) {
 
 /* ======================= Registro ======================= */
 function vistaRegistro(partes, params) {
-  if (estado.sesion) { ir(estado.cliente ? '#/perfil' : '#/completar-perfil'); return null; }
+  if (estado.sesion) { ir(estado.cliente ? 'perfil.html' : 'completar-perfil.html'); return null; }
   const volver = params.get('volver') === 'retiro' ? 'retiro' : '';
   return {
     titulo: 'Crea tu cuenta',
@@ -87,7 +87,7 @@ function vistaRegistro(partes, params) {
           <button class="boton boton--principal boton--bloque" type="submit">Crear cuenta</button>
         </form>
         <p class="separador-texto" style="margin-block:1.25rem">¿Ya tienes cuenta?</p>
-        <a class="boton boton--secundario boton--bloque" href="#/ingresar${volver ? '?volver=' + volver : ''}">Iniciar sesión</a>
+        <a class="boton boton--secundario boton--bloque" href="login.html${volver ? '?volver=' + volver : ''}">Iniciar sesión</a>
       </div>
     </div>`,
     montar(main) {
@@ -126,12 +126,12 @@ function vistaRegistro(partes, params) {
         if (r.error) { errorGeneral(form, r.error); return; }
         if (r.datos && r.datos.session) {
           await alIniciarSesion(r.datos.session);
-          ir(volver && estado.carrito.length ? '#/retiro' : '#/perfil');
+          ir(volver && estado.carrito.length ? 'retiro.html' : 'perfil.html');
           return;
         }
         guardarTemporal('correo-pendiente', correo);
         if (volver) guardarTemporal('volver', volver);
-        ir('#/verifica-correo');
+        ir('confirmar-correo.html');
       });
     }
   };
@@ -184,7 +184,7 @@ function reglasDatosPersonales(d) {
 /* ======================= Verificación de correo ======================= */
 function vistaVerificaCorreo() {
   const correo = leerTemporal('correo-pendiente');
-  if (!correo) { ir('#/ingresar'); return null; }
+  if (!correo) { ir('login.html'); return null; }
   return {
     titulo: 'Confirma tu correo',
     seccion: 'ingresar',
@@ -200,7 +200,7 @@ function vistaVerificaCorreo() {
           <li>Volverás a la tienda con tu sesión iniciada.</li>
         </ol>
         <div id="zona-reenviar"></div>
-        <a class="boton boton--texto" href="#/ingresar">Ya lo confirmé, iniciar sesión</a>
+        <a class="boton boton--texto" href="login.html">Ya lo confirmé, iniciar sesión</a>
       </div>
     </div>`,
     montar(main) { mostrarReenviar($('#zona-reenviar', main), correo); }
@@ -209,8 +209,8 @@ function vistaVerificaCorreo() {
 
 /* ======================= Completar perfil (si faltan datos al primer ingreso) ======================= */
 function vistaCompletarPerfil(partes, params) {
-  if (!estado.sesion) { ir('#/ingresar'); return null; }
-  if (estado.cliente) { ir('#/perfil'); return null; }
+  if (!estado.sesion) { ir('login.html'); return null; }
+  if (estado.cliente) { ir('perfil.html'); return null; }
   const meta = estado.sesion.user.user_metadata || {};
   const [nombreG, ...apellidoG] = String(meta.full_name || meta.name || '').split(' ');
   const v = { nombres: meta.nombres || nombreG || '', apellidos: meta.apellidos || apellidoG.join(' '), cedula: meta.cedula || '', telefono: meta.telefono || '' };
@@ -251,7 +251,7 @@ function vistaCompletarPerfil(partes, params) {
         renderCuenta();
         guardarTemporal('volver', null);
         aviso(`¡Listo, ${nombreCliente()}! Tu perfil está completo.`);
-        ir(volver && estado.carrito.length ? '#/retiro' : '#/perfil');
+        ir(volver && estado.carrito.length ? 'retiro.html' : 'perfil.html');
       });
     }
   };
@@ -271,7 +271,7 @@ function vistaRecuperar() {
           <div class="alerta alerta-errores" tabindex="-1" role="alert" hidden></div>
           ${campo({ id: 'correo-rec', etiqueta: 'Correo electrónico', tipo: 'email', extra: 'autocomplete="email" inputmode="email" autocapitalize="off"' })}
           <button class="boton boton--principal boton--bloque" type="submit">Enviar enlace</button>
-          <a class="boton boton--texto" href="#/ingresar">${icono('izquierda')}Volver a iniciar sesión</a>
+          <a class="boton boton--texto" href="login.html">${icono('izquierda')}Volver a iniciar sesión</a>
         </form>
       </div>
     </div>`,
@@ -318,7 +318,7 @@ function activarNuevaClave(form, alTerminar) {
 }
 
 function vistaNuevaClave() {
-  if (!estado.sesion) { ir('#/recuperar'); return null; }
+  if (!estado.sesion) { ir('recuperar.html'); return null; }
   return {
     titulo: 'Nueva contraseña',
     seccion: 'ingresar',
@@ -326,17 +326,18 @@ function vistaNuevaClave() {
       <h1 class="titulo-pagina">Crea tu nueva contraseña</h1>
       <p class="subtitulo cabecera-pagina">Cuenta: ${esc(correoSesion())}</p>
       ${formularioNuevaClave('form-nueva')}</div></div>`,
-    montar(main) { activarNuevaClave($('#form-nueva', main), () => { aviso('Tu contraseña se cambió correctamente.'); ir('#/'); }); }
+    montar(main) { activarNuevaClave($('#form-nueva', main), () => { aviso('Tu contraseña se cambió correctamente.'); ir('index.html'); }); }
   };
 }
 
 /* ======================= Perfil ======================= */
 function protegerCuenta(volver = '') {
-  if (!estado.sesion) { ir('#/ingresar' + (volver ? '?volver=' + volver : '')); return false; }
-  if (!estado.cliente) { ir('#/completar-perfil' + (volver ? '?volver=' + volver : '')); return false; }
+  if (!estado.sesion) { ir('login.html' + (volver ? '?volver=' + volver : '')); return false; }
+  if (!estado.cliente) { ir('completar-perfil.html' + (volver ? '?volver=' + volver : '')); return false; }
   return true;
 }
 
+const ARCHIVO_PERFIL = { '': 'perfil.html', pagos: 'metodos-pago.html', seguridad: 'cambiar-clave.html' };
 const SECCIONES_PERFIL = [
   ['', 'Mis datos', 'usuario'],
   ['pagos', 'Métodos de pago', 'tarjeta'],
@@ -350,9 +351,9 @@ function marcoPerfil(actual, contenido) {
       <div class="perfil">
         <nav class="perfil__menu" aria-label="Secciones del perfil">
           <ul>
-            ${SECCIONES_PERFIL.map(([r, t, i]) => `<li><a href="#/perfil${r ? '/' + r : ''}" ${r === actual ? 'aria-current="page"' : ''}>${icono(i)}${t}</a></li>`).join('')}
-            <li><a href="#/pedidos">${icono('paquete')}Mis pedidos</a></li>
-            ${estado.esAdmin ? `<li><a href="#/admin">${icono('ajustes')}Panel de pedidos</a></li>` : ''}
+            ${SECCIONES_PERFIL.map(([r, t, i]) => `<li><a href="${ARCHIVO_PERFIL[r]}" ${r === actual ? 'aria-current="page"' : ''}>${icono(i)}${t}</a></li>`).join('')}
+            <li><a href="pedidos.html">${icono('paquete')}Mis pedidos</a></li>
+            ${estado.esAdmin ? `<li><a href="admin.html">${icono('ajustes')}Panel de pedidos</a></li>` : ''}
             <li><button type="button" data-accion="cerrar-sesion">${icono('salir')}Cerrar sesión</button></li>
           </ul>
         </nav>
@@ -577,7 +578,7 @@ async function vistaPedidos() {
       <p class="subtitulo">Todas tus compras, de la más reciente a la más antigua, y en qué etapa está cada una.</p>
       <p style="color:var(--verde);font-weight:700;margin-block:.75rem 1.5rem">${mios.length ? `Has realizado ${plural(mios.length, 'pedido', 'pedidos')}` : ''}</p>
       ${!mios.length ? `
-        <div class="panel panel--gris vacio">${icono('paquete')}<h2 class="titulo-seccion">Aún no tienes pedidos</h2><p class="texto-suave">Cuando compres, tus pedidos aparecerán aquí.</p><a class="boton boton--principal" href="#/productos">Ver productos</a></div>` : `
+        <div class="panel panel--gris vacio">${icono('paquete')}<h2 class="titulo-seccion">Aún no tienes pedidos</h2><p class="texto-suave">Cuando compres, tus pedidos aparecerán aquí.</p><a class="boton boton--principal" href="productos.html">Ver productos</a></div>` : `
         <ul class="pedidos">${mios.map((p) => `
           <li class="pedido">
             <div class="pedido__cabecera">
@@ -585,7 +586,7 @@ async function vistaPedidos() {
               <span class="estado estado--${p.estado.toLowerCase()}">${NOMBRE_ESTADO[p.estado]}</span>
             </div>
             <p class="texto-suave" style="margin-top:.25rem">${fechaHora(p.creado_en)}</p>
-            <ul class="pedido__productos">${p.detalle_pedido.map((d) => { const pr = productoPorDbId(d.producto_id); return `<li>${d.cantidad} × ${pr ? `<a href="#/producto/${pr.id}">${esc(pr.nombre)}</a>` : 'Producto'}${d.talla ? ` (talla ${esc(d.talla)})` : ''} · ${dinero(d.precio_unitario * d.cantidad)}${p.estado === 'Retirado' && pr ? ` · <a href="#/producto/${pr.id}">Dejar reseña</a>` : ''}</li>`; }).join('')}</ul>
+            <ul class="pedido__productos">${p.detalle_pedido.map((d) => { const pr = productoPorDbId(d.producto_id); return `<li>${d.cantidad} × ${pr ? `<a href="producto.html?id=${pr.id}">${esc(pr.nombre)}</a>` : 'Producto'}${d.talla ? ` (talla ${esc(d.talla)})` : ''} · ${dinero(d.precio_unitario * d.cantidad)}${p.estado === 'Retirado' && pr ? ` · <a href="producto.html?id=${pr.id}">Dejar reseña</a>` : ''}</li>`; }).join('')}</ul>
             <dl class="datos-lista datos-lista--compacta">
               <dt>Subtotal</dt><dd>${dinero(p.subtotal)}</dd>
               <dt>IVA</dt><dd>${dinero(p.iva)}</dd>

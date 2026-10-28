@@ -710,3 +710,4 @@ fieldset.panel { margin: 0; min-width: 0; }
 .pedido--resaltado { outline: 3px solid var(--verde); outline-offset: 2px; animation: resaltar 2s ease-out 1; }
 @keyframes resaltar { from { background: #E7F3F1; } to { background: var(--blanco); } }
 @media (prefers-reduced-motion: reduce) { .pedido--resaltado { animation: none; } }
+.logo { text-decoration: none; }

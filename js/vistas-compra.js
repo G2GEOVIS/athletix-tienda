@@ -4,19 +4,24 @@
 const CLAVE_PAGO_PENDIENTE = 'athletix-pago-pendiente';
 
 function protegerCompra() {
-  if (!estado.carrito.length) { ir('#/carrito'); return false; }
+  if (!estado.carrito.length) { ir('carrito.html'); return false; }
   if (!protegerCuenta('retiro')) return false;
   return true;
+}
+
+/* Las tiendas se leen de la base una vez por página */
+async function cargarTiendas() {
+  if (estado.tiendas.length) return { datos: estado.tiendas };
+  const r = await Api.catalogo.tiendas();
+  if (!r.error) estado.tiendas = r.datos || [];
+  return r;
 }
 
 /* ======================= Retiro en tienda ======================= */
 async function vistaRetiro() {
   if (!protegerCompra()) return null;
-  if (!estado.tiendas.length) {
-    const r = await Api.catalogo.tiendas();
-    if (r.error) return { titulo: 'Retiro en tienda', seccion: 'carrito', html: errorCargaHtml(r.error) };
-    estado.tiendas = r.datos || [];
-  }
+  const rt = await cargarTiendas();
+  if (rt.error) return { titulo: 'Retiro en tienda', seccion: 'carrito', html: errorCargaHtml(rt.error) };
   const elegida = leerTemporal('tienda') || (estado.tiendas[0] && estado.tiendas[0].id);
   const c = estado.cliente;
   return {
@@ -54,7 +59,7 @@ async function vistaRetiro() {
             <p class="alerta alerta--info" style="margin-top:1.25rem">${icono('correo')}<span>Te enviaremos un correo cuando tu pedido esté listo. Al retirarlo, presenta tu cédula y tu número de pedido.</span></p>
           </section>
         </form>
-        ${resumenPedido(`<button class="boton boton--principal boton--bloque" type="submit" form="form-retiro">Continuar al pago</button><a class="boton boton--texto boton--bloque" href="#/carrito">${icono('izquierda')}Volver al carrito</a>`)}
+        ${resumenPedido(`<button class="boton boton--principal boton--bloque" type="submit" form="form-retiro">Continuar al pago</button><a class="boton boton--texto boton--bloque" href="carrito.html">${icono('izquierda')}Volver al carrito</a>`)}
       </div>
     </div>`,
     montar(main) {
@@ -63,7 +68,7 @@ async function vistaRetiro() {
         const t = new FormData(e.target).get('tienda');
         if (!t) { aviso('Elige la tienda donde retirarás tu pedido.', 'error'); return; }
         guardarTemporal('tienda', Number(t));
-        ir('#/pago');
+        ir('pago.html');
       });
     }
   };
@@ -72,11 +77,13 @@ async function vistaRetiro() {
 /* ======================= Pago ======================= */
 async function vistaPago() {
   if (!protegerCompra()) return null;
+  const rTiendas = await cargarTiendas();
+  if (rTiendas.error) return { titulo: 'Pago', seccion: 'carrito', html: errorCargaHtml(rTiendas.error) };
   const tiendaId = leerTemporal('tienda');
   const tienda = estado.tiendas.find((t) => t.id === tiendaId);
-  if (!tienda) { ir('#/retiro'); return null; }
+  if (!tienda) { ir('retiro.html'); return null; }
   const avisos = revisarCarrito();
-  if (!estado.carrito.length) { ir('#/carrito'); return null; }
+  if (!estado.carrito.length) { ir('carrito.html'); return null; }
 
   // Si se recargó la página mientras se pagaba, se revisa si el pedido ya se creó para no cobrar dos veces
   const pendiente = leerPendiente();
@@ -121,7 +128,7 @@ async function vistaPago() {
             </div>
             <p class="alerta alerta--info">${icono('candado')}<span>Solo guardamos los últimos 4 dígitos de tu tarjeta. <strong>Una vez pagado, el pedido no se puede modificar.</strong></span></p>
             <button class="boton boton--principal boton--bloque" type="submit">${icono('candado')}Pagar ${dinero(total)}</button>
-            <a class="boton boton--texto" href="#/retiro">${icono('izquierda')}Volver a retiro en tienda</a>
+            <a class="boton boton--texto" href="retiro.html">${icono('izquierda')}Volver a retiro en tienda</a>
           </form>
         </section>
         ${resumenPedido(`<div class="tienda" style="margin-top:1rem;background:var(--blanco)"><span class="tienda__icono">${icono('ubicacion')}</span><div><strong style="font-size:1rem">Retiro en ${esc(tienda.nombre)}</strong><p class="texto-suave">${esc(tienda.direccion)}</p></div></div>`)}
@@ -179,14 +186,17 @@ async function vistaPago() {
           return;
         }
         const fila = Array.isArray(r.datos) ? r.datos[0] : r.datos;
-        // Correos de confirmación al cliente y de aviso al administrador (no detienen la compra si fallan)
-        Api.correo.compraConfirmada({ correo: correoSesion(), nombre: estado.cliente.nombres, numero: fila.numero, total: fila.total, tienda: tienda.nombre, horario: tienda.horario });
+        // Correos de confirmación al cliente y de aviso al administrador (no detienen la compra si fallan).
+        // Se esperan como máximo 6 segundos antes de cambiar de página para que alcancen a salir.
+        mostrarProcesando(main, true);
+        const correos = Promise.allSettled([Api.correo.compraConfirmada({ correo: correoSesion(), nombre: estado.cliente.nombres, numero: fila.numero, total: fila.total, tienda: tienda.nombre, horario: tienda.horario }),
         Api.correo.nuevoPedido({
           numero: fila.numero, total: fila.total, tienda: tienda.nombre,
           cliente: `${estado.cliente.nombres} ${estado.cliente.apellidos}`, cedula: estado.cliente.cedula,
           correo: correoSesion(), telefono: estado.cliente.telefono,
           productos: estado.carrito.map((l) => `${l.cantidad} × ${producto(l.id).nombre}${l.talla ? ' (talla ' + l.talla + ')' : ''}`).join(', ')
-        });
+        })]);
+        await Promise.race([correos, new Promise((ok) => setTimeout(ok, 6000))]);
         terminarCompra({ numero: fila.numero, total: fila.total });
       });
     }
@@ -222,13 +232,13 @@ function terminarCompra({ numero, total }) {
   estado.carrito = [];
   guardarCarrito(); actualizarContador(); borrarPendiente();
   cargarCatalogo(); // actualiza el stock
-  location.replace('#/confirmacion');
+  location.replace('confirmacion.html');
 }
 
 /* ======================= Confirmación ======================= */
 function vistaConfirmacion() {
   const p = leerTemporal('ultimo-pedido');
-  if (!p) { ir('#/pedidos'); return null; }
+  if (!p) { ir('pedidos.html'); return null; }
   return {
     titulo: 'Compra realizada',
     seccion: 'carrito',
@@ -249,8 +259,8 @@ function vistaConfirmacion() {
         </dl>
         <h2 class="titulo-seccion" style="text-align:left;margin-top:1.75rem;font-size:1.6rem">Estado de tu pedido</h2>
         ${seguimiento('Recibido')}
-        <a class="boton boton--principal boton--bloque" style="margin-top:1.75rem" href="#/pedidos">${icono('paquete')}Ver mis pedidos</a>
-        <a class="boton boton--texto boton--bloque" href="#/productos">Seguir comprando</a>
+        <a class="boton boton--principal boton--bloque" style="margin-top:1.75rem" href="pedidos.html">${icono('paquete')}Ver mis pedidos</a>
+        <a class="boton boton--texto boton--bloque" href="productos.html">Seguir comprando</a>
       </div>
     </div>`
   };

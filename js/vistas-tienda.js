@@ -19,7 +19,7 @@ function vistaInicio() {
           <span class="hero__etiqueta">NUEVO · CARRERA 2026</span>
           <h1 class="hero__titulo" id="hero-titulo">Vuela en cada kilómetro</h1>
           <p class="hero__texto">${esc(destacado.nombre)}: espuma RebotePlus y placa de propulsión para tus ritmos más rápidos.</p>
-          <a class="boton boton--naranja" href="#/producto/vx">Comprar ${esc(destacado.nombre)} ${icono('derecha')}</a>
+          <a class="boton boton--naranja" href="producto.html?id=vx">Comprar ${esc(destacado.nombre)} ${icono('derecha')}</a>
         </div>
         <div class="hero__imagen"><img src="${img(destacado)}" alt="Zapatilla ${esc(destacado.nombre)} en blanco, azul y naranja" width="500" height="500"></div>
       </div>
@@ -39,7 +39,7 @@ function vistaInicio() {
       <p class="subtitulo">Elige qué necesitas para entrenar hoy.</p>
       <div class="categorias__grilla">
         ${cats.map(([c, t, d, foto, ver]) => `
-          <a class="tarjeta-categoria" href="#/productos?cat=${c}">
+          <a class="tarjeta-categoria" href="productos.html?cat=${c}">
             <img src="img/productos/${foto}-1.jpg" alt="" width="500" height="500" loading="lazy">
             <div class="tarjeta-categoria__texto"><h3>${t}</h3><p>${d}</p><span class="enlace-flecha">${ver} ${icono('derecha')}</span></div>
           </a>`).join('')}
@@ -98,7 +98,7 @@ function tarjetaProducto(p) {
         <div class="tarjeta-producto__imagen"><img src="${img(p)}" alt="" width="500" height="500" loading="lazy"></div>
         ${agotado ? '<span class="etiqueta etiqueta--azul tarjeta-producto__etiqueta">Agotado</span>' : (p.etiqueta ? `<span class="etiqueta tarjeta-producto__etiqueta">${p.etiqueta}</span>` : '')}
         <div class="tarjeta-producto__cuerpo">
-          <h2 class="tarjeta-producto__nombre"><a href="#/producto/${p.id}">${esc(p.nombre)}</a></h2>
+          <h2 class="tarjeta-producto__nombre"><a href="producto.html?id=${p.id}">${esc(p.nombre)}</a></h2>
           <p class="texto-suave">${etiquetaCategoria(p).replace('Tecnología deportiva', 'Tecnología')}</p>
           ${calificacionHtml(p)}
           <div class="tarjeta-producto__pie">
@@ -116,8 +116,8 @@ function htmlResultados(f) {
       <div class="sin-resultados">
         <h2 class="titulo-seccion">Sin resultados</h2>
         <p class="subtitulo">No encontramos productos${f.q ? ` para "${esc(f.q)}"` : ' con estos filtros'}. Prueba con otra palabra o con una de estas búsquedas:</p>
-        <ul class="chips">${BUSQUEDAS_POPULARES.map((b) => `<li><a class="chip" href="#/productos?q=${encodeURIComponent(b)}">${b}</a></li>`).join('')}</ul>
-        <p style="margin-top:1.25rem"><a class="boton boton--secundario" href="#/productos">Ver todos los productos</a></p>
+        <ul class="chips">${BUSQUEDAS_POPULARES.map((b) => `<li><a class="chip" href="productos.html?q=${encodeURIComponent(b)}">${b}</a></li>`).join('')}</ul>
+        <p style="margin-top:1.25rem"><a class="boton boton--secundario" href="productos.html">Ver todos los productos</a></p>
       </div>`;
   }
   return `<ul class="grilla-productos">${f.lista.map(tarjetaProducto).join('')}</ul>`;
@@ -139,7 +139,7 @@ function vistaProductos(partes, params) {
     seccion: 'productos',
     html: `
     <div class="contenedor pagina">
-      <nav class="migas" aria-label="Ruta de navegación"><ol><li><a href="#/">Inicio</a></li><li><span aria-current="page">Productos</span></li></ol></nav>
+      <nav class="migas" aria-label="Ruta de navegación"><ol><li><a href="index.html">Inicio</a></li><li><span aria-current="page">Productos</span></li></ol></nav>
       <div class="cabecera-pagina resultados__info">
         <h1 class="titulo-pagina" id="titulo-catalogo">${tituloCatalogo(f)}</h1>
         <div class="resultados__orden">
@@ -190,7 +190,7 @@ function vistaProductos(partes, params) {
         if (d.get('precio') !== 'todos') p.set('precio', d.get('precio'));
         const orden = $('#orden', main).value;
         if (orden !== 'relevancia') p.set('orden', orden);
-        history.replaceState(null, '', '#/productos' + (p.toString() ? '?' + p : ''));
+        history.replaceState(null, '', 'productos.html' + (p.toString() ? '?' + p : ''));
         const f2 = filtrar(p);
         $('#grupo-publico', main).hidden = !(f2.cat === 'calzado' || f2.cat === 'tecnologia');
         $('#resultados', main).innerHTML = htmlResultados(f2);
@@ -201,7 +201,7 @@ function vistaProductos(partes, params) {
       form.addEventListener('change', aplicar);
       $('#orden', main).addEventListener('change', aplicar);
       $('#limpiar-filtros', main).addEventListener('click', () => {
-        history.replaceState(null, '', '#/productos');
+        history.replaceState(null, '', 'productos.html');
         render();
         anunciar('Filtros limpiados. Se muestran todos los productos.');
       });
@@ -223,8 +223,8 @@ function vistaProducto(partes) {
       <div class="migas">
         <button class="boton-volver" type="button" id="volver">${icono('izquierda')}Volver</button>
         <nav aria-label="Ruta de navegación"><ol>
-          <li><a href="#/">Inicio</a></li>
-          <li><a href="#/productos?cat=${p.categoria}">${CATEGORIAS[p.categoria]}</a></li>
+          <li><a href="index.html">Inicio</a></li>
+          <li><a href="productos.html?cat=${p.categoria}">${CATEGORIAS[p.categoria]}</a></li>
           <li><span aria-current="page">${esc(p.nombre)}</span></li>
         </ol></nav>
       </div>
@@ -325,7 +325,7 @@ function vistaProducto(partes) {
         b.addEventListener('click', () => mostrar(Number(b.dataset.vista)));
         b.addEventListener('mouseenter', () => mostrar(Number(b.dataset.vista)));
       });
-      $('#volver', main).addEventListener('click', () => { if (history.length > 1) history.back(); else ir('#/productos'); });
+      $('#volver', main).addEventListener('click', () => { if (history.length > 1) history.back(); else ir('productos.html'); });
 
       // Pestañas accesibles
       const tabs = $$('[role="tab"]', main);
@@ -466,7 +466,7 @@ async function pintarZonaEscribir(p, main, mia) {
   const zona = $('#zona-escribir', main);
   if (!zona) return;
   if (!estado.sesion) {
-    zona.innerHTML = `<p class="texto-suave">¿Compraste este producto? <a href="#/ingresar">Inicia sesión</a> para dejar tu opinión.</p>`;
+    zona.innerHTML = `<p class="texto-suave">¿Compraste este producto? <a href="login.html">Inicia sesión</a> para dejar tu opinión.</p>`;
     return;
   }
   if (!estado.cliente) { zona.innerHTML = ''; return; }
@@ -583,7 +583,7 @@ function mostrarProductoAgregado(p, talla, agregadas) {
     </dl>
     <div class="dialogo__botones">
       <button class="boton boton--secundario" type="button" data-cerrar-dialogo>Seguir comprando</button>
-      <a class="boton boton--principal" href="#/carrito">${icono('carrito')}Ver carrito</a>
+      <a class="boton boton--principal" href="carrito.html">${icono('carrito')}Ver carrito</a>
     </div>`, { alAbrir: (d) => $('[data-cerrar-dialogo]', d).focus() });
 }
 
@@ -643,7 +643,7 @@ function vistaCarrito() {
           ${icono('carrito')}
           <h2 class="titulo-seccion">Tu carrito está vacío</h2>
           <p class="texto-suave">Agrega productos para empezar tu compra.</p>
-          <a class="boton boton--principal" href="#/productos">Ver productos</a>
+          <a class="boton boton--principal" href="productos.html">Ver productos</a>
         </div>` : `
         <div class="compra-grilla">
           <section aria-label="Productos en tu carrito">
@@ -651,7 +651,7 @@ function vistaCarrito() {
           </section>
           ${resumenPedido(`
             <button class="boton boton--principal boton--bloque" type="button" id="continuar-compra">Continuar con la compra</button>
-            <a class="boton boton--secundario boton--bloque" href="#/productos">${icono('izquierda')}Seguir comprando</a>
+            <a class="boton boton--secundario boton--bloque" href="productos.html">${icono('izquierda')}Seguir comprando</a>
             <div style="text-align:center;margin-top:.5rem"><button class="boton-icono" type="button" id="vaciar">${icono('basura')}Vaciar carrito</button></div>
             <p class="texto-suave" style="margin-top:1rem;display:flex;gap:.5rem">${icono('candado')}Pago seguro con Visa o Mastercard.</p>`)}
         </div>`}
@@ -660,7 +660,7 @@ function vistaCarrito() {
       if (vacio) return;
       $('#continuar-compra', main).addEventListener('click', () => {
         if (!estado.catalogoConectado) { aviso('No hay conexión con la tienda. Revisa tu internet y vuelve a intentarlo.', 'error'); return; }
-        ir(estado.sesion ? '#/retiro' : '#/ingresar?volver=retiro');
+        ir(estado.sesion ? 'retiro.html' : 'login.html?volver=retiro');
       });
       $('#vaciar', main).addEventListener('click', async () => {
         if (!(await confirmar('¿Vaciar el carrito?', 'Se quitarán todos los productos del carrito.', 'Sí, vaciar'))) { $('#vaciar').focus(); return; }
@@ -712,10 +712,10 @@ function itemCarrito(linea, i) {
   const max = Math.min(10, stockDe(p, linea.talla));
   return `
     <li class="item-carrito">
-      <a class="item-carrito__imagen" href="#/producto/${p.id}" tabindex="-1" aria-hidden="true"><img src="${img(p)}" alt="" width="500" height="500"></a>
+      <a class="item-carrito__imagen" href="producto.html?id=${p.id}" tabindex="-1" aria-hidden="true"><img src="${img(p)}" alt="" width="500" height="500"></a>
       <div>
         <p class="texto-suave" style="font-size:.85rem">${CATEGORIAS[p.categoria]}</p>
-        <h2 class="item-carrito__nombre"><a href="#/producto/${p.id}">${esc(p.nombre)}</a></h2>
+        <h2 class="item-carrito__nombre"><a href="producto.html?id=${p.id}">${esc(p.nombre)}</a></h2>
         ${linea.talla ? `<p class="item-carrito__talla"><span>Talla: <strong>${linea.talla}</strong></span>
           <button class="boton-icono" type="button" data-item="${i}" data-accion="talla" style="min-height:2.25rem;color:var(--verde)">${icono('editar')}Cambiar talla<span class="solo-lector"> de ${esc(p.nombre)}</span></button></p>` : ''}
         <p class="texto-suave">${dinero(p.precio)} c/u</p>

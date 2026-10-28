@@ -56,7 +56,8 @@ const Api = (() => {
     }
   }
 
-  const urlRegreso = (ruta = '') => location.origin + location.pathname + ruta;
+  // Los enlaces de los correos (confirmar cuenta, recuperar clave) siempre regresan a la página de inicio
+  const urlRegreso = () => location.origin + location.pathname.replace(/[^/]*$/, '') + 'index.html';
 
   /* ---------- Sesión ---------- */
   const auth = {

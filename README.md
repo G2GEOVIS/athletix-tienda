@@ -8,7 +8,7 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 
 ## Funciones
 
-- Catálogo de 16 productos con filtros, orden y buscador. Precio y stock vienen de la base de datos.
+- Catálogo de 68 productos (calzado, tecnología deportiva y entrenamiento) con filtros, orden y buscador. Precio y stock vienen de la base de datos.
 - Cuentas reales con Supabase: registro con cédula ecuatoriana validada (módulo 10), confirmación por correo, recuperar contraseña y botón para mostrar la contraseña.
 - No se permite registrar dos veces la misma cédula ni el mismo correo.
 - Perfil: editar datos, métodos de pago (solo últimos 4 dígitos) y contraseña.
@@ -65,6 +65,7 @@ bd/01_tablas.sql          Mis tablas con la forma de modelar de la clase (CATEGO
                           ADMINISTRADOR, TIENDA, METODO_PAGO, PEDIDO, DETALLE_PEDIDO, RESENA)
 bd/02_seguridad_y_funciones.sql  Seguridad por filas, compra en una transacción, reglas de estados y reseñas
 bd/03_datos.sql           Categorías, tiendas, productos y existencias
+bd/04_productos_nuevos.sql       Catálogo ampliado (52 productos más)
 bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner

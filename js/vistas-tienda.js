@@ -488,7 +488,9 @@ async function pintarZonaEscribir(p, main, mia) {
   });
 }
 
-function abrirFormularioResena(p, main, mia, pedidoVerificado) {
+/* alTerminar: qué hacer después de guardar o borrar (en el producto se recargan sus reseñas; en Mis pedidos se recarga la lista) */
+function abrirFormularioResena(p, main, mia, pedidoVerificado, alTerminar) {
+  const terminar = alTerminar || (() => cargarResenas(p, main));
   abrirDialogo(`
     <h2 class="dialogo__titulo" id="dialogo-titulo">${mia ? 'Editar mi reseña' : 'Escribir reseña'}</h2>
     <p class="texto-suave" style="margin-bottom:${pedidoVerificado ? '.5rem' : '1rem'}">${esc(p.nombre)}</p>
@@ -533,7 +535,7 @@ function abrirFormularioResena(p, main, mia, pedidoVerificado) {
           if (r.error) { errorGeneral(form, r.error); return; }
           cerrarDialogo();
           aviso('Borraste tu reseña.');
-          cargarResenas(p, main);
+          terminar();
         });
       }
       form.addEventListener('submit', async (e) => {
@@ -552,7 +554,7 @@ function abrirFormularioResena(p, main, mia, pedidoVerificado) {
         if (r.error) { errorGeneral(form, r.error); return; }
         cerrarDialogo();
         aviso('¡Gracias! Tu reseña ya está publicada.');
-        cargarResenas(p, main);
+        terminar();
       });
     }
   });

@@ -41,6 +41,8 @@ const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const dinero = (n) => '$' + Number(n || 0).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const producto = (id) => PRODUCTOS.find((p) => p.id === id);
 const productoPorDbId = (dbId) => PRODUCTOS.find((p) => p.dbId === dbId);
+// El código del producto en la base es el mismo de la tienda; así cada página lo reconoce aunque el catálogo aún esté cargando
+PRODUCTOS.forEach((p) => { if (p.dbId === undefined) p.dbId = p.id; });
 const normalizar = (t) => String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
 const img = (p, vista = 1) => `img/productos/${p.id}-${vista}.jpg`;

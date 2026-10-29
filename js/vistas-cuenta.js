@@ -569,6 +569,14 @@ async function vistaPedidos() {
   const r = await Api.pedidos.mios();
   if (r.error) return { titulo: 'Mis pedidos', seccion: 'pedidos', html: errorCargaHtml(r.error) };
   const mios = r.datos || [];
+  // Reseñas que ya escribió el cliente, para mostrar "Editar mi reseña" en vez de "Escribir reseña"
+  const rr = mios.length ? await Api.resenas.mias() : { datos: [] };
+  const mias = new Map(((rr.datos) || []).map((x) => [x.id, x]));
+  const botonResena = (p, d, pr) => {
+    if (p.estado === 'Cancelado' || !pr || !pr.dbId) return '';
+    const mia = mias.get(pr.dbId);
+    return `<button class="boton boton--secundario boton--chico" type="button" data-resena="${esc(pr.id)}" data-pedido="${esc(p.numero)}">${icono(mia ? 'editar' : 'estrella')}${mia ? 'Editar mi reseña' : 'Escribir reseña'}<span class="solo-lector"> de ${esc(pr.nombre)}</span></button>${mia ? `<span class="resena-mia" aria-label="Tu calificación: ${mia.estrellas} de 5 estrellas">${estrellas(mia.estrellas)}</span>` : ''}`;
+  };
   return {
     titulo: 'Mis pedidos',
     seccion: 'pedidos',
@@ -586,7 +594,7 @@ async function vistaPedidos() {
               <span class="estado estado--${p.estado.toLowerCase()}">${NOMBRE_ESTADO[p.estado]}</span>
             </div>
             <p class="texto-suave" style="margin-top:.25rem">${fechaHora(p.creado_en)}</p>
-            <ul class="pedido__productos">${p.detalle_pedido.map((d) => { const pr = productoPorDbId(d.producto_id); return `<li>${d.cantidad} × ${pr ? `<a href="producto.html?id=${pr.id}">${esc(pr.nombre)}</a>` : 'Producto'}${d.talla ? ` (talla ${esc(d.talla)})` : ''} · ${dinero(d.precio_unitario * d.cantidad)}${p.estado === 'Retirado' && pr ? ` · <a href="producto.html?id=${pr.id}">Dejar reseña</a>` : ''}</li>`; }).join('')}</ul>
+            <ul class="pedido__productos">${p.detalle_pedido.map((d) => { const pr = productoPorDbId(d.producto_id); return `<li class="pedido__producto"><span>${d.cantidad} × ${pr ? `<a href="producto.html?id=${pr.id}">${esc(pr.nombre)}</a>` : 'Producto'}${d.talla ? ` (talla ${esc(d.talla)})` : ''} · ${dinero(d.precio_unitario * d.cantidad)}</span><span class="pedido__resena">${botonResena(p, d, pr)}</span></li>`; }).join('')}</ul>
             <dl class="datos-lista datos-lista--compacta">
               <dt>Subtotal</dt><dd>${dinero(p.subtotal)}</dd>
               <dt>IVA</dt><dd>${dinero(p.iva)}</dd>
@@ -598,6 +606,16 @@ async function vistaPedidos() {
           </li>`).join('')}
         </ul>
         <p class="texto-suave" style="margin-top:1rem">Te enviaremos un correo a ${esc(correoSesion())} cuando tu pedido esté listo para retirar.</p>`}
-    </div>`
+    </div>`,
+    montar(main) {
+      // Desde cada producto comprado se abre el formulario de reseña; la compra ya está verificada por el pedido
+      main.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-resena]');
+        if (!b) return;
+        const pr = producto(b.dataset.resena);
+        if (!pr) return;
+        abrirFormularioResena(pr, main, mias.get(pr.dbId) || null, b.dataset.pedido, () => render());
+      });
+    }
   };
 }

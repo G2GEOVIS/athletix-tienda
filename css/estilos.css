@@ -711,3 +711,8 @@ fieldset.panel { margin: 0; min-width: 0; }
 @keyframes resaltar { from { background: #E7F3F1; } to { background: var(--blanco); } }
 @media (prefers-reduced-motion: reduce) { .pedido--resaltado { animation: none; } }
 .logo { text-decoration: none; }
+.pedido__producto { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; padding-block: .5rem; border-bottom: 1px solid var(--borde, #E3E7EC); }
+.pedido__producto:last-child { border-bottom: 0; }
+.pedido__resena { display: inline-flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.boton--chico { min-height: 2.5rem; padding: .4rem .9rem; font-size: .95rem; }
+.resena-mia { display: inline-flex; color: var(--naranja); }

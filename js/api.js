@@ -166,6 +166,10 @@ const Api = (() => {
 
   /* ---------- Reseñas ---------- */
   const resenas = {
+    /* Reseñas que escribió el cliente con sesión abierta (para mostrarlas en Mis pedidos) */
+    async mias() {
+      return mapear(await ejecutar(sb.from('vista_resenas').select('*').eq('es_mia', true)), aResena);
+    },
     async deProducto(codigo) {
       return mapear(await ejecutar(sb.from('vista_resenas').select('*').eq('prd_codigo', codigo).order('res_fecha', { ascending: false }).limit(50)), aResena);
     },

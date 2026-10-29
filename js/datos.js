@@ -715,6 +715,6 @@ const AYUDA = [
   ['No me llega el correo de confirmación', 'Revisa la carpeta de spam o promociones. Si no aparece en unos minutos, en «Iniciar sesión» puedes pedir que te lo enviemos otra vez.'],
   ['¿Cómo puedo pagar?', 'Con tarjeta Visa o Mastercard. Esta es una tienda académica: usa solo las tarjetas de prueba que aparecen en la pantalla de pago, nunca tu tarjeta real. Solo guardamos los últimos 4 dígitos.'],
   ['¿Cómo recibo mi pedido?', 'Lo retiras sin costo en la tienda que elijas. Te enviamos un correo cuando esté listo, normalmente en 24 a 48 horas. Presenta tu cédula al retirarlo.'],
-  ['¿Cómo dejo una reseña?', 'Inicia sesión, entra al producto que compraste, abre «Opiniones de clientes» y pulsa «Escribir reseña». La tienda verifica en tu cuenta que compraste ese producto: solo pueden opinar quienes lo compraron, y cada cliente deja una reseña por producto (puede editarla después).'],
+  ['¿Cómo dejo una reseña?', 'Inicia sesión y entra a «Mis pedidos»: junto a cada producto que compraste está el botón «Escribir reseña». También puedes hacerlo desde la página del producto, en «Opiniones de clientes». La tienda verifica en tu cuenta que compraste ese producto: solo pueden opinar quienes lo compraron, y cada cliente deja una reseña por producto (puede editarla después).'],
   ['¿Puedo cambiar mi pedido después de pagar?', 'No. Antes de pagar puedes cambiar la talla, la cantidad o quitar productos del carrito. Una vez pagado, el pedido no se puede modificar.']
 ];

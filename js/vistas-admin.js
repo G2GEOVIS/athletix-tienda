@@ -129,7 +129,7 @@ async function vistaAdminProductos(partes, params) {
       <div class="cabecera-seccion"><h1 class="titulo-pagina">Productos</h1>
         <a class="boton boton--principal" href="admin-producto.html">${icono('mas')}Nuevo producto</a></div>
       <p class="subtitulo cabecera-pagina">${plural(PRODUCTOS.length, 'producto', 'productos')} en la base de datos. Edita precio, stock, fotos y datos, o desactiva los que no quieras mostrar.</p>
-      <form class="filtro-admin" id="filtro-admin" role="search">
+      <form class="filtro-admin" id="filtro-admin" role="search" aria-label="Filtrar productos">
         <div class="campo"><label for="buscar-admin">Buscar por código o nombre</label><input id="buscar-admin" name="q" type="search" value="${esc(params.get('q') || '')}"></div>
         <div class="campo"><label for="cat-admin">Categoría</label><select id="cat-admin" name="cat"><option value="">Todas</option>${Object.entries(CATEGORIAS).map(([k, v]) => `<option value="${k}" ${k === cat ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
         <button class="boton boton--secundario" type="submit">${icono('lupa')}Filtrar</button>
@@ -200,8 +200,9 @@ async function vistaAdminProducto(partes, params) {
   const filasTalla = usaTalla ? v.tallas.map((t) => [t, v.stock[t] || 0]) : [];
   const stockUnico = usaTalla ? 0 : (v.stock && v.stock.U) || 0;
   const fotos = (v.imagenes && v.imagenes.length ? v.imagenes : (p ? [1, 2, 3].map((n) => img(p, n)) : [])).map((u, i) => [u, (v.vistas || [])[i] || 'vista ' + (i + 1)]);
-  const filaTalla = (t = '', s = 0) => `<li class="fila-talla"><div class="campo"><label>Talla</label><input name="talla" value="${esc(t)}" maxlength="5" required></div><div class="campo"><label>Stock</label><input name="stock-talla" type="number" min="0" max="99999" value="${s}" required></div><button class="boton-icono" type="button" data-quitar-talla>${icono('basura')}Quitar<span class="solo-lector"> talla</span></button></li>`;
-  const filaFoto = (u = '', d = '') => `<li class="fila-foto"><img src="${esc(u || FOTO_RESPALDO)}" alt="" width="72" height="72"><div class="campo"><label>Dirección de la foto</label><input name="foto-url" value="${esc(u)}" maxlength="300"></div><div class="campo"><label>Descripción</label><input name="foto-desc" value="${esc(d)}" maxlength="80"></div><button class="boton-icono" type="button" data-quitar-foto>${icono('basura')}Quitar<span class="solo-lector"> foto</span></button></li>`;
+  let fila = 0;
+  const filaTalla = (t = '', s = 0) => { const k = ++fila; return `<li class="fila-talla"><div class="campo"><label for="talla-${k}">Talla</label><input id="talla-${k}" name="talla" value="${esc(t)}" maxlength="5" required></div><div class="campo"><label for="stock-${k}">Stock</label><input id="stock-${k}" name="stock-talla" type="number" min="0" max="99999" value="${s}" required></div><button class="boton-icono" type="button" data-quitar-talla>${icono('basura')}Quitar<span class="solo-lector"> talla ${esc(t)}</span></button></li>`; };
+  const filaFoto = (u = '', d = '') => { const k = ++fila; return `<li class="fila-foto"><img src="${esc(u || FOTO_RESPALDO)}" alt="" width="72" height="72"><div class="campo"><label for="foto-url-${k}">Dirección de la foto</label><input id="foto-url-${k}" name="foto-url" value="${esc(u)}" maxlength="300"></div><div class="campo"><label for="foto-desc-${k}">Descripción</label><input id="foto-desc-${k}" name="foto-desc" value="${esc(d)}" maxlength="80"></div><button class="boton-icono" type="button" data-quitar-foto>${icono('basura')}Quitar<span class="solo-lector"> foto ${k}</span></button></li>`; };
   return {
     titulo: nuevo ? 'Nuevo producto' : `Editar ${v.nombre}`,
     seccion: 'admin',
@@ -233,7 +234,7 @@ async function vistaAdminProducto(partes, params) {
           <textarea id="ficha" rows="4" aria-describedby="ficha-ayuda">${esc((v.ficha || []).map(([a, b]) => `${a}: ${b}`).join('\n'))}</textarea></div>
         <div class="formulario__fila formulario__fila--doble">
           ${campo({ id: 'etiqueta', etiqueta: 'Etiqueta', ayuda: 'Opcional, por ejemplo: Nuevo', valor: v.etiqueta || '', max: 20, opcional: true })}
-          <div class="campo"><p style="font-weight:700">Visibilidad</p><label class="opcion"><input type="checkbox" id="activo" ${v.activo !== false ? 'checked' : ''}> Mostrar en la tienda</label></div>
+          <div><p style="font-weight:700;margin-bottom:.5rem">Visibilidad</p><label class="opcion"><input type="checkbox" id="activo" ${v.activo !== false ? 'checked' : ''}> Mostrar en la tienda</label></div>
         </div>
 
         <fieldset class="panel panel--gris">

@@ -437,16 +437,16 @@ async function vistaOrden(partes, params) {
         <a class="boton boton--texto" href="${estado.esAdmin && !p.esMio ? 'admin.html' : 'pedidos.html'}">${icono('izquierda')}Volver</a>
         <button class="boton boton--principal" type="button" id="imprimir">${icono('documento')}Imprimir o guardar en PDF</button>
       </div>
-      <article class="panel orden" aria-labelledby="titulo-orden">
-        <header class="orden__cabecera">
+      <article class="panel orden-pedido" aria-labelledby="titulo-orden">
+        <header class="orden-pedido__cabecera">
           <div><span class="logo logo--orden" aria-hidden="true">ATHLETIX</span><p class="texto-suave">Tienda deportiva en línea · tienda académica</p></div>
-          <div class="orden__numero"><h1 id="titulo-orden">Orden de pedido</h1><p><strong>N.º ${esc(p.numero)}</strong></p><p class="texto-suave">${fechaHora(p.creado_en)}</p></div>
+          <div class="orden-pedido__numero"><h1 id="titulo-orden">Orden de pedido</h1><p><strong>N.º ${esc(p.numero)}</strong></p><p class="texto-suave">${fechaHora(p.creado_en)}</p></div>
         </header>
         <div class="codigo-retiro codigo-retiro--orden">
           <span>Código de ${domicilio ? 'entrega' : 'retiro'}</span><strong>${esc(p.codigoRetiro)}</strong>
           <span class="texto-suave">${domicilio ? 'Muéstralo al repartidor junto con tu cédula.' : 'Preséntalo en la tienda junto con tu cédula.'}</span>
         </div>
-        <div class="orden__grilla">
+        <div class="orden-pedido__grilla">
           <section aria-labelledby="orden-cliente"><h2 id="orden-cliente">Cliente</h2>
             <dl class="datos-lista datos-lista--compacta">
               <dt>Nombre</dt><dd>${esc(cli.nombres)} ${esc(cli.apellidos)}</dd>

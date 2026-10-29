@@ -706,18 +706,219 @@ const PRODUCTOS = [
     caracteristicas: ['Estructura de acero resistente', 'Admite discos de peso', 'Para empujar o arrastrar'],
     ficha: [['Material', 'Acero'], ['Peso propio', '≈12 kg'], ['Carga', 'Discos de hasta 100 kg'], ['Superficie', 'Césped y pista'], ['Uso ideal', 'Fuerza y aceleración']],
     claves: ['trineo', 'sled', 'arrastre', 'fuerza', 'entrenamiento']
+  },
+  {
+    id: 'kn01', nombre: 'Pequeño Veloz Azul', categoria: 'calzado', publico: 'Hombre', edad: 'Niño', precio: 49.99,
+    etiqueta: 'Nuevo',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla para correr pensada para niños activos. Su malla azul deja respirar el pie y la suela acolchada amortigua en el recreo, la pista o el parque.",
+    caracteristicas: ["Malla transpirable y liviana", "Suela acolchada que absorbe impactos", "Detalles naranja de alta visibilidad"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Cordones"], ["Material", "Malla y EVA"], ["Uso ideal", "Correr y jugar"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niño", "niños", "infantil", "kids", "correr", "running"]
+  },
+  {
+    id: 'kn02', nombre: 'Brinco Velcro Lima', categoria: 'calzado', publico: 'Hombre', edad: 'Niño', precio: 39.99,
+    etiqueta: '',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla con dos correas de velcro para que el niño se la ponga solo y rápido. Puntera reforzada para los juegos más bruscos.",
+    caracteristicas: ["Doble correa de velcro", "Puntera reforzada", "Suela antideslizante"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Velcro"], ["Material", "Cuero sintético"], ["Uso ideal", "Uso diario y escuela"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niño", "niños", "infantil", "kids", "velcro", "escolar"]
+  },
+  {
+    id: 'kn03', nombre: 'Escolar Clásico Negro', categoria: 'calzado', publico: 'Hombre', edad: 'Niño', precio: 44.99,
+    etiqueta: '',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla negra de líneas simples que cumple con el uniforme escolar y aguanta todo el día de clases y educación física.",
+    caracteristicas: ["Material fácil de limpiar", "Plantilla acolchada", "Suela de goma resistente"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Cordones"], ["Material", "Cuero sintético"], ["Uso ideal", "Escuela y uniforme"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niño", "niños", "infantil", "kids", "escolar", "colegio", "uniforme"]
+  },
+  {
+    id: 'kn04', nombre: 'Multideporte Rojo Rayo', categoria: 'calzado', publico: 'Hombre', edad: 'Niño', precio: 47.99,
+    etiqueta: '',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla multideporte con suela de buen agarre para fútbol en patio, básquet y carreras. Liviana y firme a la vez.",
+    caracteristicas: ["Suela de goma con agarre multidireccional", "Paneles de refuerzo laterales", "Interior acolchado"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Cordones"], ["Material", "Malla y sintético"], ["Uso ideal", "Educación física"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niño", "niños", "infantil", "kids", "multideporte", "educacion fisica"]
+  },
+  {
+    id: 'kn05', nombre: 'Sendero Junior Grafito', categoria: 'calzado', publico: 'Hombre', edad: 'Niño', precio: 59.99,
+    etiqueta: '',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de montaña para niños con suela de tacos profundos. Perfecta para excursiones, campamentos y caminatas en tierra.",
+    caracteristicas: ["Suela de tacos para tierra y piedra", "Puntera protectora", "Malla resistente al roce"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Cordones"], ["Material", "Malla y goma"], ["Uso ideal", "Caminatas y excursiones"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niño", "niños", "infantil", "kids", "trail", "montaña", "excursion"]
+  },
+  {
+    id: 'kn06', nombre: 'Clavada Junior Marino', categoria: 'calzado', publico: 'Hombre', edad: 'Niño', precio: 64.99,
+    etiqueta: 'Nuevo',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de básquet de caña media con cuello acolchado que sujeta el tobillo en saltos y cambios de dirección.",
+    caracteristicas: ["Caña media que protege el tobillo", "Mediasuela gruesa con amortiguación", "Tejido de punto transpirable"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Cordones"], ["Material", "Tejido de punto"], ["Uso ideal", "Básquet"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niño", "niños", "infantil", "kids", "basquet", "basketball"]
+  },
+  {
+    id: 'kn07', nombre: 'Futsal Junior Neón', categoria: 'calzado', publico: 'Hombre', edad: 'Niño', precio: 42.99,
+    etiqueta: '',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de fútbol sala para niños con suela plana de goma que no marca la cancha y da un control preciso del balón.",
+    caracteristicas: ["Suela de goma que no marca", "Empeine con buen toque de balón", "Puntera reforzada"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Cordones"], ["Material", "Sintético"], ["Uso ideal", "Fútbol sala"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niño", "niños", "infantil", "kids", "futbol", "futsal", "indoor"]
+  },
+  {
+    id: 'kn08', nombre: 'Sin Cordones Gris Ágil', categoria: 'calzado', publico: 'Hombre', edad: 'Niño', precio: 39.99,
+    etiqueta: '',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla sin amarrar con cordones elásticos: se pone y se quita en segundos. Ideal para niños que aún no se atan los zapatos.",
+    caracteristicas: ["Cordones elásticos fijos", "Tejido de punto flexible", "Suela ultraliviana"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Cordones elásticos"], ["Material", "Tejido de punto"], ["Uso ideal", "Uso diario"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niño", "niños", "infantil", "kids", "slip on", "sin cordones", "elastico"]
+  },
+  {
+    id: 'kn09', nombre: 'Lona Oliva Recreo', categoria: 'calzado', publico: 'Hombre', edad: 'Niño', precio: 34.99,
+    etiqueta: '',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de lona color oliva, fresca y cómoda para el día a día. Puntera de goma que resiste los juegos en el patio.",
+    caracteristicas: ["Lona de algodón transpirable", "Puntera de goma", "Suela vulcanizada flexible"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Cordones"], ["Material", "Lona"], ["Uso ideal", "Uso diario"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niño", "niños", "infantil", "kids", "lona", "casual"]
+  },
+  {
+    id: 'kn10', nombre: 'Luces Rojas Turbo', categoria: 'calzado', publico: 'Hombre', edad: 'Niño', precio: 54.99,
+    etiqueta: 'Nuevo',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla con luces LED en la suela que se encienden con cada paso. Velcro y cordón elástico para ponérsela solo.",
+    caracteristicas: ["Luces LED que se activan al pisar", "Correa de velcro", "Malla liviana y transpirable"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Velcro y cordón elástico"], ["Material", "Malla y sintético"], ["Uso ideal", "Uso diario y juego"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niño", "niños", "infantil", "kids", "luces", "led", "brillan"]
+  },
+  {
+    id: 'ka01', nombre: 'Pequeña Veloz Rosa', categoria: 'calzado', publico: 'Mujer', edad: 'Niño', precio: 49.99,
+    etiqueta: 'Nuevo',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla para correr pensada para niñas activas. Malla rosa que deja respirar el pie y suela acolchada para jugar y correr todo el día.",
+    caracteristicas: ["Malla transpirable y liviana", "Suela acolchada que absorbe impactos", "Detalles morados que dan estabilidad"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Cordones"], ["Material", "Malla y EVA"], ["Uso ideal", "Correr y jugar"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niña", "niños", "infantil", "kids", "correr", "running"]
+  },
+  {
+    id: 'ka02', nombre: 'Brinco Velcro Lila', categoria: 'calzado', publico: 'Mujer', edad: 'Niño', precio: 39.99,
+    etiqueta: '',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla lila con dos correas de velcro para ponérsela sola y rápido. Puntera reforzada y suela que no resbala.",
+    caracteristicas: ["Doble correa de velcro", "Puntera reforzada", "Suela antideslizante"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Velcro"], ["Material", "Cuero sintético"], ["Uso ideal", "Uso diario y escuela"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niña", "niños", "infantil", "kids", "velcro", "escolar"]
+  },
+  {
+    id: 'ka03', nombre: 'Escolar Blanca Clásica', categoria: 'calzado', publico: 'Mujer', edad: 'Niño', precio: 44.99,
+    etiqueta: '',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla blanca de líneas simples con un toque rosa en el talón. Cumple con el uniforme de educación física y se limpia con facilidad.",
+    caracteristicas: ["Material fácil de limpiar", "Plantilla acolchada", "Suela de goma resistente"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Cordones"], ["Material", "Cuero sintético"], ["Uso ideal", "Escuela y uniforme"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niña", "niños", "infantil", "kids", "escolar", "colegio", "uniforme", "blanca"]
+  },
+  {
+    id: 'ka04', nombre: 'Luces Holográficas', categoria: 'calzado', publico: 'Mujer', edad: 'Niño', precio: 57.99,
+    etiqueta: 'Nuevo',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla plateada holográfica con luces LED rosadas que se encienden al pisar. Velcro y cordón elástico para ponérsela sola.",
+    caracteristicas: ["Luces LED que se activan al pisar", "Paneles holográficos", "Correa de velcro"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Velcro y cordón elástico"], ["Material", "Malla y sintético"], ["Uso ideal", "Uso diario y juego"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niña", "niños", "infantil", "kids", "luces", "led", "brillan", "holografica"]
+  },
+  {
+    id: 'ka05', nombre: 'Sendero Junior Turquesa', categoria: 'calzado', publico: 'Mujer', edad: 'Niño', precio: 59.99,
+    etiqueta: '',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de montaña para niñas con suela de tacos y puntera protectora. Lista para excursiones, campamentos y caminatas.",
+    caracteristicas: ["Suela de tacos para tierra y piedra", "Puntera protectora", "Malla resistente al roce"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Cordones"], ["Material", "Malla y goma"], ["Uso ideal", "Caminatas y excursiones"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niña", "niños", "infantil", "kids", "trail", "montaña", "excursion"]
+  },
+  {
+    id: 'ka06', nombre: 'Sin Cordones Menta', categoria: 'calzado', publico: 'Mujer', edad: 'Niño', precio: 39.99,
+    etiqueta: '',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de punto color menta sin cordones: se pone en segundos y se adapta al pie como un calcetín.",
+    caracteristicas: ["Tejido de punto elástico", "Tirador en el talón", "Suela ultraliviana"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Sin cordones"], ["Material", "Tejido de punto"], ["Uso ideal", "Uso diario"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niña", "niños", "infantil", "kids", "slip on", "sin cordones"]
+  },
+  {
+    id: 'ka07', nombre: 'Futsal Junior Fucsia', categoria: 'calzado', publico: 'Mujer', edad: 'Niño', precio: 42.99,
+    etiqueta: '',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de fútbol sala para niñas con suela plana que no marca la cancha y da buen control del balón.",
+    caracteristicas: ["Suela de goma que no marca", "Empeine con buen toque de balón", "Puntera reforzada"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Cordones"], ["Material", "Sintético"], ["Uso ideal", "Fútbol sala"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niña", "niños", "infantil", "kids", "futbol", "futsal", "indoor"]
+  },
+  {
+    id: 'ka08', nombre: 'Gimnasia Oro Rosa', categoria: 'calzado', publico: 'Mujer', edad: 'Niño', precio: 44.99,
+    etiqueta: '',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla liviana y muy flexible para gimnasia, baile y danza. Suela delgada que deja sentir el piso y girar con facilidad.",
+    caracteristicas: ["Suela delgada y flexible", "Detalles en oro rosa", "Muy liviana"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Cordones"], ["Material", "Textil"], ["Uso ideal", "Gimnasia y baile"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niña", "niños", "infantil", "kids", "gimnasia", "baile", "danza"]
+  },
+  {
+    id: 'ka09', nombre: 'Lona Celeste Recreo', categoria: 'calzado', publico: 'Mujer', edad: 'Niño', precio: 34.99,
+    etiqueta: '',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de lona celeste, fresca y cómoda para el día a día. Puntera de goma que resiste el juego en el patio.",
+    caracteristicas: ["Lona de algodón transpirable", "Puntera de goma", "Suela vulcanizada flexible"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Cordones"], ["Material", "Lona"], ["Uso ideal", "Uso diario"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niña", "niños", "infantil", "kids", "lona", "casual"]
+  },
+  {
+    id: 'ka10', nombre: 'Clavada Junior Violeta', categoria: 'calzado', publico: 'Mujer', edad: 'Niño', precio: 64.99,
+    etiqueta: '',
+    tallas: ["28", "29", "30", "31", "32", "33", "34", "35"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de básquet de caña media para niñas, con cuello acolchado violeta que sujeta el tobillo en saltos y giros.",
+    caracteristicas: ["Caña media que protege el tobillo", "Mediasuela gruesa con amortiguación", "Tejido de punto transpirable"],
+    ficha: [["Edad", "4 a 11 años"], ["Cierre", "Cordones"], ["Material", "Tejido de punto"], ["Uso ideal", "Básquet"], ["Tallas", "28 – 35 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "niña", "niños", "infantil", "kids", "basquet", "basketball"]
   }
 ];
 
 /* Guía de tallas (EU) */
 const GUIA_TALLAS = [
+  ['28', '17.5 cm'], ['29', '18 cm'], ['30', '19 cm'], ['31', '19.5 cm'], ['32', '20.5 cm'], ['33', '21 cm'], ['34', '21.5 cm'],
   ['35', '22 cm'], ['36', '22.5 cm'], ['36.5', '23 cm'], ['37', '23.5 cm'], ['37.5', '23.8 cm'], ['38', '24 cm'],
   ['38.5', '24.5 cm'], ['39', '25 cm'], ['40', '25.5 cm'], ['41', '26 cm'], ['42', '27 cm'],
   ['43', '27.5 cm'], ['44', '28.5 cm'], ['45', '29 cm']
 ];
 
 
-const BUSQUEDAS_POPULARES = ['calzado', 'reloj', 'audífonos', 'bandas', 'conos', 'chaleco', 'mujer', 'hombre'];
+const BUSQUEDAS_POPULARES = ['calzado', 'niños', 'reloj', 'audífonos', 'bandas', 'conos', 'mujer', 'hombre'];
 
 const AYUDA = [
   ['¿Cómo compro?', 'Elige un producto (y tu talla si es calzado), agrégalo al carrito, inicia sesión, elige la tienda donde lo retiras y paga con tarjeta.'],

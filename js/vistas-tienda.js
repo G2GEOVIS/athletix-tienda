@@ -79,15 +79,18 @@ const ORDENES = {
 function filtrar(params) {
   const cat = CATEGORIAS[params.get('cat')] ? params.get('cat') : 'todas';
   const pub = ['Hombre', 'Mujer', 'Unisex'].includes(params.get('pub')) ? params.get('pub') : 'todos';
+  const edad = ['Adulto', 'Niño'].includes(params.get('edad')) ? params.get('edad') : 'todas';
   const precio = RANGOS[params.get('precio')] ? params.get('precio') : 'todos';
   const orden = ORDENES[params.get('orden')] ? params.get('orden') : 'relevancia';
   const q = (params.get('q') || '').slice(0, 80);
   let lista = buscar(PRODUCTOS.filter((p) => p.activo !== false), q);
   if (cat !== 'todas') lista = lista.filter((p) => p.categoria === cat);
-  if (pub !== 'todos' && (cat === 'calzado' || cat === 'tecnologia')) lista = lista.filter((p) => p.publico === pub);
+  // Género y edad son atributos del producto y se combinan: Hombre + Niño = niños, Mujer + Niño = niñas
+  if (pub !== 'todos') lista = lista.filter((p) => (p.publico || 'Unisex') === pub);
+  if (edad !== 'todas') lista = lista.filter((p) => (p.edad || 'Adulto') === edad);
   lista = lista.filter(RANGOS[precio][1]);
   if (ORDENES[orden][1]) lista = [...lista].sort(ORDENES[orden][1]);
-  return { lista, cat, pub, precio, orden, q };
+  return { lista, cat, pub, edad, precio, orden, q };
 }
 
 function tarjetaProducto(p) {
@@ -133,7 +136,6 @@ function vistaProductos(partes, params) {
   const f = filtrar(params);
   const radio = (grupo, valor, texto, actual) =>
     `<label class="opcion"><input type="radio" name="${grupo}" value="${valor}" ${valor === actual ? 'checked' : ''}> ${texto}</label>`;
-  const verPublico = f.cat === 'calzado' || f.cat === 'tecnologia';
   return {
     titulo: f.q ? `Resultados para ${f.q}` : (f.cat !== 'todas' ? CATEGORIAS[f.cat] : 'Productos'),
     seccion: 'productos',
@@ -157,9 +159,13 @@ function vistaProductos(partes, params) {
               <legend>Categoría</legend>
               ${radio('cat', 'todas', 'Todas', f.cat)}${radio('cat', 'calzado', 'Calzado', f.cat)}${radio('cat', 'tecnologia', 'Tecnología deportiva', f.cat)}${radio('cat', 'entrenamiento', 'Entrenamiento', f.cat)}
             </fieldset>
-            <fieldset class="grupo-filtro" id="grupo-publico" ${verPublico ? '' : 'hidden'}>
-              <legend>Público</legend>
+            <fieldset class="grupo-filtro" id="grupo-publico">
+              <legend>Género</legend>
               ${radio('pub', 'todos', 'Todos', f.pub)}${radio('pub', 'Hombre', 'Hombre', f.pub)}${radio('pub', 'Mujer', 'Mujer', f.pub)}${radio('pub', 'Unisex', 'Unisex', f.pub)}
+            </fieldset>
+            <fieldset class="grupo-filtro">
+              <legend>Edad</legend>
+              ${radio('edad', 'todas', 'Todas', f.edad)}${radio('edad', 'Adulto', 'Adultos', f.edad)}${radio('edad', 'Niño', 'Niños y niñas', f.edad)}
             </fieldset>
             <fieldset class="grupo-filtro">
               <legend>Precio</legend>
@@ -186,13 +192,13 @@ function vistaProductos(partes, params) {
         const d = new FormData(form);
         const cat = d.get('cat');
         if (cat !== 'todas') p.set('cat', cat);
-        if ((cat === 'calzado' || cat === 'tecnologia') && d.get('pub') !== 'todos') p.set('pub', d.get('pub'));
+        if (d.get('pub') !== 'todos') p.set('pub', d.get('pub'));
+        if (d.get('edad') !== 'todas') p.set('edad', d.get('edad'));
         if (d.get('precio') !== 'todos') p.set('precio', d.get('precio'));
         const orden = $('#orden', main).value;
         if (orden !== 'relevancia') p.set('orden', orden);
         history.replaceState(null, '', 'productos.html' + (p.toString() ? '?' + p : ''));
         const f2 = filtrar(p);
-        $('#grupo-publico', main).hidden = !(f2.cat === 'calzado' || f2.cat === 'tecnologia');
         $('#resultados', main).innerHTML = htmlResultados(f2);
         $('#titulo-catalogo', main).innerHTML = tituloCatalogo(f2);
         $('#conteo', main).textContent = plural(f2.lista.length, 'producto', 'productos');
@@ -237,7 +243,7 @@ function vistaProducto(partes) {
             <button class="galeria__flecha galeria__flecha--siguiente" type="button" data-paso="1" aria-label="Foto siguiente">${icono('chevronDer')}</button>
           </div>
           <ul class="galeria__miniaturas">
-            ${[1, 2, 3].map((v) => `<li><button class="galeria__miniatura" type="button" data-vista="${v}" aria-label="Ver ${p.vistas[v - 1]}" ${v === 1 ? 'aria-current="true"' : ''}><img src="${img(p, v)}" alt="" width="500" height="500" loading="lazy"></button></li>`).join('')}
+            ${p.vistas.map((_, i) => i + 1).map((v) => `<li><button class="galeria__miniatura" type="button" data-vista="${v}" aria-label="Ver ${p.vistas[v - 1]}" ${v === 1 ? 'aria-current="true"' : ''}><img src="${img(p, v)}" alt="" width="500" height="500" loading="lazy"></button></li>`).join('')}
           </ul>
         </section>
 
@@ -273,7 +279,8 @@ function vistaProducto(partes) {
                   <output id="cantidad" aria-live="polite">1</output>
                   <button type="button" data-cambio="1" aria-label="Agregar una unidad">${icono('mas')}</button>
                 </div>
-                <span class="texto-suave" id="limite-cantidad">Máximo 10 unidades por producto</span>
+                <button class="boton-enlace" type="button" id="llevar-todo" hidden>Llevar todo</button>
+                <span class="texto-suave" id="limite-cantidad" aria-live="polite">Elige tu talla para ver cuántas unidades hay</span>
               </div>
             </div>
 
@@ -282,7 +289,7 @@ function vistaProducto(partes) {
           </form>
 
           <ul class="lista-iconos">
-            <li>${icono('camion')}Listo para retirar en ${TIEMPO_LISTO}</li>
+            <li>${icono('camion')}Retiro en tienda en ${ENTREGA.retiro} o envío express en ${ENTREGA.domicilio}</li>
             <li>${icono('correo')}Te avisamos por correo cuando esté listo</li>
             <li>${icono('escudo')}Pago seguro con Visa o Mastercard</li>
           </ul>
@@ -313,14 +320,15 @@ function vistaProducto(partes) {
       let cantidad = 1;
       const foto = $('#foto-principal', main);
       const mostrar = (v) => {
-        vista = ((v - 1 + 3) % 3) + 1;
+        const n = p.vistas.length;
+        vista = ((v - 1 + n) % n) + 1;
         foto.src = img(p, vista);
         foto.alt = `${p.nombre}, ${p.vistas[vista - 1]}`;
         $$('.galeria__miniatura', main).forEach((b) => {
           if (Number(b.dataset.vista) === vista) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
         });
       };
-      $$('[data-paso]', main).forEach((b) => b.addEventListener('click', () => { mostrar(vista + Number(b.dataset.paso)); anunciar(`Foto ${vista} de 3: ${p.vistas[vista - 1]}`); }));
+      $$('[data-paso]', main).forEach((b) => b.addEventListener('click', () => { mostrar(vista + Number(b.dataset.paso)); anunciar(`Foto ${vista} de ${p.vistas.length}: ${p.vistas[vista - 1]}`); }));
       $$('.galeria__miniatura', main).forEach((b) => {
         b.addEventListener('click', () => mostrar(Number(b.dataset.vista)));
         b.addEventListener('mouseenter', () => mostrar(Number(b.dataset.vista)));
@@ -355,22 +363,26 @@ function vistaProducto(partes) {
         t.focus({ preventScroll: true });
       });
 
-      // Cantidad (máximo 10 y nunca más que el stock)
+      // Cantidad: se puede llevar todo el stock disponible
       const salida = $('#cantidad', main);
       const [menos, mas] = $$('[data-cambio]', main);
       const grupoTallas = $('#grupo-tallas', main);
       const tallaElegida = () => { const t = $('input[name="talla"]:checked', main); return t ? t.value : null; };
-      const maximo = () => Math.max(1, Math.min(10, stockDe(p, tieneTallas ? tallaElegida() : null) || (tieneTallas && !tallaElegida() ? 10 : 1)));
+      const maximo = () => Math.max(1, stockDe(p, tieneTallas ? tallaElegida() : null) || 1);
       const pintarCantidad = () => {
         cantidad = Math.min(cantidad, maximo());
         salida.textContent = cantidad;
         menos.disabled = cantidad <= 1;
         mas.disabled = cantidad >= maximo();
         const stock = stockDe(p, tieneTallas ? tallaElegida() : null);
-        $('#limite-cantidad', main).textContent = (tieneTallas && !tallaElegida()) || stock >= 10
-          ? 'Máximo 10 unidades por producto'
-          : `Quedan ${plural(stock, 'unidad', 'unidades')}${tieneTallas ? ' en esta talla' : ''}`;
+        $('#limite-cantidad', main).textContent = tieneTallas && !tallaElegida()
+          ? 'Elige tu talla para ver cuántas unidades hay'
+          : `Disponibles: ${plural(stock, 'unidad', 'unidades')}${tieneTallas ? ' en esta talla' : ''}. Puedes llevarlas todas.`;
+        const todo = $('#llevar-todo', main);
+        if (todo) { todo.hidden = (tieneTallas && !tallaElegida()) || stock < 2; todo.textContent = `Llevar todo (${stock})`; }
       };
+      const todo = $('#llevar-todo', main);
+      if (todo) todo.addEventListener('click', () => { cantidad = maximo(); pintarCantidad(); anunciar(`Cantidad: ${cantidad}`); });
       [menos, mas].forEach((b) => b.addEventListener('click', () => {
         cantidad = Math.min(maximo(), Math.max(1, cantidad + Number(b.dataset.cambio)));
         pintarCantidad();
@@ -563,7 +575,7 @@ function abrirFormularioResena(p, main, mia, pedidoVerificado, alTerminar) {
 /* ======================= Carrito ======================= */
 function agregarAlCarrito(id, talla, cantidad) {
   const p = producto(id);
-  const limite = Math.min(10, stockDe(p, talla));
+  const limite = stockDe(p, talla);
   const linea = estado.carrito.find((i) => i.id === id && i.talla === talla);
   let agregadas = Math.min(cantidad, limite - (linea ? linea.cantidad : 0));
   if (agregadas <= 0) return 0;
@@ -578,7 +590,7 @@ function mostrarProductoAgregado(p, talla, agregadas) {
   const limite = agregadas <= 0;
   abrirDialogo(`
     <h2 class="dialogo__titulo" id="dialogo-titulo"><span class="icono-ok">${icono(limite ? 'info' : 'check')}</span>${limite ? 'Ya tienes el máximo' : '¡Producto agregado al carrito!'}</h2>
-    <p>${limite ? `Ya tienes en tu carrito todas las unidades disponibles de ${esc(p.nombre)}${talla ? ` en talla ${talla}` : ''} (máximo 10 por producto).` : `${plural(agregadas, 'unidad', 'unidades')} de ${esc(p.nombre)}${talla ? `, talla ${talla}` : ''}.`}</p>
+    <p>${limite ? `Ya tienes en tu carrito todas las unidades disponibles de ${esc(p.nombre)}${talla ? ` en talla ${talla}` : ''}. No hay más stock.` : `${plural(agregadas, 'unidad', 'unidades')} de ${esc(p.nombre)}${talla ? `, talla ${talla}` : ''}.`}</p>
     <dl class="datos-lista" style="margin-top:1rem">
       <dt>Productos en tu carrito</dt><dd>${unidadesCarrito()}</dd>
       <dt>Subtotal</dt><dd>${dinero(subtotalCarrito())}</dd>
@@ -590,7 +602,7 @@ function mostrarProductoAgregado(p, talla, agregadas) {
 }
 
 function pasos(actual) {
-  const nombres = ['Carrito', 'Retiro en tienda', 'Pago', 'Confirmación'];
+  const nombres = ['Carrito', 'Entrega', 'Pago', 'Confirmación'];
   return `<ol class="pasos" aria-label="Pasos de la compra">${nombres.map((n, i) => {
     const estadoPaso = i + 1 < actual ? 'hecho' : (i + 1 === actual ? 'actual' : '');
     return `<li class="paso ${estadoPaso ? 'paso--' + estadoPaso : ''}" ${i + 1 === actual ? 'aria-current="step"' : ''}>
@@ -599,7 +611,7 @@ function pasos(actual) {
   }).join('')}</ol>`;
 }
 
-function resumenPedido(extra = '') {
+function resumenPedido(extra = '', envio = null) {
   return `
     <aside class="panel panel--gris resumen" aria-labelledby="titulo-resumen">
       <h2 id="titulo-resumen">Resumen del pedido</h2>
@@ -607,8 +619,8 @@ function resumenPedido(extra = '') {
         <dt>Productos</dt><dd>${unidadesCarrito()}</dd>
         <dt>Subtotal</dt><dd>${dinero(subtotalCarrito())}</dd>
         <dt>IVA (15 %)</dt><dd>${dinero(ivaCarrito())}</dd>
-        <dt>Retiro en tienda</dt><dd>Gratis</dd>
-        <dt class="resumen__total">Total</dt><dd class="resumen__total">${dinero(totalCarrito())}</dd>
+        ${envio ? `<dt>Envío a domicilio</dt><dd>${dinero(envio)}</dd>` : `<dt>${envio === 0 ? 'Retiro en tienda' : 'Entrega'}</dt><dd>${envio === 0 ? 'Gratis' : 'Desde $0,00'}</dd>`}
+        <dt class="resumen__total">Total</dt><dd class="resumen__total">${dinero(totalCarrito() + (envio || 0))}</dd>
       </dl>
       ${extra}
     </aside>`;
@@ -622,7 +634,7 @@ function revisarCarrito() {
     if (!p || p.activo === false || (p.tallas.length && !p.tallas.includes(l.talla)) || (!p.tallas.length && l.talla)) { avisos.push('Quitamos un producto que ya no está disponible.'); return false; }
     const stock = stockDe(p, l.talla);
     if (stock <= 0) { avisos.push(`${p.nombre}${l.talla ? ' talla ' + l.talla : ''} se agotó y lo quitamos del carrito.`); return false; }
-    if (l.cantidad > Math.min(10, stock)) { l.cantidad = Math.min(10, stock); avisos.push(`Ajustamos la cantidad de ${p.nombre} a ${l.cantidad} (stock disponible).`); }
+    if (l.cantidad > stock) { l.cantidad = stock; avisos.push(`Ajustamos la cantidad de ${p.nombre} a ${l.cantidad} (stock disponible).`); }
     return true;
   });
   if (avisos.length) { guardarCarrito(); actualizarContador(); }
@@ -680,7 +692,7 @@ function vistaCarrito() {
         const p = producto(linea.id);
         const accion = b.dataset.accion;
         if (accion === 'menos' || accion === 'mas') {
-          const max = Math.min(10, stockDe(p, linea.talla));
+          const max = stockDe(p, linea.talla);
           linea.cantidad = Math.min(max, Math.max(1, linea.cantidad + (accion === 'mas' ? 1 : -1)));
           guardarCarrito(); actualizarContador();
           rerenderCarrito(`[data-item="${i}"][data-accion="${accion}"]`, `[data-item="${i}"][data-accion="${accion === 'mas' ? 'menos' : 'mas'}"]`);
@@ -711,7 +723,7 @@ function rerenderCarrito(...selectores) {
 function itemCarrito(linea, i) {
   const p = producto(linea.id);
   const nombreCompleto = `${p.nombre}${linea.talla ? ', talla ' + linea.talla : ''}`;
-  const max = Math.min(10, stockDe(p, linea.talla));
+  const max = stockDe(p, linea.talla);
   return `
     <li class="item-carrito">
       <a class="item-carrito__imagen" href="producto.html?id=${p.id}" tabindex="-1" aria-hidden="true"><img src="${img(p)}" alt="" width="500" height="500"></a>
@@ -760,7 +772,7 @@ function abrirCambioTalla(i) {
         const nueva = new FormData(e.target).get('nueva');
         cerrarDialogo();
         if (!nueva || nueva === linea.talla) return;
-        const max = Math.min(10, stockDe(p, nueva));
+        const max = stockDe(p, nueva);
         const otra = estado.carrito.find((x, j) => j !== i && x.id === linea.id && x.talla === nueva);
         if (otra) {
           otra.cantidad = Math.min(max, otra.cantidad + linea.cantidad);

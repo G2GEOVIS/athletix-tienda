@@ -33,6 +33,10 @@ const Api = (() => {
     if (m.includes('same password') || m.includes('should be different')) return 'La nueva contraseña debe ser diferente a la actual.';
     if (m.includes('jwt') || m.includes('not authenticated') || m.includes('inicia sesión') || m.includes('iniciar sesión')) return 'Tu sesión terminó. Vuelve a iniciar sesión.';
     if (m.includes('ak_metodo_pago_cliente')) return 'Ya tienes guardada esta tarjeta.';
+    if (m.includes('fk_producto_detallepedido') || (m.includes('foreign key') && m.includes('detalle_pedido'))) return 'Este producto ya tiene ventas registradas: no se puede borrar. Ocúltalo para que no se muestre en la tienda.';
+    if (m.includes('pk_producto') && m.includes('duplicate')) return 'Ya existe un producto con ese código.';
+    if (m.includes('row-level security') && m.includes('storage')) return 'Solo el administrador puede subir fotos.';
+    if (m.includes('payload too large') || m.includes('exceeded the maximum')) return 'La foto pesa demasiado (máximo 3 MB).';
     if (m.includes('pk_resena')) return 'Ya dejaste una reseña de este producto. Puedes editarla.';
     // Mensajes propios de la base de datos (ya vienen en español)
     const propio = String((error && error.message) || '');
@@ -83,15 +87,44 @@ const Api = (() => {
   const codigoPedido = (numero, fecha) => `AX-${new Date(fecha).getFullYear()}-${String(numero).padStart(5, '0')}`;
   const aCliente = (c) => ({ id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_telefono, correo: c.cli_correo, creado_en: c.cli_fecha_registro });
   const aTarjeta = (t) => ({ id: t.mpa_codigo, marca: t.mpa_marca, ultimos4: t.mpa_ultimos4, titular: t.mpa_titular, mes_vence: t.mpa_mes_vence, anio_vence: t.mpa_anio_vence });
+  const CAMPOS_PEDIDO = 'ped_numero, ped_estado, ped_subtotal, ped_iva, ped_costo_envio, ped_total, ped_fecha, ped_entrega, ped_ciudad, ped_direccion, ped_referencia, ped_codigo_retiro, ped_hora_estimada, '
+    + 'tienda(tie_nombre, tie_direccion, tie_horario, tie_ciudad), pago(pag_metodo, pag_marca, pag_ultimos4, pag_banco, pag_referencia, pag_monto, pag_fecha, pag_estado), '
+    + 'detalle_pedido(prd_codigo, dpe_talla, dpe_cantidad, dpe_precio_unitario)';
+  const textoDePago = (g) => (!g ? 'Sin registro de pago' : g.pag_metodo === 'Tarjeta' ? `Tarjeta ${g.pag_marca} •••• ${g.pag_ultimos4}` : `Transferencia desde ${g.pag_banco} · comprobante ${g.pag_referencia}`);
+  const aPedido = (p) => {
+    const g = Array.isArray(p.pago) ? p.pago[0] : p.pago;
+    const c = p.cliente;
+    return {
+      id: p.ped_numero, numero: codigoPedido(p.ped_numero, p.ped_fecha), estado: p.ped_estado,
+      subtotal: p.ped_subtotal, iva: p.ped_iva, costoEnvio: Number(p.ped_costo_envio || 0), total: p.ped_total, creado_en: p.ped_fecha,
+      entrega: p.ped_entrega || 'Retiro', ciudad: p.ped_ciudad, direccion: p.ped_direccion, referencia: p.ped_referencia,
+      codigoRetiro: p.ped_codigo_retiro, horaEstimada: p.ped_hora_estimada,
+      tiendas: p.tienda ? { nombre: p.tienda.tie_nombre, direccion: p.tienda.tie_direccion, horario: p.tienda.tie_horario, ciudad: p.tienda.tie_ciudad } : null,
+      pago: g ? { metodo: g.pag_metodo, estado: g.pag_estado, fecha: g.pag_fecha, monto: g.pag_monto } : null,
+      pagoTexto: textoDePago(g),
+      cliente: c ? { id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_telefono, correo: c.cli_correo } : null,
+      detalle_pedido: (p.detalle_pedido || []).map((d) => ({ producto_id: d.prd_codigo, talla: d.dpe_talla === 'U' ? null : d.dpe_talla, cantidad: d.dpe_cantidad, precio_unitario: d.dpe_precio_unitario }))
+    };
+  };
+  const SLUG_CATEGORIA = { 1: 'calzado', 2: 'tecnologia', 3: 'entrenamiento' };
+  const lineas = (t) => String(t || '').split('\n').map((x) => x.trim()).filter(Boolean);
+  const aProducto = (p) => ({
+    id: p.prd_codigo, codigo: p.prd_codigo, categoria: SLUG_CATEGORIA[p.cat_codigo] || 'entrenamiento', cat_codigo: p.cat_codigo,
+    nombre: p.prd_nombre, descripcion: p.prd_descripcion, publico: p.prd_publico, edad: p.prd_edad || 'Adulto',
+    precio: p.prd_precio, activo: p.prd_activo, usa_talla: p.prd_usa_talla, etiqueta: p.prd_etiqueta || '',
+    caracteristicas: lineas(p.prd_caracteristicas),
+    ficha: lineas(p.prd_ficha).map((l) => { const i = l.indexOf(':'); return i > 0 ? [l.slice(0, i).trim(), l.slice(i + 1).trim()] : [l, '']; }),
+    producto_tallas: (p.producto_talla || []).map((t) => ({ talla: t.pta_talla, stock: t.pta_stock })),
+    imagenes: (p.producto_imagen || []).slice().sort((x, y) => x.pim_orden - y.pim_orden).map((i) => ({ orden: i.pim_orden, url: i.pim_url, descripcion: i.pim_descripcion }))
+  });
   const aTienda = (t) => ({ id: t.tie_codigo, nombre: t.tie_nombre, direccion: t.tie_direccion, ciudad: t.tie_ciudad, horario: t.tie_horario });
   const aResena = (r) => ({ id: r.prd_codigo, mia: !!r.es_mia, autor: r.autor, estrellas: r.res_estrellas, comentario: r.res_comentario, creado_en: r.res_fecha });
 
   /* ---------- Catálogo ---------- */
   const catalogo = {
     async productos() {
-      const r = await ejecutar(sb.from('producto').select('prd_codigo, prd_precio, prd_activo, prd_usa_talla, producto_talla(pta_talla, pta_stock)'));
-      return mapear(r, (p) => ({ id: p.prd_codigo, codigo: p.prd_codigo, precio: p.prd_precio, activo: p.prd_activo, usa_talla: p.prd_usa_talla,
-        producto_tallas: (p.producto_talla || []).map((t) => ({ talla: t.pta_talla, stock: t.pta_stock })) }));
+      const r = await ejecutar(sb.from('producto').select('prd_codigo, cat_codigo, prd_nombre, prd_descripcion, prd_publico, prd_edad, prd_precio, prd_activo, prd_usa_talla, prd_etiqueta, prd_caracteristicas, prd_ficha, producto_talla(pta_talla, pta_stock), producto_imagen(pim_orden, pim_url, pim_descripcion)'));
+      return mapear(r, aProducto);
     },
     async calificaciones() {
       const r = await ejecutar(sb.from('vista_calificaciones').select('prd_codigo, promedio, opiniones'));
@@ -127,25 +160,25 @@ const Api = (() => {
   /* ---------- Pedidos ---------- */
   const pedidos = {
     // "clave" identifica el intento de pago: si se reenvía (doble clic, recarga, red lenta) la base devuelve el mismo pedido
-    async crear(tiendaId, tarjetaId, items, clave) {
-      const r = await ejecutar(sb.rpc('crear_pedido', { p_tienda: tiendaId, p_metodo_pago: tarjetaId, p_items: items, p_clave: clave }));
-      return mapear(r, (f) => ({ numero: f.ped_codigo, total: f.ped_total }));
+    async crear({ items, clave, entrega, pago }) {
+      const r = await ejecutar(sb.rpc('crear_pedido', {
+        p_items: items, p_clave: clave, p_entrega: entrega.tipo, p_tienda: entrega.tipo === 'Retiro' ? entrega.tienda : null,
+        p_ciudad: entrega.ciudad || null, p_direccion: entrega.direccion || null, p_referencia: entrega.referencia || null, p_pago: pago
+      }));
+      return mapear(r, (f) => {
+        const x = Array.isArray(f) ? f[0] : f;
+        return { id: x.ped_numero, numero: x.ped_codigo, total: x.ped_total, codigoRetiro: x.ped_codigo_retiro, horaEstimada: x.ped_hora_estimada };
+      });
     },
     async nuevos() { const r = await ejecutar(sb.rpc('pedidos_nuevos')); return r.error ? 0 : Number(r.datos) || 0; },
     async mios() {
-      const r = await ejecutar(sb.from('pedido')
-        .select('ped_numero, ped_estado, ped_subtotal, ped_iva, ped_total, ped_fecha, tienda(tie_nombre, tie_direccion, tie_horario), metodo_pago(mpa_marca, mpa_ultimos4), detalle_pedido(prd_codigo, dpe_talla, dpe_cantidad, dpe_precio_unitario)')
-        .order('ped_fecha', { ascending: false }));
-      return mapear(r, (p) => {
-        const pago = p.metodo_pago;
-        return {
-          id: p.ped_numero, numero: codigoPedido(p.ped_numero, p.ped_fecha), estado: p.ped_estado,
-          subtotal: p.ped_subtotal, iva: p.ped_iva, total: p.ped_total, creado_en: p.ped_fecha,
-          tiendas: p.tienda ? { nombre: p.tienda.tie_nombre, direccion: p.tienda.tie_direccion, horario: p.tienda.tie_horario } : null,
-          metodos_pago: pago ? { marca: pago.mpa_marca, ultimos4: pago.mpa_ultimos4 } : null,
-          detalle_pedido: (p.detalle_pedido || []).map((d) => ({ producto_id: d.prd_codigo, talla: d.dpe_talla === 'U' ? null : d.dpe_talla, cantidad: d.dpe_cantidad, precio_unitario: d.dpe_precio_unitario }))
-        };
-      });
+      const r = await ejecutar(sb.from('pedido').select(CAMPOS_PEDIDO).order('ped_fecha', { ascending: false }));
+      return mapear(r, aPedido);
+    },
+    /* Un pedido con todos sus datos (orden de pedido y seguimiento). El cliente solo ve los suyos; el administrador, todos */
+    async uno(numero) {
+      const r = await ejecutar(sb.from('pedido').select(CAMPOS_PEDIDO + ', cliente(cli_usuario, cli_cedula, cli_nombres, cli_apellidos, cli_telefono, cli_correo)').eq('ped_numero', numero).maybeSingle());
+      return mapear(r, aPedido);
     },
     /* Verifica en la base si el cliente compró este producto (cualquier pedido que no esté cancelado) */
     async compro(codigo) {
@@ -158,10 +191,66 @@ const Api = (() => {
     async todos() {
       return mapear(await ejecutar(sb.rpc('pedidos_admin')), (p) => ({
         id: p.ped_numero, numero: p.ped_codigo, estado: p.ped_estado, total: p.ped_total, creado_en: p.ped_fecha,
-        cliente: p.cliente, correo: p.cli_correo, telefono: p.cli_telefono, cedula: p.cli_cedula, tienda: p.tie_nombre, horario: p.tie_horario, productos: p.productos
+        cliente: p.cliente, correo: p.cli_correo, telefono: p.cli_telefono, cedula: p.cli_cedula, tienda: p.tie_nombre, horario: p.tie_horario, productos: p.productos,
+        entrega: p.ped_entrega || 'Retiro', ciudad: p.ped_ciudad, direccion: p.ped_direccion, referencia: p.ped_referencia,
+        codigoRetiro: p.ped_codigo_retiro, horaEstimada: p.ped_hora_estimada, pagoTexto: p.pago || ''
       }));
     },
     cambiarEstado(numero, estado) { return ejecutar(sb.rpc('cambiar_estado_pedido', { p_numero: numero, p_estado: estado })); }
+  };
+
+  /* ---------- Administrador: productos y pagos ---------- */
+  const CATEGORIA_CODIGO = { calzado: 1, tecnologia: 2, entrenamiento: 3 };
+  const admin = {
+    activar(codigo, activo) { return ejecutar(sb.from('producto').update({ prd_activo: activo }).eq('prd_codigo', codigo)); },
+    async borrarProducto(codigo) {
+      const r = await ejecutar(sb.from('producto').delete().eq('prd_codigo', codigo).select('prd_codigo'));
+      if (r.error) return r;
+      return r.datos && r.datos.length ? r : { error: 'No se pudo borrar el producto.' };
+    },
+    /* Crea o actualiza el producto con sus tallas y fotos */
+    async guardarProducto(d, nuevo) {
+      const fila = {
+        prd_codigo: d.codigo, cat_codigo: CATEGORIA_CODIGO[d.categoria], prd_nombre: d.nombre, prd_descripcion: d.descripcion,
+        prd_publico: d.publico, prd_edad: d.edad, prd_precio: d.precio, prd_usa_talla: d.usaTalla, prd_activo: d.activo,
+        prd_etiqueta: d.etiqueta || null, prd_caracteristicas: d.caracteristicas || null, prd_ficha: d.ficha || null
+      };
+      const rp = nuevo ? await ejecutar(sb.from('producto').insert(fila)) : await ejecutar(sb.from('producto').update(fila).eq('prd_codigo', d.codigo));
+      if (rp.error) return rp;
+      // Tallas: se guardan las nuevas y se quitan las que ya no están
+      const rt = await ejecutar(sb.from('producto_talla').upsert(d.tallas.map((t) => ({ prd_codigo: d.codigo, pta_talla: t.talla, pta_stock: t.stock }))));
+      if (rt.error) return rt;
+      const nombres = d.tallas.map((t) => t.talla);
+      const rq = await ejecutar(sb.from('producto_talla').delete().eq('prd_codigo', d.codigo).not('pta_talla', 'in', `(${nombres.map((n) => `"${n.replace(/"/g, '')}"`).join(',')})`));
+      if (rq.error) return rq;
+      // Fotos: se reemplazan en el orden del formulario
+      const rb = await ejecutar(sb.from('producto_imagen').delete().eq('prd_codigo', d.codigo));
+      if (rb.error) return rb;
+      if (d.fotos.length) {
+        const ri = await ejecutar(sb.from('producto_imagen').insert(d.fotos.slice(0, 6).map((f, i) => ({ prd_codigo: d.codigo, pim_orden: i + 1, pim_url: f.url, pim_descripcion: f.descripcion.slice(0, 80) }))));
+        if (ri.error) return ri;
+      }
+      return { datos: true };
+    },
+    async subirFoto(archivo, codigo) {
+      if (!sb) return { error: 'La tienda no pudo conectarse con el servidor.' };
+      const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[archivo.type] || 'jpg';
+      const ruta = `${codigo}/${Date.now()}.${ext}`;
+      const r = await ejecutar(sb.storage.from('productos').upload(ruta, archivo, { contentType: archivo.type, upsert: false }));
+      if (r.error) return r;
+      return { datos: sb.storage.from('productos').getPublicUrl(ruta).data.publicUrl };
+    },
+    async pagos() {
+      const r = await ejecutar(sb.from('pago')
+        .select('pag_codigo, ped_numero, pag_metodo, pag_marca, pag_ultimos4, pag_banco, pag_referencia, pag_monto, pag_fecha, pag_estado, pedido(ped_fecha, cliente(cli_nombres, cli_apellidos))')
+        .order('pag_fecha', { ascending: false }).limit(500));
+      return mapear(r, (g) => ({
+        codigo: g.pag_codigo, pedido: g.ped_numero, numeroPedido: codigoPedido(g.ped_numero, g.pedido ? g.pedido.ped_fecha : g.pag_fecha),
+        cliente: g.pedido && g.pedido.cliente ? `${g.pedido.cliente.cli_nombres} ${g.pedido.cliente.cli_apellidos}` : '',
+        metodo: g.pag_metodo, detalle: g.pag_metodo === 'Tarjeta' ? `${g.pag_marca} •••• ${g.pag_ultimos4}` : `${g.pag_banco} · comprobante ${g.pag_referencia}`,
+        monto: g.pag_monto, fecha: g.pag_fecha, estado: g.pag_estado
+      }));
+    }
   };
 
   /* ---------- Reseñas ---------- */
@@ -197,18 +286,28 @@ const Api = (() => {
     configurado() { return !!(window.emailjs && CONFIG.emailjs.servicio && CONFIG.emailjs.plantillaCliente && CONFIG.emailjs.clavePublica); },
     /* Al cliente, apenas paga: confirma que su pedido se recibió */
     compraConfirmada(p) {
+      const base = location.origin + location.pathname.replace(/[^/]*$/, '');
+      const domicilio = p.entrega === 'Domicilio';
       return enviar(CONFIG.emailjs.plantillaCliente, {
         to_email: p.correo, nombre: p.nombre, numero: p.numero, tienda: p.tienda, horario: p.horario, total: Number(p.total).toFixed(2),
-        asunto: `Recibimos tu pedido ${p.numero}`,
-        mensaje: `Gracias por tu compra. Tu pago fue aprobado y ya estamos preparando tu pedido ${p.numero}. Te enviaremos otro correo cuando esté listo para retirar.`
+        asunto: `Recibimos tu pedido ${p.numero} · código ${p.codigo}`,
+        mensaje: `Gracias por tu compra. Tu pago fue aprobado (${p.pagoTexto}, pago simulado). `
+          + (domicilio ? `Tu pedido sale de la tienda y llega a tu dirección en ${ENTREGA.domicilio}. ` : `Tu pedido estará listo para retirar en ${ENTREGA.retiro}. `)
+          + `Tu código de ${domicilio ? 'entrega' : 'retiro'} es ${p.codigo}: preséntalo con tu cédula. `
+          + `Mira tu orden de pedido aquí: ${base}orden.html?pedido=${parseInt(String(p.numero).split('-').pop(), 10)}`
       });
     },
-    /* Al cliente, cuando el administrador marca el pedido como "Listo" */
+    /* Al cliente, cuando el administrador marca el pedido como "Listo" (o "En camino" si es envío) */
     pedidoListo(p) {
+      const domicilio = p.entrega === 'Domicilio';
       return enviar(CONFIG.emailjs.plantillaCliente, {
-        to_email: p.correo, nombre: p.cliente, numero: p.numero, tienda: p.tienda, horario: p.horario, total: Number(p.total).toFixed(2),
-        asunto: `Tu pedido ${p.numero} está listo para retirar`,
-        mensaje: `Tu pedido ${p.numero} ya está listo. Puedes retirarlo en la tienda que elegiste.`
+        to_email: p.correo, nombre: p.cliente, numero: p.numero, total: Number(p.total).toFixed(2),
+        tienda: domicilio ? `Envío a domicilio: ${p.direccion}, ${p.ciudad}` : p.tienda,
+        horario: domicilio ? 'Llega en menos de 2 horas' : p.horario,
+        asunto: domicilio ? `Tu pedido ${p.numero} va en camino` : `Tu pedido ${p.numero} está listo para retirar`,
+        mensaje: domicilio
+          ? `Tu pedido ${p.numero} ya salió de la tienda con nuestro repartidor. Ten a mano tu cédula y tu código ${p.codigoRetiro || ''}.`
+          : `Tu pedido ${p.numero} ya está listo. Retíralo en la tienda con tu cédula y tu código ${p.codigoRetiro || ''}.`
       }).then((r) => (r.error ? { error: r.error + ' El estado sí se guardó.' } : r));
     },
     /* Al administrador, cada vez que un cliente hace un pedido */
@@ -220,5 +319,5 @@ const Api = (() => {
     }
   };
 
-  return { disponible, auth, catalogo, cliente, pedidos, resenas, correo, traducir };
+  return { disponible, auth, catalogo, cliente, pedidos, resenas, correo, admin, traducir };
 })();

@@ -18,7 +18,7 @@ function leerCarrito() {
   try {
     const c = JSON.parse(localStorage.getItem(CLAVE_CARRITO));
     if (Array.isArray(c)) {
-      return c.filter((i) => i && typeof i.id === 'string' && Number.isInteger(i.cantidad) && i.cantidad >= 1 && i.cantidad <= 10)
+      return c.filter((i) => i && typeof i.id === 'string' && Number.isInteger(i.cantidad) && i.cantidad >= 1 && i.cantidad <= 9999)
         .map((i) => ({ id: i.id, talla: i.talla ? String(i.talla) : null, cantidad: i.cantidad }));
     }
   } catch (e) { /* almacenamiento no disponible o dañado */ }
@@ -45,7 +45,7 @@ const productoPorDbId = (dbId) => PRODUCTOS.find((p) => p.dbId === dbId);
 PRODUCTOS.forEach((p) => { if (p.dbId === undefined) p.dbId = p.id; });
 const normalizar = (t) => String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
-const img = (p, vista = 1) => `img/productos/${p.id}-${vista}.jpg`;
+const img = (p, vista = 1) => (p.imagenes && p.imagenes[vista - 1]) || `img/productos/${p.id}-${vista}.jpg`;
 // Si una foto no carga (archivo faltante o red lenta), se muestra una imagen de respaldo en vez de un hueco roto
 const FOTO_RESPALDO = 'img/sin-foto.svg';
 document.addEventListener('error', (e) => {
@@ -55,7 +55,9 @@ document.addEventListener('error', (e) => {
     el.src = FOTO_RESPALDO;
   }
 }, true);
-const etiquetaCategoria = (p) => CATEGORIAS[p.categoria] + (p.publico ? ' · ' + p.publico : '');
+// Público y edad juntos: Hombre, Mujer, Niño, Niña o Unisex
+const etiquetaPublico = (p) => (p.edad === 'Niño' ? (p.publico === 'Mujer' ? 'Niña' : p.publico === 'Hombre' ? 'Niño' : 'Niños') : (p.publico || ''));
+const etiquetaCategoria = (p) => CATEGORIAS[p.categoria] + (etiquetaPublico(p) ? ' · ' + etiquetaPublico(p) : '');
 const unidadesCarrito = () => estado.carrito.reduce((s, i) => s + i.cantidad, 0);
 const subtotalCarrito = () => estado.carrito.reduce((s, i) => s + i.cantidad * ((producto(i.id) || {}).precio || 0), 0);
 const redondear = (n) => Math.round(n * 100) / 100;
@@ -97,7 +99,11 @@ const ICONOS = {
   correo: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 7 8.5-7"/>',
   ajustes: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
   estrella: '<path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/>',
-  recargar: '<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/>'
+  recargar: '<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/>',
+  banco: '<path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/>',
+  documento: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',
+  play: '<path d="M8 5v14l11-7z"/>',
+  imagen: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 9"/>'
 };
 const icono = (n, clase = '') => `<svg class="${clase}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONOS[n]}</svg>`;
 

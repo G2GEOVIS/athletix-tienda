@@ -555,12 +555,12 @@ function leerTarjeta(form) {
 }
 
 /* ======================= Mis pedidos ======================= */
-function seguimiento(estadoPedido) {
-  if (estadoPedido === 'Cancelado') return '<p class="alerta" style="margin-top:.75rem">Este pedido fue cancelado.</p>';
+function seguimiento(estadoPedido, entrega = 'Retiro') {
+  if (estadoPedido === 'Cancelado') return '<p class="alerta" style="margin-top:.75rem">Este pedido fue cancelado; el pago se anuló.</p>';
   const etapa = ESTADOS.indexOf(estadoPedido);
-  return `<ol class="seguimiento" aria-label="Estado del pedido: ${NOMBRE_ESTADO[estadoPedido]}">${ESTADOS.map((e, i) => `
+  return `<ol class="seguimiento" aria-label="Estado del pedido: ${nombreEstado(estadoPedido, entrega)}">${ESTADOS.map((e, i) => `
     <li class="${i < etapa ? 'hecho' : i === etapa ? 'actual hecho' : ''}" ${i === etapa ? 'aria-current="step"' : ''}>
-      <span class="seguimiento__punto">${i <= etapa ? icono('check') : ''}</span>${NOMBRE_ESTADO[e]}
+      <span class="seguimiento__punto">${i <= etapa ? icono('check') : ''}</span>${nombreEstado(e, entrega)}
     </li>`).join('')}</ol>`;
 }
 
@@ -591,21 +591,27 @@ async function vistaPedidos() {
           <li class="pedido">
             <div class="pedido__cabecera">
               <h2 class="pedido__numero">Pedido N.º ${esc(p.numero)}</h2>
-              <span class="estado estado--${p.estado.toLowerCase()}">${NOMBRE_ESTADO[p.estado]}</span>
+              <span class="estado estado--${p.estado.toLowerCase()}">${nombreEstado(p.estado, p.entrega)}</span>
             </div>
             <p class="texto-suave" style="margin-top:.25rem">${fechaHora(p.creado_en)}</p>
             <ul class="pedido__productos">${p.detalle_pedido.map((d) => { const pr = productoPorDbId(d.producto_id); return `<li class="pedido__producto"><span>${d.cantidad} × ${pr ? `<a href="producto.html?id=${pr.id}">${esc(pr.nombre)}</a>` : 'Producto'}${d.talla ? ` (talla ${esc(d.talla)})` : ''} · ${dinero(d.precio_unitario * d.cantidad)}</span><span class="pedido__resena">${botonResena(p, d, pr)}</span></li>`; }).join('')}</ul>
             <dl class="datos-lista datos-lista--compacta">
               <dt>Subtotal</dt><dd>${dinero(p.subtotal)}</dd>
               <dt>IVA</dt><dd>${dinero(p.iva)}</dd>
+              ${p.costoEnvio ? `<dt>Envío</dt><dd>${dinero(p.costoEnvio)}</dd>` : ''}
               <dt>Total</dt><dd>${dinero(p.total)}</dd>
-              <dt>Retiro en</dt><dd>${esc(p.tiendas ? p.tiendas.nombre : '')}</dd>
-              <dt>Pago</dt><dd>${p.metodos_pago ? `${p.metodos_pago.marca} •••• ${p.metodos_pago.ultimos4}` : 'Tarjeta (ya no está guardada)'}</dd>
+              <dt>${p.entrega === 'Domicilio' ? 'Envío a' : 'Retiro en'}</dt><dd>${p.entrega === 'Domicilio' ? `${esc(p.direccion)}, ${esc(p.ciudad)}` : esc(p.tiendas ? p.tiendas.nombre : '')}</dd>
+              <dt>Código</dt><dd><strong>${esc(p.codigoRetiro || '')}</strong></dd>
+              <dt>Pago</dt><dd>${esc(p.pagoTexto)}${p.pago && p.pago.estado === 'Anulado' ? ' (anulado)' : ''}</dd>
             </dl>
-            ${seguimiento(p.estado)}
+            ${seguimiento(p.estado, p.entrega)}
+            <div class="botones-fila" style="margin-top:1rem">
+              <a class="boton boton--secundario boton--chico" href="orden.html?pedido=${p.id}">${icono('documento')}Orden de pedido</a>
+              <a class="boton boton--secundario boton--chico" href="seguimiento.html?pedido=${p.id}">${icono('camion')}Ver simulación del envío</a>
+            </div>
           </li>`).join('')}
         </ul>
-        <p class="texto-suave" style="margin-top:1rem">Te enviaremos un correo a ${esc(correoSesion())} cuando tu pedido esté listo para retirar.</p>`}
+        <p class="texto-suave" style="margin-top:1rem">Te enviaremos un correo a ${esc(correoSesion())} cuando tu pedido esté listo o vaya en camino.</p>`}
     </div>`,
     montar(main) {
       // Desde cada producto comprado se abre el formulario de reseña; la compra ya está verificada por el pedido

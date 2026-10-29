@@ -1,8 +1,18 @@
 /* Datos de la tienda ATHLETIX */
 'use strict';
 
-/* Tiempo estimado para tener listo un pedido */
-const TIEMPO_LISTO = '24 a 48 horas';
+/* Entrega rápida: retiro en tienda o envío a domicilio express (la base usa los mismos tiempos) */
+const TIEMPO_LISTO = '1 hora';
+const ENTREGA = { retiro: '1 hora', domicilio: '2 a 3 horas', costoEnvio: 3.5, ciudades: ['Quito', 'Guayaquil'] };
+
+/* Pago simulado por transferencia: cuenta de la tienda (ficticia) y bancos aceptados */
+const CUENTA_TIENDA = { banco: 'Banco Pichincha', tipo: 'Cuenta corriente', numero: '2200456789', titular: 'ATHLETIX Tienda Académica', ruc: '1799999999001' };
+const BANCOS = ['Banco Pichincha', 'Banco Guayaquil', 'Produbanco', 'Banco del Pacífico', 'Banco Internacional'];
+
+/* Nombre de cada estado según cómo se entrega el pedido */
+const nombreEstado = (estadoPedido, entrega) => entrega === 'Domicilio'
+  ? ({ Listo: 'En camino', Retirado: 'Entregado' }[estadoPedido] || NOMBRE_ESTADO[estadoPedido])
+  : NOMBRE_ESTADO[estadoPedido];
 
 /* Etapas de un pedido (los nombres coinciden con la base de datos) */
 const ESTADOS = ['Recibido', 'Preparando', 'Listo', 'Retirado'];
@@ -713,8 +723,9 @@ const AYUDA = [
   ['¿Cómo compro?', 'Elige un producto (y tu talla si es calzado), agrégalo al carrito, inicia sesión, elige la tienda donde lo retiras y paga con tarjeta.'],
   ['¿Qué necesito para crear mi cuenta?', 'Tu nombre, apellido, cédula ecuatoriana, celular y un correo al que tengas acceso. Te enviaremos un enlace para confirmar el correo antes de tu primera compra.'],
   ['No me llega el correo de confirmación', 'Revisa la carpeta de spam o promociones. Si no aparece en unos minutos, en «Iniciar sesión» puedes pedir que te lo enviemos otra vez.'],
-  ['¿Cómo puedo pagar?', 'Con tarjeta Visa o Mastercard. Esta es una tienda académica: usa solo las tarjetas de prueba que aparecen en la pantalla de pago, nunca tu tarjeta real. Solo guardamos los últimos 4 dígitos.'],
-  ['¿Cómo recibo mi pedido?', 'Lo retiras sin costo en la tienda que elijas. Te enviamos un correo cuando esté listo, normalmente en 24 a 48 horas. Presenta tu cédula al retirarlo.'],
+  ['¿Cómo puedo pagar?', 'Con tarjeta Visa o Mastercard o con transferencia bancaria. Es una simulación: no se mueve dinero real. Con tarjeta, usa las tarjetas de prueba de la pantalla de pago (validamos el número, la fecha y el CVV, y solo guardamos los últimos 4 dígitos). Con transferencia, eliges tu banco y escribes el número del comprobante. Cada pago queda registrado en la base de datos.'],
+  ['¿Entregan factura?', 'No. Esta es una tienda académica y no emite facturas. Recibes una orden de pedido con el detalle de tu compra.'],
+  ['¿Cómo recibo mi pedido?', 'Tienes dos opciones: retiro gratis en la tienda que elijas, listo en 1 hora, o envío a domicilio express en Quito y Guayaquil por $3,50, que llega en 2 a 3 horas. Te enviamos la orden de pedido con un código de 6 letras; al retirar presenta ese código y tu cédula. En «Mis pedidos» puedes ver la simulación del envío paso a paso.'],
   ['¿Cómo dejo una reseña?', 'Inicia sesión y entra a «Mis pedidos»: junto a cada producto que compraste está el botón «Escribir reseña». También puedes hacerlo desde la página del producto, en «Opiniones de clientes». La tienda verifica en tu cuenta que compraste ese producto: solo pueden opinar quienes lo compraron, y cada cliente deja una reseña por producto (puede editarla después).'],
   ['¿Puedo cambiar mi pedido después de pagar?', 'No. Antes de pagar puedes cambiar la talla, la cantidad o quitar productos del carrito. Una vez pagado, el pedido no se puede modificar.']
 ];

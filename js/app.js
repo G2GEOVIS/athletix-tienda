@@ -2,8 +2,24 @@
 'use strict';
 
 /* ======================= Catálogo desde la base de datos ======================= */
-// Los textos y fotos vienen de datos.js; el precio, el stock y las calificaciones vienen de la base,
-// que es la fuente oficial (así el precio que se muestra es el mismo que se cobra).
+// La base es la fuente oficial de todos los productos (los que crea el administrador también).
+// datos.js queda como respaldo: si la base no responde, la tienda igual muestra el catálogo.
+const ORDEN_TALLAS = (a, b) => parseFloat(a) - parseFloat(b);
+function desdeBase(f, anterior) {
+  const tallas = (f.producto_tallas || []).map((t) => t.talla).filter((t) => t !== 'U').sort(ORDEN_TALLAS);
+  const vistas = f.imagenes.length ? f.imagenes.map((i) => i.descripcion) : (anterior ? anterior.vistas : ['vista principal']);
+  const claves = anterior ? anterior.claves : normalizar([f.nombre, f.descripcion].join(' ')).split(/[^a-zñ0-9]+/).filter((x) => x.length > 2);
+  return {
+    id: f.id, dbId: f.id, nombre: f.nombre, categoria: f.categoria, publico: f.publico === 'Unisex' ? null : f.publico, edad: f.edad,
+    precio: Number(f.precio), activo: f.activo, etiqueta: f.etiqueta,
+    tallas: f.usa_talla ? tallas : [], vistas, imagenes: f.imagenes.map((i) => i.url),
+    descripcion: f.descripcion,
+    caracteristicas: f.caracteristicas.length ? f.caracteristicas : (anterior ? anterior.caracteristicas : []),
+    ficha: f.ficha.length ? f.ficha : (anterior ? anterior.ficha : []),
+    claves,
+    stock: Object.fromEntries((f.producto_tallas || []).map((t) => [t.talla, t.stock]))
+  };
+}
 async function cargarCatalogo() {
   const [rp, rc] = await Promise.all([Api.catalogo.productos(), Api.catalogo.calificaciones()]);
   if (rp.error) {
@@ -13,22 +29,24 @@ async function cargarCatalogo() {
     return false;
   }
   const notas = new Map(((rc.datos) || []).map((c) => [c.producto_id, c]));
-  const filas = new Map((rp.datos || []).map((f) => [f.codigo, f]));
-  PRODUCTOS.forEach((p) => {
-    const f = filas.get(p.id);
-    // Si la base aún no tiene productos, se siguen mostrando (sin poder comprar); si los tiene, el que falte se oculta
-    if (!f) { p.dbId = null; if (filas.size) p.activo = false; return; }
-    p.dbId = f.id;
-    p.precio = Number(f.precio);
-    p.activo = f.activo;
-    p.stock = {};
-    (f.producto_tallas || []).forEach((t) => { p.stock[t.talla] = t.stock; });
-    const n = notas.get(f.id);
-    p.rating = n ? Number(n.promedio) : 0;
-    p.opiniones = n ? Number(n.opiniones) : 0;
-  });
-  estado.catalogoConectado = filas.size > 0;
-  estado.errorCatalogo = filas.size ? '' : 'Los productos todavía no están cargados en la base de datos.';
+  const filas = rp.datos || [];
+  if (filas.length) {
+    const anteriores = new Map(PRODUCTOS.map((p) => [p.id, p]));
+    const nuevos = filas.map((f) => {
+      const p = desdeBase(f, anteriores.get(f.id));
+      const n = notas.get(f.id);
+      p.rating = n ? Number(n.promedio) : 0;
+      p.opiniones = n ? Number(n.opiniones) : 0;
+      return p;
+    });
+    // Se mantiene el orden de datos.js y los productos nuevos del administrador van al final
+    const orden = new Map(PRODUCTOS.map((p, i) => [p.id, i]));
+    nuevos.sort((a, b) => (orden.has(a.id) ? orden.get(a.id) : 1e6) - (orden.has(b.id) ? orden.get(b.id) : 1e6));
+    PRODUCTOS.length = 0;
+    PRODUCTOS.push(...nuevos);
+  }
+  estado.catalogoConectado = filas.length > 0;
+  estado.errorCatalogo = filas.length ? '' : 'Los productos todavía no están cargados en la base de datos.';
   pintarBannerConexion();
   return true;
 }
@@ -106,7 +124,7 @@ function renderCuenta() {
     <ul class="cuenta__menu" id="menu-cuenta" hidden>
       <li><a href="perfil.html">${icono('usuario')}Mi perfil</a></li>
       <li><a href="pedidos.html">${icono('paquete')}Mis pedidos</a></li>
-      ${estado.esAdmin ? `<li><a href="admin.html?estado=Recibido">${icono('ajustes')}Panel de pedidos<span class="insignia" data-nuevos ${estado.nuevos ? '' : 'hidden'}>${estado.nuevos}<span class="solo-lector"> pedidos nuevos</span></span></a></li>` : ''}
+      ${estado.esAdmin ? `<li><a href="admin.html?estado=Recibido">${icono('ajustes')}Panel de pedidos<span class="insignia" data-nuevos ${estado.nuevos ? '' : 'hidden'}>${estado.nuevos}<span class="solo-lector"> pedidos nuevos</span></span></a></li><li><a href="admin-productos.html">${icono('tienda')}Productos</a></li><li><a href="admin-pagos.html">${icono('tarjeta')}Pagos</a></li>` : ''}
       <li><button type="button" data-accion="cerrar-sesion">${icono('salir')}Cerrar sesión</button></li>
     </ul>`;
   const boton = $('.cuenta__boton', zona);
@@ -180,7 +198,8 @@ function leerRuta() {
 const ARCHIVOS = { '': 'index.html', productos: 'productos.html', producto: 'producto.html', carrito: 'carrito.html', ingresar: 'login.html',
   registro: 'registro.html', 'verifica-correo': 'confirmar-correo.html', 'completar-perfil': 'completar-perfil.html', recuperar: 'recuperar.html',
   'nueva-clave': 'nueva-clave.html', retiro: 'retiro.html', pago: 'pago.html', confirmacion: 'confirmacion.html', pedidos: 'pedidos.html',
-  perfil: 'perfil.html', admin: 'admin.html', ayuda: 'ayuda.html' };
+  perfil: 'perfil.html', admin: 'admin.html', ayuda: 'ayuda.html', orden: 'orden.html', seguimiento: 'seguimiento.html',
+  'admin-productos': 'admin-productos.html', 'admin-producto': 'admin-producto.html', 'admin-pagos': 'admin-pagos.html' };
 
 const VISTAS = {
   '': vistaInicio,
@@ -199,6 +218,11 @@ const VISTAS = {
   pedidos: vistaPedidos,
   perfil: vistaPerfil,
   admin: vistaAdmin,
+  'admin-productos': vistaAdminProductos,
+  'admin-producto': vistaAdminProducto,
+  'admin-pagos': vistaAdminPagos,
+  orden: vistaOrden,
+  seguimiento: vistaSeguimiento,
   ayuda: vistaAyuda
 };
 
@@ -312,12 +336,18 @@ async function iniciar() {
     if (!estado.cliente) { ir('completar-perfil.html'); return; }
     if (volver === 'retiro' && estado.carrito.length) { guardarTemporal('volver', null); ir('retiro.html'); return; }
   }
+  // Se espera el catálogo de la base (máximo 5 s); si tarda más se muestra el de respaldo y luego se actualiza
+  $('#contenido').innerHTML = cargandoHtml();
+  let listo = false;
+  catalogo.then(() => { listo = true; });
+  await Promise.race([catalogo, new Promise((ok) => setTimeout(ok, 5000))]);
   render();
   mostrarAvisoPendiente();
-  await catalogo;
-  // Si la vista depende del stock o los precios, se vuelve a pintar con los datos reales
-  const ruta = leerRuta().partes[0] || '';
-  if (['', 'productos', 'producto', 'carrito'].includes(ruta) && !$('#dialogo').open) render();
+  if (!listo) {
+    await catalogo;
+    const ruta = leerRuta().partes[0] || '';
+    if (['', 'productos', 'producto', 'carrito'].includes(ruta) && !$('#dialogo').open) render();
+  }
 }
 
 // Enlaces antiguos con # (por ejemplo index.html#/carrito) se llevan a su página nueva

@@ -78,7 +78,7 @@ const ORDENES = {
 
 function filtrar(params) {
   const cat = CATEGORIAS[params.get('cat')] ? params.get('cat') : 'todas';
-  let pub = ['Hombre', 'Mujer', 'Unisex'].includes(params.get('pub')) ? params.get('pub') : 'todos';
+  const pub = ['Hombre', 'Mujer', 'Unisex'].includes(params.get('pub')) ? params.get('pub') : 'todos';
   const precio = RANGOS[params.get('precio')] ? params.get('precio') : 'todos';
   const orden = ORDENES[params.get('orden')] ? params.get('orden') : 'relevancia';
   const q = (params.get('q') || '').slice(0, 80);
@@ -87,8 +87,6 @@ function filtrar(params) {
   // El género es un atributo del producto: Hombre, Mujer o Unisex.
   // Entrenamiento es todo unisex, así que ahí el género no filtra.
   const usaGenero = cat !== 'entrenamiento';
-  // Tecnología solo tiene productos de hombre y de mujer
-  if (cat === 'tecnologia' && pub === 'Unisex') pub = 'todos';
   if (usaGenero && pub !== 'todos') lista = lista.filter((p) => (p.publico || 'Unisex') === pub);
   lista = lista.filter(RANGOS[precio][1]);
   if (ORDENES[orden][1]) lista = [...lista].sort(ORDENES[orden][1]);
@@ -163,7 +161,7 @@ function vistaProductos(partes, params) {
             </fieldset>
             <fieldset class="grupo-filtro" id="grupo-publico" ${f.cat === 'entrenamiento' ? 'hidden' : ''}>
               <legend>Género</legend>
-              ${radio('pub', 'todos', 'Todos', f.pub)}${radio('pub', 'Hombre', 'Hombre', f.pub)}${radio('pub', 'Mujer', 'Mujer', f.pub)}<span id="opcion-unisex" ${f.cat === 'tecnologia' ? 'hidden' : ''}>${radio('pub', 'Unisex', 'Unisex', f.pub)}</span>
+              ${radio('pub', 'todos', 'Todos', f.pub)}${radio('pub', 'Hombre', 'Hombre', f.pub)}${radio('pub', 'Mujer', 'Mujer', f.pub)}${radio('pub', 'Unisex', 'Unisex', f.pub)}
             </fieldset>
             <fieldset class="grupo-filtro">
               <legend>Precio</legend>
@@ -190,7 +188,7 @@ function vistaProductos(partes, params) {
         const d = new FormData(form);
         const cat = d.get('cat');
         if (cat !== 'todas') p.set('cat', cat);
-        if (cat !== 'entrenamiento' && d.get('pub') !== 'todos' && !(cat === 'tecnologia' && d.get('pub') === 'Unisex')) p.set('pub', d.get('pub'));
+        if (cat !== 'entrenamiento' && d.get('pub') !== 'todos') p.set('pub', d.get('pub'));
         if (d.get('precio') !== 'todos') p.set('precio', d.get('precio'));
         const orden = $('#orden', main).value;
         if (orden !== 'relevancia') p.set('orden', orden);
@@ -200,10 +198,6 @@ function vistaProductos(partes, params) {
         const grupoGenero = $('#grupo-publico', main);
         grupoGenero.hidden = f2.cat === 'entrenamiento';
         if (grupoGenero.hidden) $('input[name=pub][value=todos]', grupoGenero).checked = true;
-        // En tecnología desaparece Unisex
-        const opcionUnisex = $('#opcion-unisex', main);
-        opcionUnisex.hidden = f2.cat === 'tecnologia';
-        if (opcionUnisex.hidden && $('input[name=pub][value=Unisex]', main).checked) $('input[name=pub][value=todos]', main).checked = true;
         $('#resultados', main).innerHTML = htmlResultados(f2);
         $('#titulo-catalogo', main).innerHTML = tituloCatalogo(f2);
         $('#conteo', main).textContent = plural(f2.lista.length, 'producto', 'productos');

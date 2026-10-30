@@ -9,7 +9,7 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 ## Funciones
 
 - Catálogo de 68 productos (calzado, tecnología deportiva y entrenamiento) con filtros por categoría, género y precio, orden y buscador. Todo viene de la base de datos.
-- El género es un atributo del producto: Hombre, Mujer o Unisex. Tecnología maneja solo hombre y mujer; entrenamiento es unisex.
+- El género es un atributo del producto: Hombre, Mujer o Unisex. Calzado y tecnología tienen al menos 10 productos de hombre y 10 de mujer.
 - Cuentas reales con Supabase: registro con cédula ecuatoriana validada (módulo 10), confirmación por correo, recuperar contraseña y botón para mostrar la contraseña. Las contraseñas se guardan cifradas con bcrypt (Supabase Auth); la tienda nunca las ve.
 - No se permite registrar dos veces la misma cédula ni el mismo correo.
 - Ingreso con cuenta de Google (OAuth de Supabase). El botón aparece solo cuando el proveedor Google está activado en Supabase; al primer ingreso el cliente completa su cédula y celular.
@@ -85,7 +85,6 @@ bd/05_pagos_entrega_admin.sql    Tabla PAGO, entrega a domicilio, PRODUCTO_IMAGE
 bd/06_datos_productos.sql        Características, ficha técnica y fotos de cada producto
 bd/07_fotos_storage.sql          Carpeta pública de fotos (solo el administrador sube)
 bd/08_quitar_edad.sql            Quita la edad: el producto se clasifica solo por género
-bd/09_catalogo_ampliado.sql      Tecnología sin productos unisex (solo hombre y mujer)
 bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner

@@ -87,44 +87,44 @@ const PRODUCTOS = [
     claves: ['reloj', 'relojes', 'gps', 'smartwatch', 'tecnologia', 'hombre']
   },
   {
-    id: 'sa', nombre: 'Aire Sónico Óseo', categoria: 'tecnologia', publico: 'Hombre', precio: 89,
+    id: 'sa', nombre: 'Aire Sónico Óseo', categoria: 'tecnologia', publico: 'Unisex', precio: 89,
     etiqueta: 'Nuevo',
     tallas: [],
     vistas: ['vista principal', 'auricular', 'arco'],
     descripcion: 'Audífonos de conducción ósea para correr escuchando música sin tapar tus oídos. Te mantienen atento al tráfico y a tu entorno, con un arco flexible que no se mueve aunque aceleres.',
     caracteristicas: ['Conducción ósea: oídos libres y atentos', 'Arco de titanio flexible y liviano', 'Resistentes al sudor y la lluvia (IP67)'],
     ficha: [['Tipo', 'Conducción ósea'], ['Batería', 'Hasta 8 h'], ['Conexión', 'Bluetooth 5.3'], ['Resistencia', 'IP67'], ['Peso', '≈29 g']],
-    claves: ['audifonos', 'auriculares', 'audio', 'musica', 'tecnologia', 'hombre']
+    claves: ['audifonos', 'auriculares', 'audio', 'musica', 'tecnologia', 'unisex', 'hombre', 'mujer']
   },
   {
-    id: 'cb', nombre: 'Cardio Banda Élite', categoria: 'tecnologia', publico: 'Hombre', precio: 79,
+    id: 'cb', nombre: 'Cardio Banda Élite', categoria: 'tecnologia', publico: 'Unisex', precio: 79,
     etiqueta: '',
     tallas: [],
     vistas: ['vista principal', 'sensor', 'broche'],
     descripcion: 'Banda cardiaca de pecho para entrenar por zonas con precisión. Envía tu frecuencia cardiaca en tiempo real al reloj, al teléfono o a la máquina del gimnasio.',
     caracteristicas: ['Medición de frecuencia cardiaca tipo ECG', 'Conexión Bluetooth y ANT+', 'Correa elástica lavable y ajustable'],
     ficha: [['Mide', 'Frecuencia cardiaca (tipo ECG)'], ['Batería', 'Hasta 400 h (pila CR2032)'], ['Conexión', 'Bluetooth y ANT+'], ['Resistencia', 'Al agua, 3 ATM'], ['Ajuste', 'Correa de 65 a 110 cm']],
-    claves: ['banda', 'bandas', 'cardiaca', 'pulso', 'frecuencia', 'sensor', 'tecnologia', 'hombre']
+    claves: ['banda', 'bandas', 'cardiaca', 'pulso', 'frecuencia', 'sensor', 'tecnologia', 'unisex', 'hombre', 'mujer']
   },
   {
-    id: 'sp', nombre: 'Sensor de Zancada Pro', categoria: 'tecnologia', publico: 'Hombre', precio: 59,
+    id: 'sp', nombre: 'Sensor de Zancada Pro', categoria: 'tecnologia', publico: 'Unisex', precio: 59,
     etiqueta: '',
     tallas: [],
     vistas: ['vista principal', 'clip', 'sensor'],
     descripcion: 'Sensor de zancada que se engancha en la zapatilla y analiza tu técnica de carrera. Registra cadencia, longitud de zancada y tiempo de contacto para que corras de forma más eficiente.',
     caracteristicas: ['Analiza cadencia y longitud de zancada', 'Clip universal para cualquier zapatilla', 'Funciona incluso en cinta de correr'],
     ficha: [['Mide', 'Cadencia, zancada y tiempo de contacto'], ['Batería', 'Hasta 20 h, recargable'], ['Conexión', 'Bluetooth'], ['Montaje', 'Clip en los cordones'], ['Peso', '≈12 g']],
-    claves: ['sensor', 'zancada', 'cadencia', 'tecnologia', 'hombre']
+    claves: ['sensor', 'zancada', 'cadencia', 'tecnologia', 'unisex', 'hombre', 'mujer']
   },
   {
-    id: 'hb', nombre: 'Cinturón Hidratación Pro', categoria: 'tecnologia', publico: 'Mujer', precio: 39,
+    id: 'hb', nombre: 'Cinturón Hidratación Pro', categoria: 'tecnologia', publico: 'Unisex', precio: 39,
     etiqueta: '',
     tallas: [],
     vistas: ['vista principal', 'botella', 'bolsillo'],
     descripcion: 'Cinturón de hidratación para corredores con dos botellas de 300 ml y un bolsillo para el celular. Se ajusta a la cintura sin rebotar, ideal para rodajes largos y montaña.',
     caracteristicas: ['Incluye 2 botellas de 300 ml', 'Bolsillo con cierre para celular de hasta 6.7"', 'Detalles reflectivos y ajuste sin rebote'],
     ficha: [['Capacidad', '2 botellas de 300 ml'], ['Bolsillo', 'Celular de hasta 6.7"'], ['Ajuste', 'Cintura de 65 a 110 cm'], ['Visibilidad', 'Detalles reflectivos'], ['Material', 'Lycra transpirable']],
-    claves: ['cinturon', 'hidratacion', 'botella', 'botellas', 'agua', 'tecnologia', 'mujer']
+    claves: ['cinturon', 'hidratacion', 'botella', 'botellas', 'agua', 'tecnologia', 'unisex', 'hombre', 'mujer']
   },
   {
     id: 'au', nombre: 'Reloj Aura Rosa Pro', categoria: 'tecnologia', publico: 'Mujer', precio: 189,

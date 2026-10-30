@@ -74,6 +74,18 @@ const Api = (() => {
       return ejecutar(sb.auth.signUp({ email: correo, password: clave, options: { data: perfil, emailRedirectTo: urlRegreso() } }));
     },
     ingresar(correo, clave) { return ejecutar(sb.auth.signInWithPassword({ email: correo, password: clave })); },
+    /* Ingreso con Google (OAuth): Google confirma el correo y Supabase crea la cuenta */
+    ingresarConGoogle() {
+      return ejecutar(sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: urlRegreso() } }));
+    },
+    /* El botón de Google solo aparece si el proveedor está activado en Supabase */
+    async googleActivo() {
+      try {
+        const r = await fetch(CONFIG.supabase.url + '/auth/v1/settings', { headers: { apikey: CONFIG.supabase.clave } });
+        const d = await r.json();
+        return !!(d.external && d.external.google);
+      } catch (e) { return false; }
+    },
     reenviarConfirmacion(correo) {
       return ejecutar(sb.auth.resend({ type: 'signup', email: correo, options: { emailRedirectTo: urlRegreso() } }));
     },

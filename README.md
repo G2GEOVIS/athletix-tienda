@@ -12,6 +12,7 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - El género es un atributo del producto: Hombre, Mujer o Unisex. Calzado y tecnología tienen al menos 10 productos de hombre y 10 de mujer.
 - Cuentas reales con Supabase: registro con cédula ecuatoriana validada (módulo 10), confirmación por correo, recuperar contraseña y botón para mostrar la contraseña. Las contraseñas se guardan cifradas con bcrypt (Supabase Auth); la tienda nunca las ve.
 - No se permite registrar dos veces la misma cédula ni el mismo correo.
+- Ingreso con cuenta de Google (OAuth de Supabase). El botón aparece solo cuando el proveedor Google está activado en Supabase; al primer ingreso el cliente completa su cédula y celular.
 - Carrito: agregar, cambiar cantidad y quitar productos. Se puede comprar todo el stock de una talla (botón «Llevar todo»).
 - Entrega rápida: retiro en tienda en 1 hora (código de 6 caracteres) o envío a domicilio en 2 a 3 horas en Quito y Guayaquil ($3,50).
 - Pago simulado, sin dinero real: tarjeta de prueba validada (Luhn, fecha y CVV) o transferencia con número de comprobante. Cada pago queda guardado en la tabla PAGO.

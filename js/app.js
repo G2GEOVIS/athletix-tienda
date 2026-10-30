@@ -309,6 +309,7 @@ async function iniciar() {
   }
   // El catálogo se muestra de inmediato y se actualiza cuando responde la base
   const catalogo = cargarCatalogo();
+  const google = Api.auth.googleActivo().then((g) => { estado.googleActivo = g; });
   // Supabase lee primero los datos del enlace del correo; después se limpia la dirección
   await alIniciarSesion(await Api.auth.sesion());
   if (regreso) history.replaceState(null, '', location.pathname + location.search);
@@ -332,7 +333,8 @@ async function iniciar() {
   } else if (regreso && estado.sesion && !esRecuperacion) {
     guardarTemporal('correo-pendiente', null);
     const volver = leerTemporal('volver');
-    aviso(estado.cliente ? `¡Bienvenido, ${nombreCliente()}! Tu correo está confirmado.` : '¡Correo confirmado! Completa tu perfil.');
+    const conGoogle = (estado.sesion.user.app_metadata || {}).provider === 'google';
+    aviso(estado.cliente ? `¡Bienvenido, ${nombreCliente()}!` + (conGoogle ? '' : ' Tu correo está confirmado.') : (conGoogle ? '¡Ingresaste con Google! Completa tu perfil con tu cédula y celular.' : '¡Correo confirmado! Completa tu perfil.'));
     if (!estado.cliente) { ir('completar-perfil.html'); return; }
     if (volver === 'retiro' && estado.carrito.length) { guardarTemporal('volver', null); ir('retiro.html'); return; }
   }
@@ -340,7 +342,7 @@ async function iniciar() {
   $('#contenido').innerHTML = cargandoHtml();
   let listo = false;
   catalogo.then(() => { listo = true; });
-  await Promise.race([catalogo, new Promise((ok) => setTimeout(ok, 5000))]);
+  await Promise.race([Promise.all([catalogo, google]), new Promise((ok) => setTimeout(ok, 5000))]);
   render();
   mostrarAvisoPendiente();
   if (!listo) {

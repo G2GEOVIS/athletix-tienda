@@ -87,44 +87,44 @@ const PRODUCTOS = [
     claves: ['reloj', 'relojes', 'gps', 'smartwatch', 'tecnologia', 'hombre']
   },
   {
-    id: 'sa', nombre: 'Aire Sónico Óseo', categoria: 'tecnologia', publico: 'Unisex', precio: 89,
+    id: 'sa', nombre: 'Aire Sónico Óseo', categoria: 'tecnologia', publico: 'Hombre', precio: 89,
     etiqueta: 'Nuevo',
     tallas: [],
     vistas: ['vista principal', 'auricular', 'arco'],
     descripcion: 'Audífonos de conducción ósea para correr escuchando música sin tapar tus oídos. Te mantienen atento al tráfico y a tu entorno, con un arco flexible que no se mueve aunque aceleres.',
     caracteristicas: ['Conducción ósea: oídos libres y atentos', 'Arco de titanio flexible y liviano', 'Resistentes al sudor y la lluvia (IP67)'],
     ficha: [['Tipo', 'Conducción ósea'], ['Batería', 'Hasta 8 h'], ['Conexión', 'Bluetooth 5.3'], ['Resistencia', 'IP67'], ['Peso', '≈29 g']],
-    claves: ['audifonos', 'auriculares', 'audio', 'musica', 'tecnologia', 'unisex', 'hombre', 'mujer']
+    claves: ['audifonos', 'auriculares', 'audio', 'musica', 'tecnologia', 'hombre']
   },
   {
-    id: 'cb', nombre: 'Cardio Banda Élite', categoria: 'tecnologia', publico: 'Unisex', precio: 79,
+    id: 'cb', nombre: 'Cardio Banda Élite', categoria: 'tecnologia', publico: 'Hombre', precio: 79,
     etiqueta: '',
     tallas: [],
     vistas: ['vista principal', 'sensor', 'broche'],
     descripcion: 'Banda cardiaca de pecho para entrenar por zonas con precisión. Envía tu frecuencia cardiaca en tiempo real al reloj, al teléfono o a la máquina del gimnasio.',
     caracteristicas: ['Medición de frecuencia cardiaca tipo ECG', 'Conexión Bluetooth y ANT+', 'Correa elástica lavable y ajustable'],
     ficha: [['Mide', 'Frecuencia cardiaca (tipo ECG)'], ['Batería', 'Hasta 400 h (pila CR2032)'], ['Conexión', 'Bluetooth y ANT+'], ['Resistencia', 'Al agua, 3 ATM'], ['Ajuste', 'Correa de 65 a 110 cm']],
-    claves: ['banda', 'bandas', 'cardiaca', 'pulso', 'frecuencia', 'sensor', 'tecnologia', 'unisex', 'hombre', 'mujer']
+    claves: ['banda', 'bandas', 'cardiaca', 'pulso', 'frecuencia', 'sensor', 'tecnologia', 'hombre']
   },
   {
-    id: 'sp', nombre: 'Sensor de Zancada Pro', categoria: 'tecnologia', publico: 'Unisex', precio: 59,
+    id: 'sp', nombre: 'Sensor de Zancada Pro', categoria: 'tecnologia', publico: 'Hombre', precio: 59,
     etiqueta: '',
     tallas: [],
     vistas: ['vista principal', 'clip', 'sensor'],
     descripcion: 'Sensor de zancada que se engancha en la zapatilla y analiza tu técnica de carrera. Registra cadencia, longitud de zancada y tiempo de contacto para que corras de forma más eficiente.',
     caracteristicas: ['Analiza cadencia y longitud de zancada', 'Clip universal para cualquier zapatilla', 'Funciona incluso en cinta de correr'],
     ficha: [['Mide', 'Cadencia, zancada y tiempo de contacto'], ['Batería', 'Hasta 20 h, recargable'], ['Conexión', 'Bluetooth'], ['Montaje', 'Clip en los cordones'], ['Peso', '≈12 g']],
-    claves: ['sensor', 'zancada', 'cadencia', 'tecnologia', 'unisex', 'hombre', 'mujer']
+    claves: ['sensor', 'zancada', 'cadencia', 'tecnologia', 'hombre']
   },
   {
-    id: 'hb', nombre: 'Cinturón Hidratación Pro', categoria: 'tecnologia', publico: 'Unisex', precio: 39,
+    id: 'hb', nombre: 'Cinturón Hidratación Pro', categoria: 'tecnologia', publico: 'Mujer', precio: 39,
     etiqueta: '',
     tallas: [],
     vistas: ['vista principal', 'botella', 'bolsillo'],
     descripcion: 'Cinturón de hidratación para corredores con dos botellas de 300 ml y un bolsillo para el celular. Se ajusta a la cintura sin rebotar, ideal para rodajes largos y montaña.',
     caracteristicas: ['Incluye 2 botellas de 300 ml', 'Bolsillo con cierre para celular de hasta 6.7"', 'Detalles reflectivos y ajuste sin rebote'],
     ficha: [['Capacidad', '2 botellas de 300 ml'], ['Bolsillo', 'Celular de hasta 6.7"'], ['Ajuste', 'Cintura de 65 a 110 cm'], ['Visibilidad', 'Detalles reflectivos'], ['Material', 'Lycra transpirable']],
-    claves: ['cinturon', 'hidratacion', 'botella', 'botellas', 'agua', 'tecnologia', 'unisex', 'hombre', 'mujer']
+    claves: ['cinturon', 'hidratacion', 'botella', 'botellas', 'agua', 'tecnologia', 'mujer']
   },
   {
     id: 'au', nombre: 'Reloj Aura Rosa Pro', categoria: 'tecnologia', publico: 'Mujer', precio: 189,
@@ -706,6 +706,366 @@ const PRODUCTOS = [
     caracteristicas: ['Estructura de acero resistente', 'Admite discos de peso', 'Para empujar o arrastrar'],
     ficha: [['Material', 'Acero'], ['Peso propio', '≈12 kg'], ['Carga', 'Discos de hasta 100 kg'], ['Superficie', 'Césped y pista'], ['Uso ideal', 'Fuerza y aceleración']],
     claves: ['trineo', 'sled', 'arrastre', 'fuerza', 'entrenamiento']
+  },
+  {
+    id: 'zh11', nombre: 'ATHLETIX Impulso Carbono', categoria: 'calzado', publico: 'Hombre', precio: 159.99,
+    etiqueta: 'Nuevo',
+    tallas: ["39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de competencia con placa de carbono y espuma de alto retorno. Pensada para bajar tus marcas en 10K, media maratón y maratón.",
+    caracteristicas: ["Placa de carbono de longitud completa", "Espuma ultraligera de alto retorno", "Malla técnica que no retiene sudor"],
+    ficha: [["Peso", "≈220 g"], ["Desnivel (drop)", "8 mm"], ["Amortiguación", "Espuma de alto retorno + placa de carbono"], ["Uso ideal", "Competencia"], ["Tallas", "39 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "hombre", "carbono", "competencia", "maraton", "running"]
+  },
+  {
+    id: 'zh12', nombre: 'ATHLETIX Ruta Diaria', categoria: 'calzado', publico: 'Hombre', precio: 99.99,
+    etiqueta: '',
+    tallas: ["39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla cómoda y versátil para tus kilómetros de todos los días. Tejido de punto suave y amortiguación equilibrada.",
+    caracteristicas: ["Tejido de punto suave y transpirable", "Amortiguación equilibrada", "Suela de goma duradera"],
+    ficha: [["Peso", "≈280 g"], ["Desnivel (drop)", "10 mm"], ["Amortiguación", "Espuma estándar de doble capa"], ["Uso ideal", "Entrenamiento diario"], ["Tallas", "39 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "hombre", "diario", "running", "correr"]
+  },
+  {
+    id: 'zh13', nombre: 'ATHLETIX Cumbre Trail', categoria: 'calzado', publico: 'Hombre', precio: 129.99,
+    etiqueta: '',
+    tallas: ["39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de trail para senderos técnicos. Tacos profundos, puntera protectora y malla resistente al roce.",
+    caracteristicas: ["Suela con tacos de 5 mm", "Puntera de goma protectora", "Malla resistente a la abrasión"],
+    ficha: [["Peso", "≈310 g"], ["Desnivel (drop)", "6 mm"], ["Amortiguación", "Espuma firme para terreno irregular"], ["Uso ideal", "Trail y montaña"], ["Tallas", "39 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "hombre", "trail", "montaña", "sendero"]
+  },
+  {
+    id: 'zh14', nombre: 'ATHLETIX Fuerza Gym', categoria: 'calzado', publico: 'Hombre', precio: 94.99,
+    etiqueta: '',
+    tallas: ["39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de entrenamiento funcional con base plana y estable para sentadillas, saltos y trepa de cuerda.",
+    caracteristicas: ["Base plana y estable", "Protector lateral para trepa de cuerda", "Talón firme"],
+    ficha: [["Peso", "≈300 g"], ["Desnivel (drop)", "4 mm"], ["Amortiguación", "Media, firme"], ["Uso ideal", "Gimnasio y funcional"], ["Tallas", "39 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "hombre", "gimnasio", "gym", "funcional", "crossfit"]
+  },
+  {
+    id: 'zh15', nombre: 'ATHLETIX Nube Max', categoria: 'calzado', publico: 'Hombre', precio: 139.99,
+    etiqueta: '',
+    tallas: ["39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Máxima amortiguación para rodajes largos y recuperación. Su suela balancín hace que cada paso sea suave.",
+    caracteristicas: ["Espuma extragruesa y suave", "Suela balancín", "Collar acolchado"],
+    ficha: [["Peso", "≈295 g"], ["Desnivel (drop)", "5 mm"], ["Amortiguación", "Máxima"], ["Uso ideal", "Rodajes largos y recuperación"], ["Tallas", "39 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "hombre", "amortiguacion", "running", "largo"]
+  },
+  {
+    id: 'zh16', nombre: 'ATHLETIX Tempo Ligera', categoria: 'calzado', publico: 'Hombre', precio: 119.99,
+    etiqueta: '',
+    tallas: ["39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla liviana y reactiva para series, cambios de ritmo y carreras cortas.",
+    caracteristicas: ["Muy liviana", "Mediasuela reactiva", "Malla abierta de secado rápido"],
+    ficha: [["Peso", "≈210 g"], ["Desnivel (drop)", "8 mm"], ["Amortiguación", "Espuma reactiva"], ["Uso ideal", "Series y ritmos rápidos"], ["Tallas", "39 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "hombre", "tempo", "series", "rapida", "running"]
+  },
+  {
+    id: 'zh17', nombre: 'ATHLETIX Cancha Pro', categoria: 'calzado', publico: 'Hombre', precio: 134.99,
+    etiqueta: 'Nuevo',
+    tallas: ["39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de básquet de caña alta con cuello acolchado y suela de gran agarre para cortes y saltos.",
+    caracteristicas: ["Caña alta que protege el tobillo", "Suela de goma con patrón de agarre", "Amortiguación en talón y antepié"],
+    ficha: [["Peso", "≈420 g"], ["Desnivel (drop)", "10 mm"], ["Amortiguación", "Alta en talón y antepié"], ["Uso ideal", "Básquet"], ["Tallas", "39 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "hombre", "basquet", "basketball", "cancha"]
+  },
+  {
+    id: 'zh18', nombre: 'ATHLETIX Futsal Control', categoria: 'calzado', publico: 'Hombre', precio: 79.99,
+    etiqueta: '',
+    tallas: ["39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de fútbol sala con suela de goma que no marca y empeine para un toque preciso del balón.",
+    caracteristicas: ["Suela de goma que no marca", "Empeine de cuero sintético", "Puntera reforzada"],
+    ficha: [["Peso", "≈270 g"], ["Desnivel (drop)", "6 mm"], ["Amortiguación", "Baja"], ["Uso ideal", "Fútbol sala"], ["Tallas", "39 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "hombre", "futbol", "futsal", "indoor"]
+  },
+  {
+    id: 'zm11', nombre: 'ATHLETIX Impulso Carbono Mujer', categoria: 'calzado', publico: 'Mujer', precio: 159.99,
+    etiqueta: 'Nuevo',
+    tallas: ["35", "36", "37", "38", "39", "40", "41"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de competencia para mujer con placa de carbono y espuma de alto retorno, ideal para buscar tu mejor marca.",
+    caracteristicas: ["Placa de carbono de longitud completa", "Espuma ultraligera de alto retorno", "Horma específica para mujer"],
+    ficha: [["Peso", "≈190 g"], ["Desnivel (drop)", "8 mm"], ["Amortiguación", "Espuma de alto retorno + placa de carbono"], ["Uso ideal", "Competencia"], ["Tallas", "35 – 41 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "mujer", "carbono", "competencia", "maraton", "running"]
+  },
+  {
+    id: 'zm12', nombre: 'ATHLETIX Ruta Diaria Mujer', categoria: 'calzado', publico: 'Mujer', precio: 99.99,
+    etiqueta: '',
+    tallas: ["35", "36", "37", "38", "39", "40", "41"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla cómoda y versátil para mujer, perfecta para entrenar a diario con suavidad y estabilidad.",
+    caracteristicas: ["Tejido de punto suave", "Amortiguación equilibrada", "Horma específica para mujer"],
+    ficha: [["Peso", "≈240 g"], ["Desnivel (drop)", "10 mm"], ["Amortiguación", "Espuma estándar de doble capa"], ["Uso ideal", "Entrenamiento diario"], ["Tallas", "35 – 41 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "mujer", "diario", "running", "correr"]
+  },
+  {
+    id: 'zm13', nombre: 'ATHLETIX Cumbre Trail Mujer', categoria: 'calzado', publico: 'Mujer', precio: 129.99,
+    etiqueta: '',
+    tallas: ["35", "36", "37", "38", "39", "40", "41"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de trail para mujer con suela de tacos y puntera protectora, lista para senderos y montaña.",
+    caracteristicas: ["Suela con tacos de 5 mm", "Puntera de goma protectora", "Malla resistente a la abrasión"],
+    ficha: [["Peso", "≈270 g"], ["Desnivel (drop)", "6 mm"], ["Amortiguación", "Espuma firme para terreno irregular"], ["Uso ideal", "Trail y montaña"], ["Tallas", "35 – 41 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "mujer", "trail", "montaña", "sendero"]
+  },
+  {
+    id: 'zm14', nombre: 'ATHLETIX Fuerza Gym Mujer', categoria: 'calzado', publico: 'Mujer', precio: 94.99,
+    etiqueta: '',
+    tallas: ["35", "36", "37", "38", "39", "40", "41"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de entrenamiento para mujer con base estable, ideal para pesas, clases y circuitos.",
+    caracteristicas: ["Base plana y estable", "Detalles en oro rosa", "Tejido de punto transpirable"],
+    ficha: [["Peso", "≈250 g"], ["Desnivel (drop)", "4 mm"], ["Amortiguación", "Media, firme"], ["Uso ideal", "Gimnasio y funcional"], ["Tallas", "35 – 41 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "mujer", "gimnasio", "gym", "funcional"]
+  },
+  {
+    id: 'zm15', nombre: 'ATHLETIX Nube Max Mujer', categoria: 'calzado', publico: 'Mujer', precio: 139.99,
+    etiqueta: '',
+    tallas: ["35", "36", "37", "38", "39", "40", "41"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Máxima amortiguación para mujer en rodajes largos y días de recuperación.",
+    caracteristicas: ["Espuma extragruesa y suave", "Suela balancín", "Collar acolchado"],
+    ficha: [["Peso", "≈250 g"], ["Desnivel (drop)", "5 mm"], ["Amortiguación", "Máxima"], ["Uso ideal", "Rodajes largos y recuperación"], ["Tallas", "35 – 41 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "mujer", "amortiguacion", "running", "largo"]
+  },
+  {
+    id: 'zm16', nombre: 'ATHLETIX Tempo Ligera Mujer', categoria: 'calzado', publico: 'Mujer', precio: 119.99,
+    etiqueta: '',
+    tallas: ["35", "36", "37", "38", "39", "40", "41"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla liviana y reactiva para mujer, pensada para series y cambios de ritmo.",
+    caracteristicas: ["Muy liviana", "Mediasuela reactiva", "Malla abierta de secado rápido"],
+    ficha: [["Peso", "≈185 g"], ["Desnivel (drop)", "8 mm"], ["Amortiguación", "Espuma reactiva"], ["Uso ideal", "Series y ritmos rápidos"], ["Tallas", "35 – 41 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "mujer", "tempo", "series", "rapida", "running"]
+  },
+  {
+    id: 'zm17', nombre: 'ATHLETIX Estudio Fit', categoria: 'calzado', publico: 'Mujer', precio: 74.99,
+    etiqueta: '',
+    tallas: ["35", "36", "37", "38", "39", "40", "41"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla tipo calcetín para clases de baile, aeróbicos y entrenamiento en estudio. Suela con punto de giro.",
+    caracteristicas: ["Ajuste tipo calcetín", "Punto de giro en la suela", "Muy flexible"],
+    ficha: [["Peso", "≈190 g"], ["Desnivel (drop)", "4 mm"], ["Amortiguación", "Ligera"], ["Uso ideal", "Baile y clases en estudio"], ["Tallas", "35 – 41 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "mujer", "baile", "danza", "aerobicos", "estudio"]
+  },
+  {
+    id: 'zm18', nombre: 'ATHLETIX Caminata Confort', categoria: 'calzado', publico: 'Mujer', precio: 84.99,
+    etiqueta: '',
+    tallas: ["35", "36", "37", "38", "39", "40", "41"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla para caminar todo el día con plantilla acolchada y materiales suaves.",
+    caracteristicas: ["Plantilla acolchada extraíble", "Gamuza sintética y malla", "Suela flexible antideslizante"],
+    ficha: [["Peso", "≈260 g"], ["Desnivel (drop)", "8 mm"], ["Amortiguación", "Suave"], ["Uso ideal", "Caminata y uso diario"], ["Tallas", "35 – 41 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "mujer", "caminar", "caminata", "confort"]
+  },
+  {
+    id: 'zu01', nombre: 'ATHLETIX Sendero Roca', categoria: 'calzado', publico: null, precio: 109.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapato de senderismo de caña baja en nobuk y malla, firme y cómodo para caminatas largas.",
+    caracteristicas: ["Nobuk y malla resistentes", "Suela de tacos profundos", "Puntera protectora"],
+    ficha: [["Peso", "≈380 g"], ["Desnivel (drop)", "10 mm"], ["Amortiguación", "Firme"], ["Uso ideal", "Senderismo"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "senderismo", "hiking", "montaña"]
+  },
+  {
+    id: 'zu02', nombre: 'ATHLETIX Slide Recuperación', categoria: 'calzado', publico: null, precio: 39.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Sandalia de recuperación con espuma gruesa y suave para descansar los pies después de entrenar.",
+    caracteristicas: ["Espuma gruesa que absorbe impactos", "Plantilla anatómica", "Tira acolchada"],
+    ficha: [["Peso", "≈220 g"], ["Desnivel (drop)", "—"], ["Amortiguación", "Muy suave"], ["Uso ideal", "Recuperación"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "sandalia", "slide", "recuperacion"]
+  },
+  {
+    id: 'zu03', nombre: 'ATHLETIX Urbano Negro', categoria: 'calzado', publico: null, precio: 89.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla negra minimalista para correr y para el día a día. Combina con todo.",
+    caracteristicas: ["Tejido de punto negro", "Mediasuela ligera", "Diseño limpio"],
+    ficha: [["Peso", "≈250 g"], ["Desnivel (drop)", "8 mm"], ["Amortiguación", "Media"], ["Uso ideal", "Running urbano y uso diario"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "negro", "urbano", "running"]
+  },
+  {
+    id: 'zu04', nombre: 'ATHLETIX Clásico Retro', categoria: 'calzado', publico: null, precio: 94.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de estilo retro inspirada en el jogging clásico, con gamuza y suela de goma natural.",
+    caracteristicas: ["Gamuza y malla", "Suela de goma natural", "Plantilla acolchada"],
+    ficha: [["Peso", "≈300 g"], ["Desnivel (drop)", "10 mm"], ["Amortiguación", "Media"], ["Uso ideal", "Uso diario"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "retro", "clasico", "casual"]
+  },
+  {
+    id: 'zu05', nombre: 'ATHLETIX Agua Trail', categoria: 'calzado', publico: null, precio: 59.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapato acuático de secado rápido con orificios de drenaje, ideal para ríos, playa y deportes de agua.",
+    caracteristicas: ["Malla de secado rápido", "Orificios de drenaje", "Suela de goma antideslizante"],
+    ficha: [["Peso", "≈200 g"], ["Desnivel (drop)", "0 mm"], ["Amortiguación", "Mínima"], ["Uso ideal", "Agua y playa"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "agua", "acuatico", "rio", "playa"]
+  },
+  {
+    id: 'zu06', nombre: 'ATHLETIX Cross Box', categoria: 'calzado', publico: null, precio: 109.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla para entrenamiento cruzado y levantamiento con talón firme y base plana.",
+    caracteristicas: ["Talón con refuerzo", "Base plana muy estable", "Paneles laterales resistentes"],
+    ficha: [["Peso", "≈320 g"], ["Desnivel (drop)", "4 mm"], ["Amortiguación", "Firme"], ["Uso ideal", "Entrenamiento cruzado"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "crossfit", "cross", "pesas", "gimnasio"]
+  },
+  {
+    id: 'zu07', nombre: 'ATHLETIX Court Pádel', categoria: 'calzado', publico: null, precio: 89.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla para tenis y pádel con suela de espiga y puntera reforzada para arrastres.",
+    caracteristicas: ["Suela de espiga para pista", "Puntera reforzada", "Soporte lateral"],
+    ficha: [["Peso", "≈340 g"], ["Desnivel (drop)", "8 mm"], ["Amortiguación", "Media"], ["Uso ideal", "Tenis y pádel"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "tenis", "padel", "raqueta"]
+  },
+  {
+    id: 'zu08', nombre: 'ATHLETIX Ultraligera Knit', categoria: 'calzado', publico: null, precio: 84.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla ultraligera de punto, cómoda como un calcetín, para correr y caminar.",
+    caracteristicas: ["Tejido de punto elástico", "Muy liviana", "Suela flexible"],
+    ficha: [["Peso", "≈190 g"], ["Desnivel (drop)", "6 mm"], ["Amortiguación", "Ligera"], ["Uso ideal", "Running suave y uso diario"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "ligera", "knit", "punto"]
+  },
+  {
+    id: 'zu09', nombre: 'ATHLETIX Reflectiva Noche', categoria: 'calzado', publico: null, precio: 119.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla con capellada reflectiva para correr seguro de noche o con poca luz.",
+    caracteristicas: ["Capellada reflectiva 360°", "Detalles neón de alta visibilidad", "Amortiguación media"],
+    ficha: [["Peso", "≈260 g"], ["Desnivel (drop)", "8 mm"], ["Amortiguación", "Media"], ["Uso ideal", "Running nocturno"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "reflectiva", "noche", "seguridad", "running"]
+  },
+  {
+    id: 'zu10', nombre: 'ATHLETIX Montaña Mid', categoria: 'calzado', publico: null, precio: 139.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Bota de caña media impermeable para senderismo, con buen soporte de tobillo y suela de agarre.",
+    caracteristicas: ["Membrana impermeable", "Caña media con soporte de tobillo", "Suela de tacos profundos"],
+    ficha: [["Peso", "≈480 g"], ["Desnivel (drop)", "12 mm"], ["Amortiguación", "Firme"], ["Uso ideal", "Senderismo y montaña"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "bota", "impermeable", "montaña", "senderismo"]
+  },
+  {
+    id: 'zu11', nombre: 'ATHLETIX Salto Vóley', categoria: 'calzado', publico: null, precio: 99.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de vóley para cancha cubierta con suela de goma que agarra y amortigua los saltos.",
+    caracteristicas: ["Suela de goma para cancha", "Amortiguación para saltos", "Malla transpirable"],
+    ficha: [["Peso", "≈320 g"], ["Desnivel (drop)", "8 mm"], ["Amortiguación", "Media"], ["Uso ideal", "Vóley y deportes de cancha"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "voley", "voleibol", "cancha"]
+  },
+  {
+    id: 'zu12', nombre: 'ATHLETIX Maratón Plata', categoria: 'calzado', publico: null, precio: 149.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de maratón con capellada traslúcida ultraligera y espuma alta de gran retorno.",
+    caracteristicas: ["Capellada traslúcida ultraligera", "Espuma alta de gran retorno", "Detalles neón"],
+    ficha: [["Peso", "≈205 g"], ["Desnivel (drop)", "8 mm"], ["Amortiguación", "Alta"], ["Uso ideal", "Maratón"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "maraton", "competencia", "running"]
+  },
+  {
+    id: 'zu13', nombre: 'ATHLETIX Ciclo Indoor', categoria: 'calzado', publico: null, precio: 119.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de ciclismo indoor con suela rígida, correas de velcro y hebilla, compatible con calas.",
+    caracteristicas: ["Suela rígida compatible con calas", "Dos velcros y hebilla", "Ventilación perforada"],
+    ficha: [["Peso", "≈320 g"], ["Desnivel (drop)", "—"], ["Amortiguación", "Ninguna (suela rígida)"], ["Uso ideal", "Ciclismo indoor y spinning"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "ciclismo", "spinning", "bicicleta"]
+  },
+  {
+    id: 'zu14', nombre: 'ATHLETIX Escalada Approach', categoria: 'calzado', publico: null, precio: 109.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de aproximación con goma adherente y cordones hasta la punta para escalada y roca.",
+    caracteristicas: ["Goma adherente", "Cordones hasta la punta", "Reborde de goma protector"],
+    ficha: [["Peso", "≈350 g"], ["Desnivel (drop)", "6 mm"], ["Amortiguación", "Firme"], ["Uso ideal", "Escalada y aproximación"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "escalada", "roca", "approach"]
+  },
+  {
+    id: 'zu15', nombre: 'ATHLETIX Natural Barefoot', categoria: 'calzado', publico: null, precio: 79.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla minimalista con suela delgada y puntera ancha para un movimiento natural del pie.",
+    caracteristicas: ["Suela de 5 mm muy flexible", "Puntera ancha", "Sin desnivel"],
+    ficha: [["Peso", "≈180 g"], ["Desnivel (drop)", "0 mm"], ["Amortiguación", "Mínima"], ["Uso ideal", "Movimiento natural"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "minimalista", "barefoot", "natural"]
+  },
+  {
+    id: 'zu16', nombre: 'ATHLETIX Reposo Foam', categoria: 'calzado', publico: null, precio: 49.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Calzado de recuperación sin cordones con espuma suave y suela balancín para después de entrenar.",
+    caracteristicas: ["Espuma suave de una pieza", "Suela balancín", "Fácil de poner y quitar"],
+    ficha: [["Peso", "≈240 g"], ["Desnivel (drop)", "6 mm"], ["Amortiguación", "Muy suave"], ["Uso ideal", "Recuperación"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "recuperacion", "descanso", "foam"]
+  },
+  {
+    id: 'zu17', nombre: 'ATHLETIX Senderismo Ligero', categoria: 'calzado', publico: null, precio: 99.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de senderismo liviana con malla y suela de tacos, ideal para caminatas de un día.",
+    caracteristicas: ["Muy liviana", "Malla transpirable", "Suela de tacos"],
+    ficha: [["Peso", "≈330 g"], ["Desnivel (drop)", "10 mm"], ["Amortiguación", "Media"], ["Uso ideal", "Caminatas cortas"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "senderismo", "hiking", "ligera"]
+  },
+  {
+    id: 'zu18', nombre: 'ATHLETIX Pista Spikes', categoria: 'calzado', publico: null, precio: 89.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapatilla de clavos para velocidad en pista de atletismo, con placa rígida y clavos intercambiables.",
+    caracteristicas: ["Placa rígida de propulsión", "Clavos intercambiables", "Capellada muy liviana"],
+    ficha: [["Peso", "≈160 g"], ["Desnivel (drop)", "0 mm"], ["Amortiguación", "Ninguna"], ["Uso ideal", "Velocidad en pista"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "spikes", "clavos", "atletismo", "velocidad"]
+  },
+  {
+    id: 'zu19', nombre: 'ATHLETIX Césped FG', categoria: 'calzado', publico: null, precio: 89.99,
+    etiqueta: '',
+    tallas: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+    vistas: ["vista principal", "vista del otro lado", "detalle de la punta y la suela"],
+    descripcion: "Zapato de fútbol para césped natural con tapones moldeados y empeine ligero para un buen toque.",
+    caracteristicas: ["Tapones moldeados para césped", "Empeine ligero", "Ajuste firme"],
+    ficha: [["Peso", "≈230 g"], ["Desnivel (drop)", "—"], ["Amortiguación", "Baja"], ["Uso ideal", "Fútbol en césped natural"], ["Tallas", "36 – 45 (EU)"]],
+    claves: ["zapatilla", "zapatillas", "zapato", "zapatos", "tenis", "calzado", "unisex", "futbol", "pupos", "tacos", "cesped"]
+  },
+  {
+    id: 'tm16', nombre: 'Audífonos de Conducción Ósea Lila', categoria: 'tecnologia', publico: 'Mujer', precio: 89.99,
+    etiqueta: 'Nuevo',
+    tallas: [],
+    vistas: ["vista principal", "auricular", "arco"],
+    descripcion: "Audífonos de conducción ósea que dejan tus oídos libres para escuchar el entorno mientras corres. Livianos, resistentes al sudor y cómodos por horas.",
+    caracteristicas: ["Oídos libres para correr seguro", "Resistentes al sudor (IP67)", "Batería de hasta 8 horas"],
+    ficha: [["Tipo", "Conducción ósea"], ["Batería", "Hasta 8 h"], ["Resistencia", "IP67"], ["Peso", "≈29 g"], ["Conexión", "Bluetooth 5.3"]],
+    claves: ["audifonos", "auriculares", "conduccion osea", "musica", "mujer", "tecnologia"]
   }
 ];
 

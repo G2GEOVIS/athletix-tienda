@@ -265,6 +265,17 @@ async function vistaAdminProducto(partes, params) {
       const form = $('#form-producto', main);
       activarEnlacesError(form);
       const listaT = $('#lista-tallas', form), listaF = $('#lista-fotos', form);
+      // Género según la categoría: tecnología solo Hombre o Mujer; entrenamiento es Unisex
+      const ajustarGenero = () => {
+        const cat = $('#categoria', form).value, sel = $('#publico', form);
+        [...sel.options].forEach((o) => {
+          o.disabled = (cat === 'tecnologia' && o.value === 'Unisex') || (cat === 'entrenamiento' && o.value !== 'Unisex');
+          o.hidden = o.disabled;
+        });
+        if (sel.selectedOptions[0].disabled) sel.value = [...sel.options].find((o) => !o.disabled).value;
+      };
+      $('#categoria', form).addEventListener('change', ajustarGenero);
+      ajustarGenero();
       $('#usa-talla', form).addEventListener('change', (e) => {
         $('#stock-tallas', form).hidden = !e.target.checked; $('#stock-unico', form).hidden = e.target.checked;
         if (e.target.checked && !listaT.children.length) listaT.insertAdjacentHTML('beforeend', filaTalla());

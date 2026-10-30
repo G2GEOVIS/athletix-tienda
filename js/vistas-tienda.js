@@ -84,11 +84,13 @@ function filtrar(params) {
   const q = (params.get('q') || '').slice(0, 80);
   let lista = buscar(PRODUCTOS.filter((p) => p.activo !== false), q);
   if (cat !== 'todas') lista = lista.filter((p) => p.categoria === cat);
-  // El género es un atributo del producto: Hombre, Mujer o Unisex
-  if (pub !== 'todos') lista = lista.filter((p) => (p.publico || 'Unisex') === pub);
+  // El género es un atributo del producto: Hombre, Mujer o Unisex.
+  // Entrenamiento es todo unisex, así que ahí el género no filtra.
+  const usaGenero = cat !== 'entrenamiento';
+  if (usaGenero && pub !== 'todos') lista = lista.filter((p) => (p.publico || 'Unisex') === pub);
   lista = lista.filter(RANGOS[precio][1]);
   if (ORDENES[orden][1]) lista = [...lista].sort(ORDENES[orden][1]);
-  return { lista, cat, pub, precio, orden, q };
+  return { lista, cat, pub: usaGenero ? pub : 'todos', precio, orden, q };
 }
 
 function tarjetaProducto(p) {
@@ -157,7 +159,7 @@ function vistaProductos(partes, params) {
               <legend>Categoría</legend>
               ${radio('cat', 'todas', 'Todas', f.cat)}${radio('cat', 'calzado', 'Calzado', f.cat)}${radio('cat', 'tecnologia', 'Tecnología deportiva', f.cat)}${radio('cat', 'entrenamiento', 'Entrenamiento', f.cat)}
             </fieldset>
-            <fieldset class="grupo-filtro" id="grupo-publico">
+            <fieldset class="grupo-filtro" id="grupo-publico" ${f.cat === 'entrenamiento' ? 'hidden' : ''}>
               <legend>Género</legend>
               ${radio('pub', 'todos', 'Todos', f.pub)}${radio('pub', 'Hombre', 'Hombre', f.pub)}${radio('pub', 'Mujer', 'Mujer', f.pub)}${radio('pub', 'Unisex', 'Unisex', f.pub)}
             </fieldset>
@@ -186,12 +188,16 @@ function vistaProductos(partes, params) {
         const d = new FormData(form);
         const cat = d.get('cat');
         if (cat !== 'todas') p.set('cat', cat);
-        if (d.get('pub') !== 'todos') p.set('pub', d.get('pub'));
+        if (cat !== 'entrenamiento' && d.get('pub') !== 'todos') p.set('pub', d.get('pub'));
         if (d.get('precio') !== 'todos') p.set('precio', d.get('precio'));
         const orden = $('#orden', main).value;
         if (orden !== 'relevancia') p.set('orden', orden);
         history.replaceState(null, '', 'productos.html' + (p.toString() ? '?' + p : ''));
         const f2 = filtrar(p);
+        // En entrenamiento se oculta el género y se vuelve a "Todos"
+        const grupoGenero = $('#grupo-publico', main);
+        grupoGenero.hidden = f2.cat === 'entrenamiento';
+        if (grupoGenero.hidden) $('input[name=pub][value=todos]', grupoGenero).checked = true;
         $('#resultados', main).innerHTML = htmlResultados(f2);
         $('#titulo-catalogo', main).innerHTML = tituloCatalogo(f2);
         $('#conteo', main).textContent = plural(f2.lista.length, 'producto', 'productos');

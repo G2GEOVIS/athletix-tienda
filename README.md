@@ -8,8 +8,8 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 
 ## Funciones
 
-- Catálogo de 88 productos (calzado, tecnología deportiva y entrenamiento) con filtros por categoría, género, edad y precio, orden y buscador. Todo viene de la base de datos.
-- Género y edad son atributos del producto: Hombre / Mujer / Unisex y Adulto / Niño. Calzado tiene 12 de hombre, 12 de mujer, 10 de niño y 10 de niña.
+- Catálogo de 68 productos (calzado, tecnología deportiva y entrenamiento) con filtros por categoría, género, edad y precio, orden y buscador. Todo viene de la base de datos.
+- Género y edad son atributos del producto: Hombre / Mujer / Unisex y Adulto / Niño.
 - Cuentas reales con Supabase: registro con cédula ecuatoriana validada (módulo 10), confirmación por correo, recuperar contraseña y botón para mostrar la contraseña. Las contraseñas se guardan cifradas con bcrypt (Supabase Auth); la tienda nunca las ve.
 - No se permite registrar dos veces la misma cédula ni el mismo correo.
 - Carrito: agregar, cambiar cantidad y quitar productos. Se puede comprar todo el stock de una talla (botón «Llevar todo»).
@@ -83,7 +83,6 @@ bd/04_productos_nuevos.sql       Catálogo ampliado (52 productos más)
 bd/05_pagos_entrega_admin.sql    Tabla PAGO, entrega a domicilio, edad, PRODUCTO_IMAGEN y permisos del administrador
 bd/06_datos_productos.sql        Características, ficha técnica y fotos de cada producto
 bd/07_fotos_storage.sql          Carpeta pública de fotos (solo el administrador sube)
-bd/08_calzado_ninos.sql          20 zapatillas de niño y niña (tallas 28 a 35)
 bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner

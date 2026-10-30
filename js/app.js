@@ -10,7 +10,7 @@ function desdeBase(f, anterior) {
   const vistas = f.imagenes.length ? f.imagenes.map((i) => i.descripcion) : (anterior ? anterior.vistas : ['vista principal']);
   const claves = anterior ? anterior.claves : normalizar([f.nombre, f.descripcion].join(' ')).split(/[^a-zñ0-9]+/).filter((x) => x.length > 2);
   return {
-    id: f.id, dbId: f.id, nombre: f.nombre, categoria: f.categoria, publico: f.publico === 'Unisex' ? null : f.publico, edad: f.edad,
+    id: f.id, dbId: f.id, nombre: f.nombre, categoria: f.categoria, publico: f.publico === 'Unisex' ? null : f.publico,
     precio: Number(f.precio), activo: f.activo, etiqueta: f.etiqueta,
     tallas: f.usa_talla ? tallas : [], vistas, imagenes: f.imagenes.map((i) => i.url),
     descripcion: f.descripcion,

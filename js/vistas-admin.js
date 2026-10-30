@@ -27,7 +27,7 @@ async function vistaAdmin(partes, params) {
     <div class="contenedor pagina">
       ${menuAdmin('pedidos')}
       <h1 class="titulo-pagina">Panel de pedidos</h1>
-      <p class="subtitulo cabecera-pagina">Cambia el estado de cada pedido. Al marcarlo como <strong>Listo para retirar</strong> o <strong>En camino</strong>, el cliente recibe un correo automáticamente.</p>
+      <p class="subtitulo cabecera-pagina">Cambia el estado de cada pedido. Con cada cambio (preparando, listo o en camino, entregado o cancelado) el cliente recibe un correo automáticamente.</p>
       ${Api.correo.configurado() ? '' : `<p class="alerta" style="margin-bottom:1rem">${icono('alerta')}<span>El envío de correos no está configurado (falta la plantilla de EmailJS).</span></p>`}
       <nav class="filtro-estados" aria-label="Filtrar pedidos por estado">
         <a href="admin.html" ${!filtro ? 'aria-current="page"' : ''}>Todos (${todos.length})</a>
@@ -77,8 +77,8 @@ async function vistaAdmin(partes, params) {
           const rc = await Api.pedidos.cambiarEstado(p.id, nuevo);
           if (rc.error) return rc;
           p.estado = nuevo;
-          if (nuevo === 'Listo') return { correo: await Api.correo.pedidoListo(p) };
-          return {};
+          // El cliente recibe un correo con cada cambio de estado de su pedido
+          return { correo: await Api.correo.pedidoActualizado(p, nuevo) };
         });
         if (!r2 || r2.error) {
           $$('[data-nuevo-estado]', boton.parentElement).forEach((b) => { b.disabled = false; });
@@ -195,7 +195,7 @@ async function vistaAdminProducto(partes, params) {
   const p = id ? producto(id) : null;
   if (id && !p) return vistaNoEncontrada();
   const nuevo = !p;
-  const v = p || { id: '', nombre: '', categoria: 'calzado', publico: 'Hombre', edad: 'Adulto', precio: '', descripcion: '', caracteristicas: [], ficha: [], etiqueta: '', activo: true, tallas: [], stock: {}, imagenes: [], vistas: [] };
+  const v = p || { id: '', nombre: '', categoria: 'calzado', publico: 'Hombre', precio: '', descripcion: '', caracteristicas: [], ficha: [], etiqueta: '', activo: true, tallas: [], stock: {}, imagenes: [], vistas: [] };
   const usaTalla = v.tallas && v.tallas.length > 0;
   const filasTalla = usaTalla ? v.tallas.map((t) => [t, v.stock[t] || 0]) : [];
   const stockUnico = usaTalla ? 0 : (v.stock && v.stock.U) || 0;
@@ -224,7 +224,6 @@ async function vistaAdminProducto(partes, params) {
         </div>
         <div class="formulario__fila formulario__fila--doble">
           <div class="campo"><label for="publico">Género <span class="requerido" aria-hidden="true">*</span></label><select id="publico">${['Hombre', 'Mujer', 'Unisex'].map((x) => `<option ${x === (v.publico || 'Unisex') ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
-          <div class="campo"><label for="edad">Edad <span class="requerido" aria-hidden="true">*</span></label><select id="edad">${['Adulto', 'Niño'].map((x) => `<option ${x === (v.edad || 'Adulto') ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
         </div>
         <div class="campo"><label for="descripcion">Descripción <span class="requerido" aria-hidden="true">*</span></label><p class="campo__ayuda" id="descripcion-ayuda">De 20 a 600 caracteres.</p>
           <textarea id="descripcion" rows="4" maxlength="600" aria-describedby="descripcion-ayuda descripcion-error">${esc(v.descripcion)}</textarea><p class="campo__error" id="descripcion-error" hidden>${icono('alerta')}<span></span></p></div>
@@ -308,7 +307,7 @@ async function vistaAdminProducto(partes, params) {
         if (usa && (!tallas.length || tallas.some((t) => !t.talla || !Number.isInteger(t.stock) || t.stock < 0) || repetidas)) reglas.push(['agregar-talla', 'Revisa las tallas: cada una necesita nombre, stock de 0 o más y no se pueden repetir.']);
         if (!validarFormulario(form, reglas, 'Revisa el producto:')) return;
         const datos = {
-          codigo, nombre: val('nombre'), categoria: $('#categoria', form).value, publico: $('#publico', form).value, edad: $('#edad', form).value,
+          codigo, nombre: val('nombre'), categoria: $('#categoria', form).value, publico: $('#publico', form).value,
           precio: Math.round(precio * 100) / 100, descripcion: val('descripcion'), caracteristicas: val('caracteristicas'), ficha: val('ficha'),
           etiqueta: val('etiqueta'), activo: $('#activo', form).checked, usaTalla: usa, tallas, fotos: fotosF
         };

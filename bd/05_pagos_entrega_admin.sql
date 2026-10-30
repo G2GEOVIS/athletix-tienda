@@ -4,19 +4,16 @@
 /*  - Entrega rápida: retiro en tienda o envío a domicilio       */
 /*  - Orden de pedido con código de retiro y hora estimada       */
 /*  - Se puede comprar todo el stock (sin tope de 10 unidades)   */
-/*  - Edad del producto (Adulto / Niño) y datos completos del    */
-/*    producto en la base para que el administrador los maneje   */
+/*  - Datos completos del producto en la base para que el        */
+/*    administrador los maneje                                   */
 /* Ejecutar UNA vez después de 01 a 04. Todo o nada.             */
 /*==============================================================*/
 begin;
 
 /*---------------- PRODUCTO: atributos que maneja el administrador ----------------*/
-alter table producto add column if not exists prd_edad varchar(6) not null default 'Adulto';
 alter table producto add column if not exists prd_etiqueta varchar(20) null;
 alter table producto add column if not exists prd_caracteristicas text null;   -- una por línea
 alter table producto add column if not exists prd_ficha text null;             -- "Dato: valor" por línea
-alter table producto drop constraint if exists ckc_prd_edad;
-alter table producto add constraint ckc_prd_edad check (prd_edad in ('Adulto', 'Niño'));
 
 /*==============================================================*/
 /* Table: PRODUCTO_IMAGEN  (fotos del producto, en orden)        */

@@ -79,18 +79,16 @@ const ORDENES = {
 function filtrar(params) {
   const cat = CATEGORIAS[params.get('cat')] ? params.get('cat') : 'todas';
   const pub = ['Hombre', 'Mujer', 'Unisex'].includes(params.get('pub')) ? params.get('pub') : 'todos';
-  const edad = ['Adulto', 'Niño'].includes(params.get('edad')) ? params.get('edad') : 'todas';
   const precio = RANGOS[params.get('precio')] ? params.get('precio') : 'todos';
   const orden = ORDENES[params.get('orden')] ? params.get('orden') : 'relevancia';
   const q = (params.get('q') || '').slice(0, 80);
   let lista = buscar(PRODUCTOS.filter((p) => p.activo !== false), q);
   if (cat !== 'todas') lista = lista.filter((p) => p.categoria === cat);
-  // Género y edad son atributos del producto y se combinan: Hombre + Niño = niños, Mujer + Niño = niñas
+  // El género es un atributo del producto: Hombre, Mujer o Unisex
   if (pub !== 'todos') lista = lista.filter((p) => (p.publico || 'Unisex') === pub);
-  if (edad !== 'todas') lista = lista.filter((p) => (p.edad || 'Adulto') === edad);
   lista = lista.filter(RANGOS[precio][1]);
   if (ORDENES[orden][1]) lista = [...lista].sort(ORDENES[orden][1]);
-  return { lista, cat, pub, edad, precio, orden, q };
+  return { lista, cat, pub, precio, orden, q };
 }
 
 function tarjetaProducto(p) {
@@ -164,10 +162,6 @@ function vistaProductos(partes, params) {
               ${radio('pub', 'todos', 'Todos', f.pub)}${radio('pub', 'Hombre', 'Hombre', f.pub)}${radio('pub', 'Mujer', 'Mujer', f.pub)}${radio('pub', 'Unisex', 'Unisex', f.pub)}
             </fieldset>
             <fieldset class="grupo-filtro">
-              <legend>Edad</legend>
-              ${radio('edad', 'todas', 'Todas', f.edad)}${radio('edad', 'Adulto', 'Adultos', f.edad)}${radio('edad', 'Niño', 'Niños y niñas', f.edad)}
-            </fieldset>
-            <fieldset class="grupo-filtro">
               <legend>Precio</legend>
               ${Object.entries(RANGOS).map(([k, [t]]) => radio('precio', k, t, f.precio)).join('')}
             </fieldset>
@@ -193,7 +187,6 @@ function vistaProductos(partes, params) {
         const cat = d.get('cat');
         if (cat !== 'todas') p.set('cat', cat);
         if (d.get('pub') !== 'todos') p.set('pub', d.get('pub'));
-        if (d.get('edad') !== 'todas') p.set('edad', d.get('edad'));
         if (d.get('precio') !== 'todos') p.set('precio', d.get('precio'));
         const orden = $('#orden', main).value;
         if (orden !== 'relevancia') p.set('orden', orden);

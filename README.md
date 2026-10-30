@@ -8,15 +8,15 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 
 ## Funciones
 
-- Catálogo de 68 productos (calzado, tecnología deportiva y entrenamiento) con filtros por categoría, género, edad y precio, orden y buscador. Todo viene de la base de datos.
-- Género y edad son atributos del producto: Hombre / Mujer / Unisex y Adulto / Niño.
+- Catálogo de 68 productos (calzado, tecnología deportiva y entrenamiento) con filtros por categoría, género y precio, orden y buscador. Todo viene de la base de datos.
+- El género es un atributo del producto: Hombre, Mujer o Unisex. Calzado y tecnología tienen al menos 10 productos de hombre y 10 de mujer.
 - Cuentas reales con Supabase: registro con cédula ecuatoriana validada (módulo 10), confirmación por correo, recuperar contraseña y botón para mostrar la contraseña. Las contraseñas se guardan cifradas con bcrypt (Supabase Auth); la tienda nunca las ve.
 - No se permite registrar dos veces la misma cédula ni el mismo correo.
 - Carrito: agregar, cambiar cantidad y quitar productos. Se puede comprar todo el stock de una talla (botón «Llevar todo»).
 - Entrega rápida: retiro en tienda en 1 hora (código de 6 caracteres) o envío a domicilio en 2 a 3 horas en Quito y Guayaquil ($3,50).
 - Pago simulado, sin dinero real: tarjeta de prueba validada (Luhn, fecha y CVV) o transferencia con número de comprobante. Cada pago queda guardado en la tabla PAGO.
 - Orden de pedido imprimible con lo que el cliente debe retirar, y simulación del recorrido del pedido.
-- Correo de confirmación al cliente cuando compra y cuando su pedido está listo o en camino (EmailJS), a cualquier correo (Gmail, Outlook, Hotmail, etc.).
+- Correo al cliente cuando compra y cada vez que cambia el estado de su pedido (en preparación, listo o en camino, entregado o cancelado) (EmailJS), a cualquier correo (Gmail, Outlook, Hotmail, etc.).
 - Mis pedidos con su estado, orden, seguimiento y reseña de cada producto comprado.
 - Administrador: pedidos (cambiar estado; al cancelar se devuelve el stock y se anula el pago), productos (crear, editar, ocultar y borrar, con subida de fotos) y pagos recibidos.
 - Compras seguras ante concurrencia: el stock se descuenta con bloqueo por fila en una sola transacción y cada intento de pago tiene una clave única para no duplicar pedidos.
@@ -80,9 +80,10 @@ bd/01_tablas.sql          Mis tablas con la forma de modelar de la clase (CATEGO
 bd/02_seguridad_y_funciones.sql  Seguridad por filas, compra en una transacción, reglas de estados y reseñas
 bd/03_datos.sql           Categorías, tiendas, productos y existencias
 bd/04_productos_nuevos.sql       Catálogo ampliado (52 productos más)
-bd/05_pagos_entrega_admin.sql    Tabla PAGO, entrega a domicilio, edad, PRODUCTO_IMAGEN y permisos del administrador
+bd/05_pagos_entrega_admin.sql    Tabla PAGO, entrega a domicilio, PRODUCTO_IMAGEN y permisos del administrador
 bd/06_datos_productos.sql        Características, ficha técnica y fotos de cada producto
 bd/07_fotos_storage.sql          Carpeta pública de fotos (solo el administrador sube)
+bd/08_quitar_edad.sql            Quita la edad: el producto se clasifica solo por género
 bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner

@@ -55,9 +55,7 @@ document.addEventListener('error', (e) => {
     el.src = FOTO_RESPALDO;
   }
 }, true);
-// Público y edad juntos: Hombre, Mujer, Niño, Niña o Unisex
-const etiquetaPublico = (p) => (p.edad === 'Niño' ? (p.publico === 'Mujer' ? 'Niña' : p.publico === 'Hombre' ? 'Niño' : 'Niños') : (p.publico || ''));
-const etiquetaCategoria = (p) => CATEGORIAS[p.categoria] + (etiquetaPublico(p) ? ' · ' + etiquetaPublico(p) : '');
+const etiquetaCategoria = (p) => CATEGORIAS[p.categoria] + (p.publico ? ' · ' + p.publico : '');
 const unidadesCarrito = () => estado.carrito.reduce((s, i) => s + i.cantidad, 0);
 const subtotalCarrito = () => estado.carrito.reduce((s, i) => s + i.cantidad * ((producto(i.id) || {}).precio || 0), 0);
 const redondear = (n) => Math.round(n * 100) / 100;

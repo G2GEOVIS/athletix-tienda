@@ -110,7 +110,7 @@ const Api = (() => {
   const lineas = (t) => String(t || '').split('\n').map((x) => x.trim()).filter(Boolean);
   const aProducto = (p) => ({
     id: p.prd_codigo, codigo: p.prd_codigo, categoria: SLUG_CATEGORIA[p.cat_codigo] || 'entrenamiento', cat_codigo: p.cat_codigo,
-    nombre: p.prd_nombre, descripcion: p.prd_descripcion, publico: p.prd_publico, edad: p.prd_edad || 'Adulto',
+    nombre: p.prd_nombre, descripcion: p.prd_descripcion, publico: p.prd_publico,
     precio: p.prd_precio, activo: p.prd_activo, usa_talla: p.prd_usa_talla, etiqueta: p.prd_etiqueta || '',
     caracteristicas: lineas(p.prd_caracteristicas),
     ficha: lineas(p.prd_ficha).map((l) => { const i = l.indexOf(':'); return i > 0 ? [l.slice(0, i).trim(), l.slice(i + 1).trim()] : [l, '']; }),
@@ -123,7 +123,7 @@ const Api = (() => {
   /* ---------- Catálogo ---------- */
   const catalogo = {
     async productos() {
-      const r = await ejecutar(sb.from('producto').select('prd_codigo, cat_codigo, prd_nombre, prd_descripcion, prd_publico, prd_edad, prd_precio, prd_activo, prd_usa_talla, prd_etiqueta, prd_caracteristicas, prd_ficha, producto_talla(pta_talla, pta_stock), producto_imagen(pim_orden, pim_url, pim_descripcion)'));
+      const r = await ejecutar(sb.from('producto').select('prd_codigo, cat_codigo, prd_nombre, prd_descripcion, prd_publico, prd_precio, prd_activo, prd_usa_talla, prd_etiqueta, prd_caracteristicas, prd_ficha, producto_talla(pta_talla, pta_stock), producto_imagen(pim_orden, pim_url, pim_descripcion)'));
       return mapear(r, aProducto);
     },
     async calificaciones() {
@@ -212,7 +212,7 @@ const Api = (() => {
     async guardarProducto(d, nuevo) {
       const fila = {
         prd_codigo: d.codigo, cat_codigo: CATEGORIA_CODIGO[d.categoria], prd_nombre: d.nombre, prd_descripcion: d.descripcion,
-        prd_publico: d.publico, prd_edad: d.edad, prd_precio: d.precio, prd_usa_talla: d.usaTalla, prd_activo: d.activo,
+        prd_publico: d.publico, prd_precio: d.precio, prd_usa_talla: d.usaTalla, prd_activo: d.activo,
         prd_etiqueta: d.etiqueta || null, prd_caracteristicas: d.caracteristicas || null, prd_ficha: d.ficha || null
       };
       const rp = nuevo ? await ejecutar(sb.from('producto').insert(fila)) : await ejecutar(sb.from('producto').update(fila).eq('prd_codigo', d.codigo));
@@ -297,17 +297,30 @@ const Api = (() => {
           + `Mira tu orden de pedido aquí: ${base}orden.html?pedido=${parseInt(String(p.numero).split('-').pop(), 10)}`
       });
     },
-    /* Al cliente, cuando el administrador marca el pedido como "Listo" (o "En camino" si es envío) */
-    pedidoListo(p) {
+    /* Al cliente, cada vez que el administrador cambia el estado de su pedido */
+    pedidoActualizado(p, estadoNuevo) {
       const domicilio = p.entrega === 'Domicilio';
+      const base = location.origin + location.pathname.replace(/[^/]*$/, '');
+      const id = parseInt(String(p.numero).split('-').pop(), 10);
+      const codigo = p.codigoRetiro ? ` y tu código ${p.codigoRetiro}` : '';
+      const textos = {
+        Preparando: [`Estamos preparando tu pedido ${p.numero}`,
+          `Ya empezamos a preparar tu pedido ${p.numero}. ` + (domicilio ? `Sale hacia tu dirección en pocos minutos.` : `Estará listo para retirar en menos de ${ENTREGA.retiro}.`)],
+        Listo: domicilio
+          ? [`Tu pedido ${p.numero} va en camino`, `Tu pedido ${p.numero} ya salió de la tienda con nuestro repartidor. Ten a mano tu cédula${codigo}.`]
+          : [`Tu pedido ${p.numero} está listo para retirar`, `Tu pedido ${p.numero} ya está listo. Retíralo en ${p.tienda} con tu cédula${codigo}.`],
+        Retirado: domicilio
+          ? [`Tu pedido ${p.numero} fue entregado`, `Entregamos tu pedido ${p.numero}. ¡Gracias por comprar en ATHLETIX! Puedes dejar tu reseña desde Mis pedidos.`]
+          : [`Retiraste tu pedido ${p.numero}`, `Registramos el retiro de tu pedido ${p.numero}. ¡Gracias por comprar en ATHLETIX! Puedes dejar tu reseña desde Mis pedidos.`],
+        Cancelado: [`Tu pedido ${p.numero} fue cancelado`, `Tu pedido ${p.numero} fue cancelado y el pago simulado quedó anulado. Si tienes dudas, escríbenos desde la sección Ayuda.`]
+      };
+      const [asunto, mensaje] = textos[estadoNuevo] || [];
+      if (!asunto) return Promise.resolve({});
       return enviar(CONFIG.emailjs.plantillaCliente, {
         to_email: p.correo, nombre: p.cliente, numero: p.numero, total: Number(p.total).toFixed(2),
         tienda: domicilio ? `Envío a domicilio: ${p.direccion}, ${p.ciudad}` : p.tienda,
-        horario: domicilio ? 'Llega en menos de 2 horas' : p.horario,
-        asunto: domicilio ? `Tu pedido ${p.numero} va en camino` : `Tu pedido ${p.numero} está listo para retirar`,
-        mensaje: domicilio
-          ? `Tu pedido ${p.numero} ya salió de la tienda con nuestro repartidor. Ten a mano tu cédula y tu código ${p.codigoRetiro || ''}.`
-          : `Tu pedido ${p.numero} ya está listo. Retíralo en la tienda con tu cédula y tu código ${p.codigoRetiro || ''}.`
+        horario: domicilio ? `Llega en ${ENTREGA.domicilio}` : p.horario,
+        asunto, mensaje: mensaje + ` Sigue tu pedido aquí: ${base}seguimiento.html?pedido=${id}`
       }).then((r) => (r.error ? { error: r.error + ' El estado sí se guardó.' } : r));
     },
     /* Al administrador, cada vez que un cliente hace un pedido */

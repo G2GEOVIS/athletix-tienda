@@ -21,6 +21,7 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - Mis pedidos con su estado, orden, seguimiento y reseña de cada producto comprado.
 - Administrador: pedidos (cambiar estado; al cancelar se devuelve el stock y se anula el pago), productos (crear, editar, ocultar y borrar, con subida de fotos) y pagos recibidos.
 - Compras seguras ante concurrencia: el stock se descuenta con bloqueo por fila en una sola transacción y cada intento de pago tiene una clave única para no duplicar pedidos.
+- Datos guardados en el navegador (localStorage), separados por cuenta: carrito (no se pierde al cerrar la página o la sesión; lo agregado sin sesión se suma al ingresar), favoritos (página Mis favoritos), últimos filtros del catálogo y última forma de entrega.
 - Reseñas de compra verificada: la base verifica que el cliente compró el producto; una reseña por cliente y producto.
 - La tienda no emite facturas (es un proyecto académico).
 
@@ -57,6 +58,7 @@ admin.html               Panel de pedidos (administrador)
 admin-productos.html     Lista de productos (administrador)
 admin-producto.html      Crear o editar un producto (?id=código)
 admin-pagos.html         Pagos recibidos (administrador)
+favoritos.html           Mis favoritos (guardados en el navegador)
 ayuda.html               Centro de ayuda
 404.html                 Página no encontrada
 

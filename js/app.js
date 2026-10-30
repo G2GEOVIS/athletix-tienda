@@ -74,6 +74,8 @@ async function alIniciarSesion(sesion) {
   estado.sesion = sesion;
   estado.cliente = null;
   estado.esAdmin = false;
+  cargarDatosDeCuenta();
+  actualizarContador();
   if (!sesion) { renderCuenta(); return; }
   const r = await Api.cliente.perfil(sesion.user.id);
   if (!r.error && r.datos) {
@@ -95,6 +97,8 @@ async function alIniciarSesion(sesion) {
 async function cerrarSesion() {
   await Api.auth.salir();
   estado.sesion = null; estado.cliente = null; estado.esAdmin = false;
+  // El carrito y los favoritos de la cuenta quedan guardados para cuando vuelva a ingresar
+  cargarDatosDeCuenta(); actualizarContador();
   clearInterval(vigilanciaPedidos);
   guardarTemporal('tienda', null);
   renderCuenta();
@@ -107,6 +111,8 @@ function actualizarContador() {
   const n = unidadesCarrito();
   $('#contador-carrito').textContent = n;
   $('#contador-carrito-texto').textContent = `, ${plural(n, 'producto', 'productos')}`;
+  const f = estado.favoritos.length, cf = $('#contador-favoritos');
+  if (cf) { cf.textContent = f; cf.hidden = !f; $('#contador-favoritos-texto').textContent = f ? `, ${plural(f, 'producto', 'productos')}` : ''; }
 }
 
 function renderCuenta() {
@@ -199,7 +205,7 @@ const ARCHIVOS = { '': 'index.html', productos: 'productos.html', producto: 'pro
   registro: 'registro.html', 'verifica-correo': 'confirmar-correo.html', 'completar-perfil': 'completar-perfil.html', recuperar: 'recuperar.html',
   'nueva-clave': 'nueva-clave.html', retiro: 'retiro.html', pago: 'pago.html', confirmacion: 'confirmacion.html', pedidos: 'pedidos.html',
   perfil: 'perfil.html', admin: 'admin.html', ayuda: 'ayuda.html', orden: 'orden.html', seguimiento: 'seguimiento.html',
-  'admin-productos': 'admin-productos.html', 'admin-producto': 'admin-producto.html', 'admin-pagos': 'admin-pagos.html' };
+  'admin-productos': 'admin-productos.html', 'admin-producto': 'admin-producto.html', 'admin-pagos': 'admin-pagos.html', favoritos: 'favoritos.html' };
 
 const VISTAS = {
   '': vistaInicio,
@@ -223,6 +229,7 @@ const VISTAS = {
   'admin-pagos': vistaAdminPagos,
   orden: vistaOrden,
   seguimiento: vistaSeguimiento,
+  favoritos: vistaFavoritos,
   ayuda: vistaAyuda
 };
 
@@ -292,7 +299,22 @@ window.addEventListener('error', (e) => { console.error(e.error || e.message); }
 window.addEventListener('unhandledrejection', (e) => { console.error(e.reason); e.preventDefault(); aviso('Ocurrió un problema de conexión. Inténtalo de nuevo.', 'error'); });
 window.addEventListener('offline', () => aviso('Perdiste la conexión a internet.', 'error'));
 window.addEventListener('online', () => { aviso('Volviste a tener conexión.'); if (!estado.catalogoConectado) cargarCatalogo(); });
-window.addEventListener('storage', (e) => { if (e.key === CLAVE_CARRITO) { estado.carrito = leerCarrito(); actualizarContador(); } });
+window.addEventListener('storage', (e) => {
+  if (e.key === claveCuenta(CLAVE_CARRITO)) { estado.carrito = leerCarrito(e.key); actualizarContador(); }
+  if (e.key === claveCuenta(CLAVE_FAVORITOS)) { estado.favoritos = leerFavoritos(e.key); actualizarContador(); }
+});
+// Botón de favorito (corazón) en tarjetas y en el detalle del producto
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-favorito]');
+  if (!b) return;
+  const p = producto(b.dataset.favorito);
+  const si = alternarFavorito(b.dataset.favorito);
+  $$(`[data-favorito="${b.dataset.favorito}"]`).forEach((x) => x.setAttribute('aria-pressed', si));
+  actualizarContador();
+  const texto = `${p ? p.nombre : 'El producto'} ${si ? 'se guardó en' : 'se quitó de'} tus favoritos.`;
+  anunciar(texto);
+  if (leerRuta().partes[0] === 'favoritos') render(); else aviso(texto);
+});
 
 async function iniciar() {
   iniciarEncabezado();
@@ -317,7 +339,7 @@ async function iniciar() {
   let esRecuperacion = false;
   Api.auth.alCambiar(async (evento, sesion) => {
     if (evento === 'PASSWORD_RECOVERY') { esRecuperacion = true; estado.sesion = sesion; ir('nueva-clave.html'); return; }
-    if (evento === 'SIGNED_OUT') { estado.sesion = null; estado.cliente = null; estado.esAdmin = false; renderCuenta(); return; }
+    if (evento === 'SIGNED_OUT') { estado.sesion = null; estado.cliente = null; estado.esAdmin = false; cargarDatosDeCuenta(); actualizarContador(); renderCuenta(); return; }
     if (evento === 'TOKEN_REFRESHED' || evento === 'USER_UPDATED') { estado.sesion = sesion; return; }
     if (evento === 'SIGNED_IN' && sesion && (!estado.sesion || estado.sesion.user.id !== sesion.user.id)) {
       await alIniciarSesion(sesion);

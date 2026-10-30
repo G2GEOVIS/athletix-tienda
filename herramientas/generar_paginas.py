@@ -32,6 +32,7 @@ PAGINAS = [
     ('admin-pagos.html', 'admin-pagos', 'Pagos (administrador) | ATHLETIX', 'Registro de todos los pagos guardados en la base de datos.'),
     ('orden.html', 'orden', 'Orden de pedido | ATHLETIX', 'Orden de pedido con el código de retiro y los productos.'),
     ('seguimiento.html', 'seguimiento', 'Seguimiento y simulación del envío | ATHLETIX', 'Simulación de cómo trabaja la entrega del pedido.'),
+    ('favoritos.html', 'favoritos', 'Mis favoritos | ATHLETIX', 'Productos que guardaste como favoritos.'),
     ('ayuda.html', 'ayuda', 'Centro de ayuda | ATHLETIX', 'Preguntas frecuentes sobre compras, pagos, retiro y reseñas.'),
     ('404.html', '404', 'Página no encontrada | ATHLETIX', 'La página que buscas no existe.'),
 ]

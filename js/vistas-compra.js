@@ -45,7 +45,11 @@ async function vistaRetiro() {
   if (!protegerCompra()) return null;
   const rt = await cargarTiendas();
   if (rt.error) return { titulo: 'Entrega', seccion: 'carrito', html: errorCargaHtml(rt.error) };
-  const e = leerEntrega() || { tipo: 'Retiro', tienda: estado.tiendas[0] && estado.tiendas[0].id };
+  // Si no eligió en esta compra, se usa la última forma de entrega que usó esta cuenta (guardada en el navegador)
+  const ultima = leerLocal(claveCuenta(CLAVE_ENTREGA));
+  const ultimaValida = ultima && (ultima.tipo === 'Domicilio' ? ENTREGA.ciudades.includes(ultima.ciudad) : estado.tiendas.some((t) => t.id === ultima.tienda));
+  const recordada = !leerEntrega() && ultimaValida;
+  const e = leerEntrega() || (ultimaValida ? ultima : null) || { tipo: 'Retiro', tienda: estado.tiendas[0] && estado.tiendas[0].id };
   const c = estado.cliente;
   const ciudades = ENTREGA.ciudades.filter((x) => estado.tiendas.some((t) => t.ciudad === x));
   return {
@@ -55,6 +59,7 @@ async function vistaRetiro() {
     <div class="contenedor pagina">
       ${pasos(2)}
       <h1 class="titulo-pagina cabecera-pagina">Entrega</h1>
+      ${recordada ? `<p class="alerta alerta--info" style="margin-bottom:1rem">${icono('info')}<span>Usamos tu última forma de entrega. Puedes cambiarla si quieres.</span></p>` : ''}
       <div class="compra-grilla">
         <form id="form-retiro" class="formulario" style="display:grid;gap:1.5rem" novalidate>
           <div class="alerta alerta-errores" tabindex="-1" role="alert" hidden></div>
@@ -135,10 +140,12 @@ async function vistaRetiro() {
         if (t === 'Retiro') {
           if (!d.get('tienda')) { aviso('Elige la tienda donde retirarás tu pedido.', 'error'); return; }
           guardarTemporal('entrega', { tipo: 'Retiro', tienda: Number(d.get('tienda')) });
+          guardarLocal(claveCuenta(CLAVE_ENTREGA), leerEntrega());
         } else {
           const direccion = String(d.get('direccion') || '').trim().replace(/\s+/g, ' ');
           if (!validarFormulario(form, [['direccion', direccion.length < 8 ? 'Escribe la dirección completa (mínimo 8 caracteres).' : '']], 'Revisa la dirección de entrega:')) return;
           guardarTemporal('entrega', { tipo: 'Domicilio', ciudad: d.get('ciudad'), direccion, referencia: String(d.get('referencia') || '').trim() });
+          guardarLocal(claveCuenta(CLAVE_ENTREGA), leerEntrega());
         }
         ir('pago.html');
       });

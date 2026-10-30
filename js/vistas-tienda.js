@@ -99,6 +99,7 @@ function tarjetaProducto(p) {
     <li>
       <article class="tarjeta-producto">
         <div class="tarjeta-producto__imagen"><img src="${img(p)}" alt="" width="500" height="500" loading="lazy"></div>
+        ${botonFavorito(p, 'tarjeta-producto__favorito')}
         ${agotado ? '<span class="etiqueta etiqueta--azul tarjeta-producto__etiqueta">Agotado</span>' : (p.etiqueta ? `<span class="etiqueta tarjeta-producto__etiqueta">${p.etiqueta}</span>` : '')}
         <div class="tarjeta-producto__cuerpo">
           <h2 class="tarjeta-producto__nombre"><a href="producto.html?id=${p.id}">${esc(p.nombre)}</a></h2>
@@ -133,6 +134,14 @@ function tituloCatalogo(f) {
 }
 
 function vistaProductos(partes, params) {
+  // Si entra al catálogo sin filtros, se usan los últimos que eligió (guardados en el navegador)
+  let recordados = false;
+  const guardados = leerLocal(CLAVE_FILTROS);
+  if (![...params.keys()].length && typeof guardados === 'string' && guardados) {
+    params = new URLSearchParams(guardados);
+    history.replaceState(null, '', 'productos.html?' + params);
+    recordados = true;
+  }
   const f = filtrar(params);
   const radio = (grupo, valor, texto, actual) =>
     `<label class="opcion"><input type="radio" name="${grupo}" value="${valor}" ${valor === actual ? 'checked' : ''}> ${texto}</label>`;
@@ -146,6 +155,7 @@ function vistaProductos(partes, params) {
         <h1 class="titulo-pagina" id="titulo-catalogo">${tituloCatalogo(f)}</h1>
         <div class="resultados__orden">
           <p class="texto-suave" id="conteo" aria-live="polite">${plural(f.lista.length, 'producto', 'productos')}</p>
+          ${recordados ? `<p class="texto-suave" id="aviso-filtros">Usamos tus últimos filtros. <button class="boton-enlace" type="button" id="ver-todo">Ver todos los productos</button></p>` : ''}
           <label class="orden"><span>Ordenar por</span>
             <select id="orden">${Object.entries(ORDENES).map(([k, [t]]) => `<option value="${k}" ${k === f.orden ? 'selected' : ''}>${t}</option>`).join('')}</select>
           </label>
@@ -193,6 +203,8 @@ function vistaProductos(partes, params) {
         const orden = $('#orden', main).value;
         if (orden !== 'relevancia') p.set('orden', orden);
         history.replaceState(null, '', 'productos.html' + (p.toString() ? '?' + p : ''));
+        const sinBusqueda = new URLSearchParams(p); sinBusqueda.delete('q');
+        guardarLocal(CLAVE_FILTROS, sinBusqueda.toString() || null);
         const f2 = filtrar(p);
         // En entrenamiento se oculta el género y se vuelve a "Todos"
         const grupoGenero = $('#grupo-publico', main);
@@ -205,7 +217,15 @@ function vistaProductos(partes, params) {
       };
       form.addEventListener('change', aplicar);
       $('#orden', main).addEventListener('change', aplicar);
+      const verTodo = () => {
+        guardarLocal(CLAVE_FILTROS, null);
+        history.replaceState(null, '', 'productos.html');
+        render();
+        anunciar('Se muestran todos los productos.');
+      };
+      if ($('#ver-todo', main)) $('#ver-todo', main).addEventListener('click', verTodo);
       $('#limpiar-filtros', main).addEventListener('click', () => {
+        guardarLocal(CLAVE_FILTROS, null);
         history.replaceState(null, '', 'productos.html');
         render();
         anunciar('Filtros limpiados. Se muestran todos los productos.');
@@ -285,6 +305,7 @@ function vistaProducto(partes) {
 
             ${sinStock ? `<p class="alerta" style="margin-top:1.25rem">${icono('info')}<span>Este producto está agotado por ahora.</span></p>` : ''}
             <button class="boton boton--principal boton--bloque" type="submit" style="margin-top:1.25rem" ${sinStock ? 'disabled' : ''}>${icono('carrito')}Agregar al carrito</button>
+            ${botonFavorito(p, 'boton boton--secundario boton--bloque boton-favorito--texto', true)}
           </form>
 
           <ul class="lista-iconos">
@@ -786,4 +807,23 @@ function abrirCambioTalla(i) {
       });
     }
   });
+}
+
+/* ======================= Mis favoritos (guardados en el navegador) ======================= */
+function vistaFavoritos() {
+  const lista = estado.favoritos.map(producto).filter((p) => p && p.activo !== false);
+  return {
+    titulo: 'Mis favoritos',
+    seccion: 'favoritos',
+    html: `
+    <div class="contenedor pagina">
+      <nav class="migas" aria-label="Ruta de navegación"><ol><li><a href="index.html">Inicio</a></li><li><span aria-current="page">Mis favoritos</span></li></ol></nav>
+      <div class="cabecera-pagina">
+        <h1 class="titulo-pagina">Mis favoritos</h1>
+        <p class="subtitulo">${lista.length ? `${plural(lista.length, 'producto guardado', 'productos guardados')}. Pulsa el corazón para quitar uno.` : 'Guarda productos con el corazón para verlos aquí más tarde.'}</p>
+      </div>
+      ${lista.length ? `<ul class="grilla-productos">${lista.map(tarjetaProducto).join('')}</ul>`
+        : `<div class="vacio panel">${icono('corazon')}<p>Todavía no tienes favoritos.</p><a class="boton boton--principal" href="productos.html">Ver productos</a></div>`}
+    </div>`
+  };
 }

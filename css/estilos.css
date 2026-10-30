@@ -186,7 +186,8 @@ svg { width: 1.25rem; height: 1.25rem; flex-shrink: 0; fill: none; stroke: curre
   .logo__texto { font-size: 1.4rem; }
 }
 
-@media (min-width: 62rem) {
+/* El menú completo se muestra desde 70rem (≈1120 px); en pantallas menores se usa el botón Menú */
+@media (min-width: 70rem) {
   .encabezado__barra {
     grid-template-columns: auto auto minmax(12rem, 1fr) auto auto;
     grid-template-areas: "logo nav buscador cuenta carrito";
@@ -197,6 +198,11 @@ svg { width: 1.25rem; height: 1.25rem; flex-shrink: 0; fill: none; stroke: curre
   .navegacion__lista { display: flex; gap: .25rem; padding: 0; }
   .navegacion__enlace[aria-current="page"] { box-shadow: inset 0 -3px 0 var(--verde); background: none; border-radius: 0; }
   .buscador { max-width: 26rem; }
+}
+@media (min-width: 70rem) and (max-width: 80rem) {
+  .encabezado__barra { grid-template-columns: auto auto minmax(8rem, 1fr) auto auto; gap: .6rem; }
+  .navegacion__enlace { padding-inline: .5rem; gap: .35rem; }
+  .cuenta__boton { max-width: 8.5rem; }
 }
 
 /* ---------- Pie de página ---------- */
@@ -801,4 +807,33 @@ fieldset.panel { margin: 0; min-width: 0; }
   .pagina { padding: 0 !important; }
   .panel { box-shadow: none; border: 0; }
   a { color: inherit; text-decoration: none; }
+}
+
+/* ======================= Favoritos ======================= */
+.boton-favorito {
+  display: inline-grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%;
+  background: var(--blanco); border: 1px solid var(--borde-fuerte); color: var(--azul); cursor: pointer;
+}
+.boton-favorito svg { width: 1.35rem; height: 1.35rem; fill: none; stroke: currentColor; stroke-width: 2; }
+.boton-favorito[aria-pressed="true"] { color: #C2185B; border-color: #C2185B; }
+.boton-favorito[aria-pressed="true"] svg { fill: currentColor; }
+.boton-favorito:hover { background: var(--gris); }
+.tarjeta-producto__favorito { position: absolute; top: .9rem; right: .9rem; z-index: 2; }
+.boton-favorito--texto { display: inline-flex; width: 100%; height: auto; border-radius: var(--radio-sm); gap: .5rem; margin-top: .75rem; }
+.boton-favorito--texto[aria-pressed="true"] { background: #FCE4EC; }
+.navegacion__cantidad {
+  min-width: 1.4rem; height: 1.4rem; padding-inline: .3rem; margin-left: .35rem; border-radius: 999px;
+  background: var(--naranja); color: var(--azul); font-size: .8rem; font-weight: 800; display: inline-grid; place-items: center;
+}
+.navegacion__cantidad[hidden] { display: none; }
+#aviso-filtros { width: 100%; }
+
+/* Pantallas muy angostas (320 px): el encabezado entra sin desplazamiento horizontal (WCAG 1.4.10) */
+@media (max-width: 22.5rem) {
+  .encabezado__barra { gap: .5rem .35rem; grid-template-columns: minmax(0, 1fr) auto auto auto; }
+  .logo__icono { width: 1.6rem; height: 1.6rem; }
+  .logo__texto { font-size: 1.2rem; }
+  .boton-menu { padding-inline: .5rem; }
+  .boton-carrito { padding-inline: .55rem; }
+  .cuenta__boton { padding-inline: .35rem; }
 }

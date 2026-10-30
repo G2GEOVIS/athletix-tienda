@@ -2,10 +2,16 @@
 'use strict';
 
 /* ======================= Estado ======================= */
-// En el navegador solo se guarda el carrito; las cuentas, pedidos y reseñas viven en la base de datos.
+// En el navegador (localStorage) se guardan el carrito, los favoritos, los últimos filtros y la última
+// forma de entrega. Las cuentas, pedidos, pagos y reseñas viven en la base de datos.
+// Cada cuenta tiene sus propias claves (clave base + id del usuario); sin sesión se usa la clave base.
 const CLAVE_CARRITO = 'athletix-carrito-v2';
+const CLAVE_FAVORITOS = 'athletix-favoritos';
+const CLAVE_FILTROS = 'athletix-ultimos-filtros';
+const CLAVE_ENTREGA = 'athletix-ultima-entrega';
 const estado = {
-  carrito: leerCarrito(),
+  carrito: leerCarrito(CLAVE_CARRITO),
+  favoritos: leerFavoritos(CLAVE_FAVORITOS),
   sesion: null,        // sesión de Supabase (usuario autenticado)
   cliente: null,       // fila de la tabla clientes
   esAdmin: false,
@@ -15,18 +21,56 @@ const estado = {
   errorCatalogo: ''
 };
 
-function leerCarrito() {
-  try {
-    const c = JSON.parse(localStorage.getItem(CLAVE_CARRITO));
-    if (Array.isArray(c)) {
-      return c.filter((i) => i && typeof i.id === 'string' && Number.isInteger(i.cantidad) && i.cantidad >= 1 && i.cantidad <= 9999)
-        .map((i) => ({ id: i.id, talla: i.talla ? String(i.talla) : null, cantidad: i.cantidad }));
-    }
-  } catch (e) { /* almacenamiento no disponible o dañado */ }
-  return [];
+/* ---------- localStorage ---------- */
+function leerLocal(clave) {
+  try { return JSON.parse(localStorage.getItem(clave)); } catch (e) { return null; } // almacenamiento no disponible o dañado
 }
-function guardarCarrito() {
-  try { localStorage.setItem(CLAVE_CARRITO, JSON.stringify(estado.carrito)); } catch (e) { /* se mantiene en memoria */ }
+function guardarLocal(clave, valor) {
+  try { if (valor === null) localStorage.removeItem(clave); else localStorage.setItem(clave, JSON.stringify(valor)); } catch (e) { /* se mantiene en memoria */ }
+}
+// Clave propia de la cuenta que inició sesión (o la de invitado si no hay sesión)
+const claveCuenta = (base) => (estado.sesion ? `${base}-${estado.sesion.user.id}` : base);
+
+function leerCarrito(clave) {
+  const c = leerLocal(clave);
+  if (!Array.isArray(c)) return [];
+  return c.filter((i) => i && typeof i.id === 'string' && Number.isInteger(i.cantidad) && i.cantidad >= 1 && i.cantidad <= 9999)
+    .map((i) => ({ id: i.id, talla: i.talla ? String(i.talla) : null, cantidad: i.cantidad }));
+}
+function guardarCarrito() { guardarLocal(claveCuenta(CLAVE_CARRITO), estado.carrito); }
+
+function leerFavoritos(clave) {
+  const f = leerLocal(clave);
+  return Array.isArray(f) ? [...new Set(f.filter((id) => typeof id === 'string' && id.length <= 10))] : [];
+}
+function guardarFavoritos() { guardarLocal(claveCuenta(CLAVE_FAVORITOS), estado.favoritos); }
+const esFavorito = (id) => estado.favoritos.includes(id);
+function alternarFavorito(id) {
+  estado.favoritos = esFavorito(id) ? estado.favoritos.filter((x) => x !== id) : [...estado.favoritos, id];
+  guardarFavoritos();
+  return esFavorito(id);
+}
+function botonFavorito(p, clase = '', conTexto = false) {
+  return `<button class="boton-favorito ${clase}" type="button" data-favorito="${p.id}" aria-pressed="${esFavorito(p.id)}" ${conTexto ? '' : `aria-label="Favorito: ${esc(p.nombre)}"`}>${icono('corazon')}${conTexto ? '<span>Guardar en favoritos</span>' : ''}</button>`;
+}
+
+/* Al iniciar o cerrar sesión se cambia al carrito y a los favoritos de esa cuenta.
+   Lo que se agregó sin sesión se suma a la cuenta que ingresa. */
+function cargarDatosDeCuenta() {
+  const carrito = leerCarrito(claveCuenta(CLAVE_CARRITO));
+  const favoritos = leerFavoritos(claveCuenta(CLAVE_FAVORITOS));
+  if (estado.sesion) {
+    leerCarrito(CLAVE_CARRITO).forEach((l) => {
+      const igual = carrito.find((x) => x.id === l.id && x.talla === l.talla);
+      if (igual) igual.cantidad = Math.min(9999, igual.cantidad + l.cantidad); else carrito.push(l);
+    });
+    leerFavoritos(CLAVE_FAVORITOS).forEach((id) => { if (!favoritos.includes(id)) favoritos.push(id); });
+    guardarLocal(CLAVE_CARRITO, null);
+    guardarLocal(CLAVE_FAVORITOS, null);
+  }
+  estado.carrito = carrito;
+  estado.favoritos = favoritos;
+  guardarCarrito(); guardarFavoritos();
 }
 function guardarTemporal(clave, valor) {
   try { if (valor === null) sessionStorage.removeItem(clave); else sessionStorage.setItem(clave, JSON.stringify(valor)); } catch (e) { /* sin almacenamiento */ }
@@ -69,6 +113,7 @@ const correoSesion = () => (estado.sesion ? estado.sesion.user.email : '');
 const stockDe = (p, talla) => (p.stock ? (p.stock[talla || 'U'] ?? 0) : 10);
 
 const ICONOS = {
+  corazon: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.5 2.4C19.5 15.4 12 20 12 20z"/>',
   carrito: '<path d="M3 4h2l2.4 11h11L21 7H6.2"/><circle cx="9" cy="19.5" r="1.5"/><circle cx="17" cy="19.5" r="1.5"/>',
   check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
   derecha: '<path d="M5 12h14M13 6l6 6-6 6"/>',

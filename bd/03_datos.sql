@@ -14,7 +14,7 @@ insert into tienda (tie_codigo, tie_nombre, tie_direccion, tie_ciudad, tie_horar
   (3, 'ATHLETIX Mall del Sol', 'Av. Juan Tanca Marengo y Av. Joaquín Orrantia, C.C. Mall del Sol', 'Guayaquil', 'Lunes a domingo, 10:00 a 21:00')
 on conflict do nothing;
 
-insert into producto (prd_codigo, cat_codigo, prd_nombre, prd_descripcion, prd_publico, prd_precio, prd_usa_talla) values
+insert into producto (prd_codigo, cat_codigo, prd_nombre, prd_descripcion, prd_genero, prd_precio, prd_tiene_talla) values
   ('vx', 1, 'Veloz Aero Llama', 'Zapatilla para correr de alto rendimiento para ritmos rápidos y competencias. Su espuma RebotePlus y la placa de propulsión de nylon convierten cada zancada en impulso, con una malla ultraligera que se ajusta al pie.', 'Hombre', 165.00, true),
   ('sf', 1, 'Flujo Tormenta Turquesa', 'Zapatilla para correr amortiguada para rodajes largos y entrenamiento diario. La espuma NúcleoNube de doble densidad absorbe el impacto en cada pisada y su suela ancha da estabilidad kilómetro tras kilómetro.', 'Hombre', 135.00, true),
   ('oc', 1, 'Ritmo Océano Coral', 'Zapatilla para correr ligera para mujer, ideal para entrenar a diario. Su malla transpirable mantiene el pie fresco y la mediasuela FlexiLigera acompaña el movimiento natural de la pisada.', 'Mujer', 119.00, true),
@@ -33,7 +33,7 @@ insert into producto (prd_codigo, cat_codigo, prd_nombre, prd_descripcion, prd_p
   ('cm', 3, 'Balón Medicinal Núcleo Pro', 'Balón medicinal para fuerza funcional y trabajo abdominal. Su superficie texturizada da un agarre firme en lanzamientos, giros y abdominales, incluso con las manos sudadas.', 'Unisex', 45.00, false)
 on conflict do nothing;
 
-insert into producto_talla (prd_codigo, pta_talla, pta_stock) values
+insert into producto_talla (prd_codigo, pta_talla, pta_cantidad) values
   ('vx', '39', 15),
   ('vx', '40', 15),
   ('vx', '41', 15),

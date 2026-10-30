@@ -111,7 +111,7 @@ create table METODO_PAGO (
 
 /*==============================================================*/
 /* Table: PEDIDO                                                 */
-/* ped_clave: identifica el intento de pago para no cobrar dos   */
+/* ped_clave_pago: identifica el intento de pago para no cobrar dos   */
 /* veces si el cliente pulsa "Pagar" otra vez o la red se corta. */
 /*==============================================================*/
 create table PEDIDO (

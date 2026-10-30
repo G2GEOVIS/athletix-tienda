@@ -2,7 +2,7 @@
 /* ATHLETIX - Catálogo ampliado: 52 productos nuevos            */
 /*==============================================================*/
 
-insert into producto (prd_codigo, cat_codigo, prd_nombre, prd_descripcion, prd_publico, prd_precio, prd_usa_talla) values
+insert into producto (prd_codigo, cat_codigo, prd_nombre, prd_descripcion, prd_genero, prd_precio, prd_tiene_talla) values
   ('zh01', 1, 'Asics Gel-Kayano 31', 'Zapatilla de running de estabilidad para corredores que buscan soporte y amortiguación en rodajes largos. Su sistema GEL absorbe el impacto y la parte superior de malla mantiene el pie fresco.', 'Hombre', 149.99, true),
   ('zh02', 1, 'Nike Pegasus 41', 'Zapatilla versátil para el entrenamiento diario. La espuma ReactX da una pisada suave y reactiva, y la malla engineered deja respirar el pie en cada kilómetro.', 'Hombre', 129.99, true),
   ('zh03', 1, 'Mizuno Wave Rider 28', 'Zapatilla de running cómoda y estable gracias a la placa Wave, que reparte el impacto y da una transición fluida. Su malla AIRmesh es ultraligera y fresca.', 'Hombre', 119.99, true),
@@ -57,7 +57,7 @@ insert into producto (prd_codigo, cat_codigo, prd_nombre, prd_descripcion, prd_p
   ('en15', 3, 'Trineo de Arrastre para Entrenamiento', 'Trineo de acero para arrastres y empujes. Desarrolla fuerza horizontal y aceleración; se le pueden agregar discos de peso.', 'Unisex', 129.99, false)
 on conflict (prd_codigo) do nothing;
 
-insert into producto_talla (prd_codigo, pta_talla, pta_stock) values
+insert into producto_talla (prd_codigo, pta_talla, pta_cantidad) values
   ('zh01', '39', 10),
   ('zh01', '40', 10),
   ('zh01', '41', 10),

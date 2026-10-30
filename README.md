@@ -85,6 +85,7 @@ bd/05_pagos_entrega_admin.sql    Tabla PAGO, entrega a domicilio, PRODUCTO_IMAGE
 bd/06_datos_productos.sql        Características, ficha técnica y fotos de cada producto
 bd/07_fotos_storage.sql          Carpeta pública de fotos (solo el administrador sube)
 bd/08_quitar_edad.sql            Quita la edad: el producto se clasifica solo por género
+bd/10_renombrar_atributos.sql    Nombres de atributos más claros (prd_genero, prd_visible, ped_tipo_entrega, mtp_ ...)
 bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner

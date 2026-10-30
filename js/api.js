@@ -97,36 +97,36 @@ const Api = (() => {
   /* ---------- Traducción entre la base (columnas CLI_, PRD_, PED_...) y la interfaz ---------- */
   const mapear = (r, fn) => (r.error || !r.datos ? r : { datos: Array.isArray(r.datos) ? r.datos.map(fn) : fn(r.datos) });
   const codigoPedido = (numero, fecha) => `AX-${new Date(fecha).getFullYear()}-${String(numero).padStart(5, '0')}`;
-  const aCliente = (c) => ({ id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_telefono, correo: c.cli_correo, creado_en: c.cli_fecha_registro });
-  const aTarjeta = (t) => ({ id: t.mpa_codigo, marca: t.mpa_marca, ultimos4: t.mpa_ultimos4, titular: t.mpa_titular, mes_vence: t.mpa_mes_vence, anio_vence: t.mpa_anio_vence });
-  const CAMPOS_PEDIDO = 'ped_numero, ped_estado, ped_subtotal, ped_iva, ped_costo_envio, ped_total, ped_fecha, ped_entrega, ped_ciudad, ped_direccion, ped_referencia, ped_codigo_retiro, ped_hora_estimada, '
-    + 'tienda(tie_nombre, tie_direccion, tie_horario, tie_ciudad), pago(pag_metodo, pag_marca, pag_ultimos4, pag_banco, pag_referencia, pag_monto, pag_fecha, pag_estado), '
-    + 'detalle_pedido(prd_codigo, dpe_talla, dpe_cantidad, dpe_precio_unitario)';
-  const textoDePago = (g) => (!g ? 'Sin registro de pago' : g.pag_metodo === 'Tarjeta' ? `Tarjeta ${g.pag_marca} •••• ${g.pag_ultimos4}` : `Transferencia desde ${g.pag_banco} · comprobante ${g.pag_referencia}`);
+  const aCliente = (c) => ({ id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_celular, correo: c.cli_correo, creado_en: c.cli_fecha_registro });
+  const aTarjeta = (t) => ({ id: t.mtp_codigo, marca: t.mtp_marca, ultimos4: t.mtp_ultimos4, titular: t.mtp_titular, mes_vence: t.mtp_mes_vence, anio_vence: t.mtp_anio_vence });
+  const CAMPOS_PEDIDO = 'ped_numero, ped_estado, ped_subtotal, ped_iva, ped_costo_envio, ped_total, ped_fecha, ped_tipo_entrega, ped_ciudad, ped_direccion, ped_referencia, ped_codigo_entrega, ped_hora_estimada, '
+    + 'tienda(tie_nombre, tie_direccion, tie_horario, tie_ciudad), pago(pag_metodo, pag_marca, pag_ultimos4, pag_banco, pag_comprobante, pag_monto, pag_fecha, pag_estado), '
+    + 'detalle_pedido(prd_codigo, dpe_talla, dpe_cantidad, dpe_precio)';
+  const textoDePago = (g) => (!g ? 'Sin registro de pago' : g.pag_metodo === 'Tarjeta' ? `Tarjeta ${g.pag_marca} •••• ${g.pag_ultimos4}` : `Transferencia desde ${g.pag_banco} · comprobante ${g.pag_comprobante}`);
   const aPedido = (p) => {
     const g = Array.isArray(p.pago) ? p.pago[0] : p.pago;
     const c = p.cliente;
     return {
       id: p.ped_numero, numero: codigoPedido(p.ped_numero, p.ped_fecha), estado: p.ped_estado,
       subtotal: p.ped_subtotal, iva: p.ped_iva, costoEnvio: Number(p.ped_costo_envio || 0), total: p.ped_total, creado_en: p.ped_fecha,
-      entrega: p.ped_entrega || 'Retiro', ciudad: p.ped_ciudad, direccion: p.ped_direccion, referencia: p.ped_referencia,
-      codigoRetiro: p.ped_codigo_retiro, horaEstimada: p.ped_hora_estimada,
+      entrega: p.ped_tipo_entrega || 'Retiro', ciudad: p.ped_ciudad, direccion: p.ped_direccion, referencia: p.ped_referencia,
+      codigoRetiro: p.ped_codigo_entrega, horaEstimada: p.ped_hora_estimada,
       tiendas: p.tienda ? { nombre: p.tienda.tie_nombre, direccion: p.tienda.tie_direccion, horario: p.tienda.tie_horario, ciudad: p.tienda.tie_ciudad } : null,
       pago: g ? { metodo: g.pag_metodo, estado: g.pag_estado, fecha: g.pag_fecha, monto: g.pag_monto } : null,
       pagoTexto: textoDePago(g),
-      cliente: c ? { id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_telefono, correo: c.cli_correo } : null,
-      detalle_pedido: (p.detalle_pedido || []).map((d) => ({ producto_id: d.prd_codigo, talla: d.dpe_talla === 'U' ? null : d.dpe_talla, cantidad: d.dpe_cantidad, precio_unitario: d.dpe_precio_unitario }))
+      cliente: c ? { id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_celular, correo: c.cli_correo } : null,
+      detalle_pedido: (p.detalle_pedido || []).map((d) => ({ producto_id: d.prd_codigo, talla: d.dpe_talla === 'U' ? null : d.dpe_talla, cantidad: d.dpe_cantidad, precio_unitario: d.dpe_precio }))
     };
   };
   const SLUG_CATEGORIA = { 1: 'calzado', 2: 'tecnologia', 3: 'entrenamiento' };
   const lineas = (t) => String(t || '').split('\n').map((x) => x.trim()).filter(Boolean);
   const aProducto = (p) => ({
     id: p.prd_codigo, codigo: p.prd_codigo, categoria: SLUG_CATEGORIA[p.cat_codigo] || 'entrenamiento', cat_codigo: p.cat_codigo,
-    nombre: p.prd_nombre, descripcion: p.prd_descripcion, publico: p.prd_publico,
-    precio: p.prd_precio, activo: p.prd_activo, usa_talla: p.prd_usa_talla, etiqueta: p.prd_etiqueta || '',
+    nombre: p.prd_nombre, descripcion: p.prd_descripcion, publico: p.prd_genero,
+    precio: p.prd_precio, activo: p.prd_visible, usa_talla: p.prd_tiene_talla, etiqueta: p.prd_etiqueta || '',
     caracteristicas: lineas(p.prd_caracteristicas),
     ficha: lineas(p.prd_ficha).map((l) => { const i = l.indexOf(':'); return i > 0 ? [l.slice(0, i).trim(), l.slice(i + 1).trim()] : [l, '']; }),
-    producto_tallas: (p.producto_talla || []).map((t) => ({ talla: t.pta_talla, stock: t.pta_stock })),
+    producto_tallas: (p.producto_talla || []).map((t) => ({ talla: t.pta_talla, stock: t.pta_cantidad })),
     imagenes: (p.producto_imagen || []).slice().sort((x, y) => x.pim_orden - y.pim_orden).map((i) => ({ orden: i.pim_orden, url: i.pim_url, descripcion: i.pim_descripcion }))
   });
   const aTienda = (t) => ({ id: t.tie_codigo, nombre: t.tie_nombre, direccion: t.tie_direccion, ciudad: t.tie_ciudad, horario: t.tie_horario });
@@ -135,7 +135,7 @@ const Api = (() => {
   /* ---------- Catálogo ---------- */
   const catalogo = {
     async productos() {
-      const r = await ejecutar(sb.from('producto').select('prd_codigo, cat_codigo, prd_nombre, prd_descripcion, prd_publico, prd_precio, prd_activo, prd_usa_talla, prd_etiqueta, prd_caracteristicas, prd_ficha, producto_talla(pta_talla, pta_stock), producto_imagen(pim_orden, pim_url, pim_descripcion)'));
+      const r = await ejecutar(sb.from('producto').select('prd_codigo, cat_codigo, prd_nombre, prd_descripcion, prd_genero, prd_precio, prd_visible, prd_tiene_talla, prd_etiqueta, prd_caracteristicas, prd_ficha, producto_talla(pta_talla, pta_cantidad), producto_imagen(pim_orden, pim_url, pim_descripcion)'));
       return mapear(r, aProducto);
     },
     async calificaciones() {
@@ -151,22 +151,22 @@ const Api = (() => {
     async correoRegistrado(correo) { const r = await ejecutar(sb.rpc('correo_registrado', { p_correo: correo })); return r.error ? r : { datos: !!r.datos }; },
     async perfil(usuario) { return mapear(await ejecutar(sb.from('cliente').select('*').eq('cli_usuario', usuario).maybeSingle()), aCliente); },
     async crear(d) {
-      return mapear(await ejecutar(sb.from('cliente').insert({ cli_cedula: d.cedula, cli_usuario: d.id, cli_nombres: d.nombres, cli_apellidos: d.apellidos, cli_telefono: d.telefono, cli_correo: d.correo }).select().single()), aCliente);
+      return mapear(await ejecutar(sb.from('cliente').insert({ cli_cedula: d.cedula, cli_usuario: d.id, cli_nombres: d.nombres, cli_apellidos: d.apellidos, cli_celular: d.telefono, cli_correo: d.correo }).select().single()), aCliente);
     },
     async actualizar(usuario, d) {
-      return mapear(await ejecutar(sb.from('cliente').update({ cli_nombres: d.nombres, cli_apellidos: d.apellidos, cli_telefono: d.telefono }).eq('cli_usuario', usuario).select().single()), aCliente);
+      return mapear(await ejecutar(sb.from('cliente').update({ cli_nombres: d.nombres, cli_apellidos: d.apellidos, cli_celular: d.telefono }).eq('cli_usuario', usuario).select().single()), aCliente);
     },
     async esAdmin() { const r = await ejecutar(sb.rpc('es_admin')); return !r.error && r.datos === true; },
 
-    async tarjetas() { return mapear(await ejecutar(sb.from('metodo_pago').select('*').order('mpa_codigo', { ascending: false })), aTarjeta); },
+    async tarjetas() { return mapear(await ejecutar(sb.from('metodo_pago').select('*').order('mtp_codigo', { ascending: false })), aTarjeta); },
     async guardarTarjeta(d) {
-      const fila = { cli_cedula: d.cedula, mpa_marca: d.marca, mpa_ultimos4: d.ultimos4, mpa_titular: d.titular, mpa_mes_vence: d.mes_vence, mpa_anio_vence: d.anio_vence };
-      const existente = await ejecutar(sb.from('metodo_pago').select('mpa_codigo').match(fila).maybeSingle());
+      const fila = { cli_cedula: d.cedula, mtp_marca: d.marca, mtp_ultimos4: d.ultimos4, mtp_titular: d.titular, mtp_mes_vence: d.mes_vence, mtp_anio_vence: d.anio_vence };
+      const existente = await ejecutar(sb.from('metodo_pago').select('mtp_codigo').match(fila).maybeSingle());
       if (existente.error) return existente;
-      if (existente.datos) return { datos: { id: existente.datos.mpa_codigo } };
-      return mapear(await ejecutar(sb.from('metodo_pago').insert(fila).select('mpa_codigo').single()), (t) => ({ id: t.mpa_codigo }));
+      if (existente.datos) return { datos: { id: existente.datos.mtp_codigo } };
+      return mapear(await ejecutar(sb.from('metodo_pago').insert(fila).select('mtp_codigo').single()), (t) => ({ id: t.mtp_codigo }));
     },
-    borrarTarjeta(id) { return ejecutar(sb.from('metodo_pago').delete().eq('mpa_codigo', id)); }
+    borrarTarjeta(id) { return ejecutar(sb.from('metodo_pago').delete().eq('mtp_codigo', id)); }
   };
 
   /* ---------- Pedidos ---------- */
@@ -179,7 +179,7 @@ const Api = (() => {
       }));
       return mapear(r, (f) => {
         const x = Array.isArray(f) ? f[0] : f;
-        return { id: x.ped_numero, numero: x.ped_codigo, total: x.ped_total, codigoRetiro: x.ped_codigo_retiro, horaEstimada: x.ped_hora_estimada };
+        return { id: x.ped_numero, numero: x.ped_codigo, total: x.ped_total, codigoRetiro: x.ped_codigo_entrega, horaEstimada: x.ped_hora_estimada };
       });
     },
     async nuevos() { const r = await ejecutar(sb.rpc('pedidos_nuevos')); return r.error ? 0 : Number(r.datos) || 0; },
@@ -189,7 +189,7 @@ const Api = (() => {
     },
     /* Un pedido con todos sus datos (orden de pedido y seguimiento). El cliente solo ve los suyos; el administrador, todos */
     async uno(numero) {
-      const r = await ejecutar(sb.from('pedido').select(CAMPOS_PEDIDO + ', cliente(cli_usuario, cli_cedula, cli_nombres, cli_apellidos, cli_telefono, cli_correo)').eq('ped_numero', numero).maybeSingle());
+      const r = await ejecutar(sb.from('pedido').select(CAMPOS_PEDIDO + ', cliente(cli_usuario, cli_cedula, cli_nombres, cli_apellidos, cli_celular, cli_correo)').eq('ped_numero', numero).maybeSingle());
       return mapear(r, aPedido);
     },
     /* Verifica en la base si el cliente compró este producto (cualquier pedido que no esté cancelado) */
@@ -203,9 +203,9 @@ const Api = (() => {
     async todos() {
       return mapear(await ejecutar(sb.rpc('pedidos_admin')), (p) => ({
         id: p.ped_numero, numero: p.ped_codigo, estado: p.ped_estado, total: p.ped_total, creado_en: p.ped_fecha,
-        cliente: p.cliente, correo: p.cli_correo, telefono: p.cli_telefono, cedula: p.cli_cedula, tienda: p.tie_nombre, horario: p.tie_horario, productos: p.productos,
-        entrega: p.ped_entrega || 'Retiro', ciudad: p.ped_ciudad, direccion: p.ped_direccion, referencia: p.ped_referencia,
-        codigoRetiro: p.ped_codigo_retiro, horaEstimada: p.ped_hora_estimada, pagoTexto: p.pago || ''
+        cliente: p.cliente, correo: p.cli_correo, telefono: p.cli_celular, cedula: p.cli_cedula, tienda: p.tie_nombre, horario: p.tie_horario, productos: p.productos,
+        entrega: p.ped_tipo_entrega || 'Retiro', ciudad: p.ped_ciudad, direccion: p.ped_direccion, referencia: p.ped_referencia,
+        codigoRetiro: p.ped_codigo_entrega, horaEstimada: p.ped_hora_estimada, pagoTexto: p.pago || ''
       }));
     },
     cambiarEstado(numero, estado) { return ejecutar(sb.rpc('cambiar_estado_pedido', { p_numero: numero, p_estado: estado })); }
@@ -214,7 +214,7 @@ const Api = (() => {
   /* ---------- Administrador: productos y pagos ---------- */
   const CATEGORIA_CODIGO = { calzado: 1, tecnologia: 2, entrenamiento: 3 };
   const admin = {
-    activar(codigo, activo) { return ejecutar(sb.from('producto').update({ prd_activo: activo }).eq('prd_codigo', codigo)); },
+    activar(codigo, activo) { return ejecutar(sb.from('producto').update({ prd_visible: activo }).eq('prd_codigo', codigo)); },
     async borrarProducto(codigo) {
       const r = await ejecutar(sb.from('producto').delete().eq('prd_codigo', codigo).select('prd_codigo'));
       if (r.error) return r;
@@ -224,13 +224,13 @@ const Api = (() => {
     async guardarProducto(d, nuevo) {
       const fila = {
         prd_codigo: d.codigo, cat_codigo: CATEGORIA_CODIGO[d.categoria], prd_nombre: d.nombre, prd_descripcion: d.descripcion,
-        prd_publico: d.publico, prd_precio: d.precio, prd_usa_talla: d.usaTalla, prd_activo: d.activo,
+        prd_genero: d.publico, prd_precio: d.precio, prd_tiene_talla: d.usaTalla, prd_visible: d.activo,
         prd_etiqueta: d.etiqueta || null, prd_caracteristicas: d.caracteristicas || null, prd_ficha: d.ficha || null
       };
       const rp = nuevo ? await ejecutar(sb.from('producto').insert(fila)) : await ejecutar(sb.from('producto').update(fila).eq('prd_codigo', d.codigo));
       if (rp.error) return rp;
       // Tallas: se guardan las nuevas y se quitan las que ya no están
-      const rt = await ejecutar(sb.from('producto_talla').upsert(d.tallas.map((t) => ({ prd_codigo: d.codigo, pta_talla: t.talla, pta_stock: t.stock }))));
+      const rt = await ejecutar(sb.from('producto_talla').upsert(d.tallas.map((t) => ({ prd_codigo: d.codigo, pta_talla: t.talla, pta_cantidad: t.stock }))));
       if (rt.error) return rt;
       const nombres = d.tallas.map((t) => t.talla);
       const rq = await ejecutar(sb.from('producto_talla').delete().eq('prd_codigo', d.codigo).not('pta_talla', 'in', `(${nombres.map((n) => `"${n.replace(/"/g, '')}"`).join(',')})`));
@@ -254,12 +254,12 @@ const Api = (() => {
     },
     async pagos() {
       const r = await ejecutar(sb.from('pago')
-        .select('pag_codigo, ped_numero, pag_metodo, pag_marca, pag_ultimos4, pag_banco, pag_referencia, pag_monto, pag_fecha, pag_estado, pedido(ped_fecha, cliente(cli_nombres, cli_apellidos))')
+        .select('pag_codigo, ped_numero, pag_metodo, pag_marca, pag_ultimos4, pag_banco, pag_comprobante, pag_monto, pag_fecha, pag_estado, pedido(ped_fecha, cliente(cli_nombres, cli_apellidos))')
         .order('pag_fecha', { ascending: false }).limit(500));
       return mapear(r, (g) => ({
         codigo: g.pag_codigo, pedido: g.ped_numero, numeroPedido: codigoPedido(g.ped_numero, g.pedido ? g.pedido.ped_fecha : g.pag_fecha),
         cliente: g.pedido && g.pedido.cliente ? `${g.pedido.cliente.cli_nombres} ${g.pedido.cliente.cli_apellidos}` : '',
-        metodo: g.pag_metodo, detalle: g.pag_metodo === 'Tarjeta' ? `${g.pag_marca} •••• ${g.pag_ultimos4}` : `${g.pag_banco} · comprobante ${g.pag_referencia}`,
+        metodo: g.pag_metodo, detalle: g.pag_metodo === 'Tarjeta' ? `${g.pag_marca} •••• ${g.pag_ultimos4}` : `${g.pag_banco} · comprobante ${g.pag_comprobante}`,
         monto: g.pag_monto, fecha: g.pag_fecha, estado: g.pag_estado
       }));
     }

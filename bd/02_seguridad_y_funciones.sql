@@ -90,7 +90,7 @@ alter table detalle_pedido  enable row level security;
 alter table resena          enable row level security;
 
 create policy "catalogo visible" on categoria      for select using (true);
-create policy "catalogo visible" on producto       for select using (prd_activo or es_admin());
+create policy "catalogo visible" on producto       for select using (prd_visible or es_admin());
 create policy "catalogo visible" on producto_talla for select using (true);
 create policy "catalogo visible" on tienda         for select using (true);
 
@@ -133,11 +133,11 @@ begin
 
   if p_clave is not null then
     return query select p.ped_numero, 'AX-' || to_char(p.ped_fecha, 'YYYY') || '-' || lpad(p.ped_numero::text, 5, '0'), p.ped_total
-      from pedido p where p.ped_clave = p_clave and p.cli_cedula = v_cedula;
+      from pedido p where p.ped_clave_pago = p_clave and p.cli_cedula = v_cedula;
     if found then return; end if;
   end if;
 
-  if not exists (select 1 from metodo_pago where mpa_codigo = p_metodo_pago and cli_cedula = v_cedula) then raise exception 'El método de pago no es válido'; end if;
+  if not exists (select 1 from metodo_pago where mtp_codigo = p_metodo_pago and cli_cedula = v_cedula) then raise exception 'El método de pago no es válido'; end if;
   if not exists (select 1 from tienda where tie_codigo = p_tienda) then raise exception 'La tienda de retiro no es válida'; end if;
   if p_items is null or jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then raise exception 'El carrito está vacío'; end if;
   if jsonb_array_length(p_items) > 30 then raise exception 'Demasiados productos en un solo pedido'; end if;
@@ -147,20 +147,20 @@ begin
 
   begin
     for r in
-      select p.prd_codigo, p.prd_nombre, p.prd_precio, p.prd_usa_talla, p.prd_activo,
+      select p.prd_codigo, p.prd_nombre, p.prd_precio, p.prd_tiene_talla, p.prd_visible,
              coalesce(nullif(x->>'talla', ''), 'U') as talla,
              sum((x->>'cantidad')::int) as cantidad
         from jsonb_array_elements(p_items) x
         left join producto p on p.prd_codigo = x->>'producto'
-       group by p.prd_codigo, p.prd_nombre, p.prd_precio, p.prd_usa_talla, p.prd_activo, coalesce(nullif(x->>'talla', ''), 'U')
+       group by p.prd_codigo, p.prd_nombre, p.prd_precio, p.prd_tiene_talla, p.prd_visible, coalesce(nullif(x->>'talla', ''), 'U')
        order by p.prd_codigo, 6
     loop
-      if r.prd_codigo is null or not r.prd_activo then raise exception 'Un producto del carrito ya no está disponible'; end if;
+      if r.prd_codigo is null or not r.prd_visible then raise exception 'Un producto del carrito ya no está disponible'; end if;
       if r.cantidad is null or r.cantidad < 1 or r.cantidad > 10 then raise exception 'La cantidad de "%" debe estar entre 1 y 10', r.prd_nombre; end if;
-      if r.prd_usa_talla and r.talla = 'U' then raise exception 'Elige una talla para "%"', r.prd_nombre; end if;
+      if r.prd_tiene_talla and r.talla = 'U' then raise exception 'Elige una talla para "%"', r.prd_nombre; end if;
 
-      update producto_talla set pta_stock = pta_stock - r.cantidad
-       where prd_codigo = r.prd_codigo and pta_talla = r.talla and pta_stock >= r.cantidad;
+      update producto_talla set pta_cantidad = pta_cantidad - r.cantidad
+       where prd_codigo = r.prd_codigo and pta_talla = r.talla and pta_cantidad >= r.cantidad;
       if not found then
         raise exception 'No hay stock suficiente de "%"%', r.prd_nombre, case when r.talla = 'U' then '' else ' talla ' || r.talla end;
       end if;
@@ -168,18 +168,18 @@ begin
     end loop;
 
     v_iva := round(v_subtotal * 0.15, 2);
-    insert into pedido (cli_cedula, tie_codigo, mpa_codigo, ped_subtotal, ped_iva, ped_total, ped_clave)
+    insert into pedido (cli_cedula, tie_codigo, mtp_codigo, ped_subtotal, ped_iva, ped_total, ped_clave_pago)
     values (v_cedula, p_tienda, p_metodo_pago, v_subtotal, v_iva, v_subtotal + v_iva, p_clave)
     returning pedido.ped_numero into v_numero;
 
-    insert into detalle_pedido (ped_numero, prd_codigo, dpe_talla, dpe_cantidad, dpe_precio_unitario)
+    insert into detalle_pedido (ped_numero, prd_codigo, dpe_talla, dpe_cantidad, dpe_precio)
     select v_numero, p.prd_codigo, coalesce(nullif(x->>'talla', ''), 'U'), sum((x->>'cantidad')::int), p.prd_precio
       from jsonb_array_elements(p_items) x join producto p on p.prd_codigo = x->>'producto'
      group by p.prd_codigo, coalesce(nullif(x->>'talla', ''), 'U'), p.prd_precio;
   exception when unique_violation then
     if p_clave is not null then
       return query select p.ped_numero, 'AX-' || to_char(p.ped_fecha, 'YYYY') || '-' || lpad(p.ped_numero::text, 5, '0'), p.ped_total
-        from pedido p where p.ped_clave = p_clave and p.cli_cedula = v_cedula;
+        from pedido p where p.ped_clave_pago = p_clave and p.cli_cedula = v_cedula;
       if found then return; end if;
     end if;
     raise;
@@ -205,7 +205,7 @@ begin
     else array[]::text[] end;
   if not (p_estado = any (permitidos)) then raise exception 'No se puede pasar un pedido de "%" a "%"', v_actual, p_estado; end if;
   if p_estado = 'Cancelado' then
-    update producto_talla t set pta_stock = t.pta_stock + d.dpe_cantidad
+    update producto_talla t set pta_cantidad = t.pta_cantidad + d.dpe_cantidad
       from detalle_pedido d
      where d.ped_numero = p_numero and t.prd_codigo = d.prd_codigo and t.pta_talla = d.dpe_talla;
   end if;
@@ -222,7 +222,7 @@ end $$;
 
 create or replace function pedidos_admin()
 returns table (ped_numero int4, ped_codigo text, ped_estado varchar, ped_total numeric, ped_fecha timestamptz,
-               cliente text, cli_correo varchar, cli_telefono char(10), cli_cedula char(10),
+               cliente text, cli_correo varchar, cli_celular char(10), cli_cedula char(10),
                tie_nombre varchar, tie_horario varchar, productos text)
 language plpgsql stable security definer set search_path = public as $$
 begin
@@ -230,7 +230,7 @@ begin
   return query
   select p.ped_numero, 'AX-' || to_char(p.ped_fecha, 'YYYY') || '-' || lpad(p.ped_numero::text, 5, '0'),
          p.ped_estado, p.ped_total, p.ped_fecha,
-         c.cli_nombres || ' ' || c.cli_apellidos, c.cli_correo, c.cli_telefono, c.cli_cedula,
+         c.cli_nombres || ' ' || c.cli_apellidos, c.cli_correo, c.cli_celular, c.cli_cedula,
          t.tie_nombre, t.tie_horario,
          (select string_agg(d.dpe_cantidad || ' × ' || pr.prd_nombre || case when d.dpe_talla = 'U' then '' else ' (talla ' || d.dpe_talla || ')' end, ', ')
             from detalle_pedido d join producto pr on pr.prd_codigo = d.prd_codigo where d.ped_numero = p.ped_numero)

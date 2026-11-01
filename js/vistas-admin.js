@@ -108,7 +108,7 @@ async function vistaAdmin(partes, params) {
 
 /* ======================= Menú del administrador ======================= */
 function menuAdmin(actual) {
-  const items = [['pedidos', 'admin.html', 'paquete', 'Pedidos'], ['productos', 'admin-productos.html', 'tienda', 'Productos'], ['pagos', 'admin-pagos.html', 'tarjeta', 'Pagos']];
+  const items = [['pedidos', 'admin.html', 'paquete', 'Pedidos'], ['productos', 'admin-productos.html', 'tienda', 'Productos'], ['stock', 'admin-stock.html', 'grafico', 'Stock'], ['pagos', 'admin-pagos.html', 'tarjeta', 'Pagos']];
   return `<nav class="menu-admin" aria-label="Administración">${items.map(([k, href, ic, t]) => `<a href="${href}" ${k === actual ? 'aria-current="page"' : ''}>${icono(ic)}${t}</a>`).join('')}</nav>`;
 }
 function soloAdmin() {
@@ -365,6 +365,105 @@ async function vistaAdminPagos() {
         </table>
       </div>`}
     </div>`
+  };
+}
+
+/* ======================= Stock (administrador) ======================= */
+/* Existencias de cada producto por talla, con la última reducción (de qué cantidad a cuál) y los movimientos.
+   Se actualiza sola cada 15 segundos: cuando un cliente compra, la fila del producto se resalta. */
+const STOCK_BAJO = 5;
+const SEGUNDOS_STOCK = 15;
+async function vistaAdminStock() {
+  const ok = soloAdmin(); if (!ok) return null; if (ok === 'no') return vistaNoEncontrada();
+  const r = await Api.admin.stock();
+  if (r.error) return { titulo: 'Stock', seccion: 'admin', html: errorCargaHtml(r.error) };
+  return {
+    titulo: 'Stock (administrador)',
+    seccion: 'admin',
+    html: `
+    <div class="contenedor pagina">
+      ${menuAdmin('stock')}
+      <h1 class="titulo-pagina">Stock</h1>
+      <p class="subtitulo cabecera-pagina">Cada compra descuenta el stock en la base de datos en el mismo momento, y cada cancelación lo devuelve. Aquí ves cuánto queda, la última reducción de cada producto y todos los movimientos.</p>
+      <p class="estado-vivo" role="status" aria-live="polite"><span class="punto-vivo" aria-hidden="true"></span><span id="stock-actualizado">Actualizado ahora</span> · se actualiza solo cada ${SEGUNDOS_STOCK} segundos</p>
+      <dl class="tarjetas-resumen" id="stock-resumen"></dl>
+      <form class="filtro-admin" id="filtro-stock" role="search" aria-label="Filtrar el stock" onsubmit="return false">
+        <div class="campo"><label for="buscar-stock">Buscar por código o nombre</label><input id="buscar-stock" type="search" autocomplete="off"></div>
+        <div class="campo"><label for="ver-stock">Mostrar</label><select id="ver-stock"><option value="todos">Todos los productos</option><option value="bajo">Stock bajo (${STOCK_BAJO} o menos)</option><option value="agotado">Agotados</option><option value="movidos">Con movimientos</option></select></div>
+        <div class="campo"><label for="cat-stock">Categoría</label><select id="cat-stock"><option value="todas">Todas</option>${Object.entries(CATEGORIAS).map(([k, t]) => `<option value="${k}">${t}</option>`).join('')}</select></div>
+      </form>
+      <h2 class="titulo-seccion" style="margin-top:1.5rem">Productos</h2>
+      <div class="tabla-desplazable" tabindex="0" role="region" aria-label="Stock por producto">
+        <table class="tabla-admin tabla-stock">
+          <thead><tr><th scope="col">Producto</th><th scope="col">Stock por talla</th><th scope="col" class="num">Total</th><th scope="col">Última reducción</th></tr></thead>
+          <tbody id="stock-filas"></tbody>
+        </table>
+      </div>
+      <h2 class="titulo-seccion" style="margin-top:2rem">Últimos movimientos</h2>
+      <div class="tabla-desplazable" tabindex="0" role="region" aria-label="Últimos movimientos de stock">
+        <table class="tabla-admin">
+          <thead><tr><th scope="col">Fecha</th><th scope="col">Producto</th><th scope="col">Talla</th><th scope="col">Motivo</th><th scope="col" class="num">Cantidad</th><th scope="col">Stock</th><th scope="col">Pedido</th></tr></thead>
+          <tbody id="stock-movimientos"></tbody>
+        </table>
+      </div>
+    </div>`,
+    montar(main) {
+      let datos = r.datos;
+      let vistos = new Set((datos.movimientos || []).map((m) => m.id));
+      let resaltar = new Set();
+      const filtros = () => ({ q: $('#buscar-stock', main).value.trim().toLowerCase(), ver: $('#ver-stock', main).value, cat: $('#cat-stock', main).value });
+      const hace = (f) => { const min = Math.round((Date.now() - new Date(f)) / 60000); return min < 1 ? 'hace un momento' : min < 60 ? `hace ${min} min` : fechaHora(f); };
+      const pintar = () => {
+        const f = filtros();
+        const porProducto = {};
+        datos.tallas.forEach((t) => { (porProducto[t.producto] = porProducto[t.producto] || []).push(t); });
+        const movs = datos.movimientos || [];
+        const filas = PRODUCTOS.map((p) => {
+          const tallas = (porProducto[p.dbId] || []).sort((a, b) => String(a.talla).localeCompare(String(b.talla), 'es', { numeric: true }));
+          const total = tallas.reduce((s, t) => s + t.cantidad, 0);
+          const reduccion = movs.find((m) => m.producto === p.dbId && m.cantidad < 0);
+          const movido = movs.some((m) => m.producto === p.dbId);
+          return { p, tallas, total, reduccion, movido };
+        }).filter(({ p, total, movido }) =>
+          (!f.q || p.nombre.toLowerCase().includes(f.q) || String(p.dbId).toLowerCase().includes(f.q)) &&
+          (f.cat === 'todas' || p.categoria === f.cat) &&
+          (f.ver === 'todos' || (f.ver === 'bajo' && total > 0 && total <= STOCK_BAJO) || (f.ver === 'agotado' && total === 0) || (f.ver === 'movidos' && movido)));
+        const todas = datos.tallas.reduce((s, t) => s + t.cantidad, 0);
+        const hoy = new Date().toDateString();
+        const vendidasHoy = movs.filter((m) => m.motivo === 'Venta' && new Date(m.fecha).toDateString() === hoy).reduce((s, m) => s - m.cantidad, 0);
+        const totales = PRODUCTOS.filter((p) => porProducto[p.dbId]).map((p) => porProducto[p.dbId].reduce((s, t) => s + t.cantidad, 0));
+        $('#stock-resumen', main).innerHTML = `
+          <div><dt>Unidades en stock</dt><dd>${todas.toLocaleString('es-EC')}</dd></div>
+          <div><dt>Vendidas hoy</dt><dd>${vendidasHoy}</dd></div>
+          <div><dt>Stock bajo</dt><dd>${totales.filter((t) => t > 0 && t <= STOCK_BAJO).length}</dd></div>
+          <div><dt>Agotados</dt><dd>${totales.filter((t) => t === 0).length}</dd></div>`;
+        $('#stock-filas', main).innerHTML = filas.length ? filas.map(({ p, tallas, total, reduccion }) => `
+          <tr class="${resaltar.has(p.dbId) ? 'fila-cambio' : ''}">
+            <td><div class="stock-producto"><img src="${img(p)}" alt="" width="48" height="48" loading="lazy"><span><strong>${esc(p.nombre)}</strong><span class="texto-suave">Cód. ${esc(p.dbId)} · ${CATEGORIAS[p.categoria] || ''}</span></span></div></td>
+            <td><ul class="chips-stock">${tallas.map((t) => `<li class="${t.cantidad === 0 ? 'agotado' : t.cantidad <= STOCK_BAJO ? 'bajo' : ''}">${t.talla ? `<span>${esc(t.talla)}</span>` : '<span>Única</span>'}<strong>${t.cantidad}</strong></li>`).join('')}</ul></td>
+            <td class="num"><strong>${total}</strong>${!tallas.length ? '' : total === 0 ? ' <span class="estado estado--cancelado">Agotado</span>' : total <= STOCK_BAJO ? ' <span class="estado estado--preparando">Bajo</span>' : ''}</td>
+            <td>${reduccion ? `<span class="reduccion"><strong class="menos">${reduccion.cantidad}</strong>${reduccion.talla ? ` talla ${esc(reduccion.talla)}` : ''} · ${reduccion.antes} → <strong>${reduccion.despues}</strong></span><span class="texto-suave d-bloque">${esc(reduccion.motivo)}${reduccion.pedido ? ` · <a href="orden.html?pedido=${reduccion.pedido.id}">${esc(reduccion.pedido.numero)}</a>` : ''} · ${hace(reduccion.fecha)}</span>` : '<span class="texto-suave">Sin ventas todavía</span>'}</td>
+          </tr>`).join('') : '<tr><td colspan="4" class="texto-suave">No hay productos con este filtro.</td></tr>';
+        $('#stock-movimientos', main).innerHTML = movs === null || !movs.length
+          ? `<tr><td colspan="7" class="texto-suave">${movs === null ? 'El registro de movimientos todavía no está activo en la base (script 19).' : 'Todavía no hay movimientos. Aparecerán apenas un cliente compre.'}</td></tr>`
+          : movs.slice(0, 40).map((m) => { const p = productoPorDbId(m.producto); return `<tr class="${resaltar.has(m.producto) && !vistos.has(m.id) ? 'fila-cambio' : ''}"><td>${fechaHora(m.fecha)}</td><td>${esc(p ? p.nombre : m.producto)}</td><td>${esc(m.talla || 'Única')}</td><td>${esc(m.motivo)}</td><td class="num"><strong class="${m.cantidad < 0 ? 'menos' : 'mas'}">${m.cantidad > 0 ? '+' : ''}${m.cantidad}</strong></td><td>${m.antes} → <strong>${m.despues}</strong></td><td>${m.pedido ? `<a href="orden.html?pedido=${m.pedido.id}">${esc(m.pedido.numero)}</a>` : '—'}</td></tr>`; }).join('');
+      };
+      pintar();
+      $('#filtro-stock', main).addEventListener('input', pintar);
+      const reloj = setInterval(async () => {
+        if (!main.isConnected) { clearInterval(reloj); return; }
+        const r2 = await Api.admin.stock();
+        if (r2.error || !main.isConnected) return;
+        const nuevos = (r2.datos.movimientos || []).filter((m) => !vistos.has(m.id));
+        resaltar = new Set(nuevos.map((m) => m.producto));
+        datos = r2.datos;
+        pintar();
+        vistos = new Set((datos.movimientos || []).map((m) => m.id));
+        $('#stock-actualizado', main).textContent = `Actualizado a las ${new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+        const ventas = nuevos.filter((m) => m.motivo === 'Venta');
+        if (ventas.length) aviso(`Stock actualizado: se vendieron ${ventas.reduce((s, m) => s - m.cantidad, 0)} unidades.`);
+      }, SEGUNDOS_STOCK * 1000);
+    }
   };
 }
 

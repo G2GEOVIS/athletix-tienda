@@ -136,7 +136,7 @@ function renderCuenta() {
       ${estado.cliente ? `<li class="cuenta__quien" role="presentation"><strong>${esc(`${estado.cliente.nombres} ${estado.cliente.apellidos}`)}</strong><span>${esc(estado.cliente.correo || correoSesion())}</span></li>` : ''}
       <li><a href="perfil.html">${icono('usuario')}Mi perfil</a></li>
       <li><a href="pedidos.html">${icono('paquete')}Mis pedidos</a></li>
-      ${estado.esAdmin ? `<li><a href="admin.html?estado=Recibido">${icono('ajustes')}Panel de pedidos<span class="insignia" data-nuevos ${estado.nuevos ? '' : 'hidden'}>${estado.nuevos}<span class="solo-lector"> pedidos nuevos</span></span></a></li><li><a href="admin-productos.html">${icono('tienda')}Productos</a></li><li><a href="admin-pagos.html">${icono('tarjeta')}Pagos</a></li>` : ''}
+      ${estado.esAdmin ? `<li><a href="admin.html?estado=Recibido">${icono('ajustes')}Panel de pedidos<span class="insignia" data-nuevos ${estado.nuevos ? '' : 'hidden'}>${estado.nuevos}<span class="solo-lector"> pedidos nuevos</span></span></a></li><li><a href="admin-productos.html">${icono('tienda')}Productos</a></li><li><a href="admin-stock.html">${icono('grafico')}Stock</a></li><li><a href="admin-pagos.html">${icono('tarjeta')}Pagos</a></li>` : ''}
       <li><button type="button" data-accion="cerrar-sesion">${icono('salir')}Cerrar sesión</button></li>
     </ul>`;
   const boton = $('.cuenta__boton', zona);
@@ -244,7 +244,7 @@ const ARCHIVOS = { '': 'index.html', productos: 'productos.html', producto: 'pro
   registro: 'registro.html', 'verifica-correo': 'confirmar-correo.html', 'completar-perfil': 'completar-perfil.html', recuperar: 'recuperar.html',
   'nueva-clave': 'nueva-clave.html', retiro: 'retiro.html', pago: 'pago.html', confirmacion: 'confirmacion.html', pedidos: 'pedidos.html',
   perfil: 'perfil.html', admin: 'admin.html', ayuda: 'ayuda.html', orden: 'orden.html',
-  'admin-productos': 'admin-productos.html', 'admin-producto': 'admin-producto.html', 'admin-pagos': 'admin-pagos.html', favoritos: 'favoritos.html' };
+  'admin-productos': 'admin-productos.html', 'admin-producto': 'admin-producto.html', 'admin-pagos': 'admin-pagos.html', 'admin-stock': 'admin-stock.html', favoritos: 'favoritos.html' };
 
 const VISTAS = {
   '': vistaInicio,
@@ -266,6 +266,7 @@ const VISTAS = {
   'admin-productos': vistaAdminProductos,
   'admin-producto': vistaAdminProducto,
   'admin-pagos': vistaAdminPagos,
+  'admin-stock': vistaAdminStock,
   orden: vistaOrden,
   favoritos: vistaFavoritos,
   ayuda: vistaAyuda

@@ -207,6 +207,7 @@ const ICONOS = {
   chevronIzq: '<path d="m15 5-7 7 7 7"/>',
   chevronDer: '<path d="m9 5 7 7-7 7"/>',
   chevronAbajo: '<path d="m6 9 6 6 6-6"/>',
+  grafico: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
   filtro: '<path d="M4 6h16M7 12h10M10 18h4"/>',
   menos: '<path d="M5 12h14"/>',
   mas: '<path d="M12 5v14M5 12h14"/>',

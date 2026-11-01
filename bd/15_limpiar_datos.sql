@@ -6,6 +6,7 @@
 /* El catálogo, las tiendas y el administrador se conservan.     */
 /*==============================================================*/
 begin;
+select set_config('athletix.motivo', 'Limpieza', true);
 
 -- 1. El stock vuelve a su total (los pedidos cancelados ya lo devolvieron)
 update producto_talla t set pta_cantidad = t.pta_cantidad + x.cantidad
@@ -17,9 +18,10 @@ update producto_talla t set pta_cantidad = t.pta_cantidad + x.cantidad
 
 -- 2. Pedidos, detalle y pagos
 delete from pedido;
-alter sequence seq_ped_numero restart with 1001;
+-- La numeración de pedidos y facturas NO se reinicia: así una factura nunca repite número
 
 -- 3. Clientes (con sus tarjetas y reseñas) y sus cuentas de acceso, menos el administrador
+delete from movimiento_stock;
 delete from carrito;
 delete from favorito;
 delete from resena where cli_cedula in (select cli_cedula from cliente where cli_usuario not in (select adm_usuario from administrador));

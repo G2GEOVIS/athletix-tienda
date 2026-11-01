@@ -29,6 +29,7 @@ PAGINAS = [
     ('admin.html', 'admin', 'Panel de pedidos | ATHLETIX', 'Panel del administrador para gestionar los pedidos.'),
     ('admin-productos.html', 'admin-productos', 'Productos (administrador) | ATHLETIX', 'Crear, editar, desactivar y borrar productos.'),
     ('admin-producto.html', 'admin-producto', 'Editar producto | ATHLETIX', 'Formulario del producto: datos, fotos y stock por talla.'),
+    ('admin-stock.html', 'admin-stock', 'Stock (administrador) | ATHLETIX', 'Existencias de cada producto, última reducción y movimientos de stock.'),
     ('admin-pagos.html', 'admin-pagos', 'Pagos (administrador) | ATHLETIX', 'Registro de todos los pagos guardados en la base de datos.'),
     ('orden.html', 'orden', 'Orden de pedido | ATHLETIX', 'Orden de pedido con el código de retiro y los productos.'),
     ('favoritos.html', 'favoritos', 'Mis favoritos | ATHLETIX', 'Productos que guardaste como favoritos.'),

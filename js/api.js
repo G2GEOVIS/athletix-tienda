@@ -133,15 +133,15 @@ const Api = (() => {
   const codigoPedido = (numero, fecha) => `AX-${new Date(fecha).getFullYear()}-${String(numero).padStart(5, '0')}`;
   const aCliente = (c) => ({ id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_celular, direccion: c.cli_direccion || '', correo: c.cli_correo, creado_en: c.cli_fecha_registro });
   const aTarjeta = (t) => ({ id: t.mtp_codigo, marca: t.mtp_marca, ultimos4: t.mtp_ultimos4, titular: t.mtp_titular, mes_vence: t.mtp_mes_vence, anio_vence: t.mtp_anio_vence });
-  const CAMPOS_PEDIDO = 'ped_numero, ped_estado, ped_subtotal, ped_iva, ped_total, ped_fecha, ped_codigo_retiro, ped_hora_estimada, '
+  const CAMPOS_PEDIDO = 'ped_numero, ped_factura, ped_estado, ped_subtotal, ped_iva, ped_total, ped_fecha, ped_codigo_retiro, ped_hora_estimada, '
     + 'tienda(tie_nombre, tie_direccion, tie_horario, tie_ciudad), pago(pag_forma, pag_marca, pag_ultimos4, pag_monto, pag_fecha, pag_estado), '
     + 'detalle_pedido(prd_codigo, dpe_talla, dpe_cantidad, dpe_precio)';
-  const textoDePago = (g) => (!g ? 'Sin registro de pago' : g.pag_forma === 'En tienda' ? `Pago en la tienda al retirar${g.pag_estado === 'Pendiente' ? ' (pendiente)' : ''}` : `Tarjeta ${g.pag_marca} •••• ${g.pag_ultimos4}`);
+  const textoDePago = (g) => (!g ? 'Sin registro de pago' : g.pag_forma === 'En tienda' ? `Efectivo en la tienda al retirar${g.pag_estado === 'Pendiente' ? ' (pendiente)' : ''}` : `Tarjeta ${g.pag_marca} •••• ${g.pag_ultimos4}`);
   const aPedido = (p) => {
     const g = Array.isArray(p.pago) ? p.pago[0] : p.pago;
     const c = p.cliente;
     return {
-      id: p.ped_numero, numero: codigoPedido(p.ped_numero, p.ped_fecha), estado: p.ped_estado,
+      id: p.ped_numero, factura: p.ped_factura || p.ped_numero, numero: codigoPedido(p.ped_numero, p.ped_fecha), estado: p.ped_estado,
       subtotal: p.ped_subtotal, iva: p.ped_iva, total: p.ped_total, creado_en: p.ped_fecha,
       codigoRetiro: p.ped_codigo_retiro, horaEstimada: p.ped_hora_estimada,
       tiendas: p.tienda ? { nombre: p.tienda.tie_nombre, direccion: p.tienda.tie_direccion, horario: p.tienda.tie_horario, ciudad: p.tienda.tie_ciudad } : null,
@@ -213,7 +213,7 @@ const Api = (() => {
       // La función devuelve una tabla (lista) con una sola fila: se toma esa fila
       const x = Array.isArray(r.datos) ? r.datos[0] : r.datos;
       if (!x || !x.ped_numero) return { error: 'No se pudo confirmar el pedido. Revisa "Mis pedidos" antes de intentar de nuevo.' };
-      return { datos: { id: x.ped_numero, numero: x.ped_codigo, total: x.ped_total, codigoRetiro: x.ped_codigo_retiro, horaEstimada: x.ped_hora_estimada } };
+      return { datos: { id: x.ped_numero, numero: x.ped_codigo, total: x.ped_total, codigoRetiro: x.ped_codigo_retiro, horaEstimada: x.ped_hora_estimada, factura: x.ped_factura || x.ped_numero } };
     },
     async nuevos() { const r = await ejecutar(sb.rpc('pedidos_nuevos')); return r.error ? 0 : Number(r.datos) || 0; },
     async mios() {
@@ -255,6 +255,24 @@ const Api = (() => {
   /* ---------- Administrador: productos y pagos ---------- */
   const CATEGORIA_CODIGO = { calzado: 1, tecnologia: 2, entrenamiento: 3 };
   const admin = {
+    /* Stock actual de cada talla y los últimos movimientos (tabla MOVIMIENTO_STOCK, la llena un trigger de la base) */
+    async stock() {
+      const [rt, rm] = await Promise.all([
+        ejecutar(sb.from('producto_talla').select('prd_codigo, pta_talla, pta_cantidad')),
+        ejecutar(sb.from('movimiento_stock').select('mst_codigo, prd_codigo, pta_talla, mst_motivo, mst_cantidad, mst_stock_anterior, mst_stock_nuevo, ped_numero, mst_fecha, pedido(ped_fecha)').order('mst_codigo', { ascending: false }).limit(400))
+      ]);
+      if (rt.error) return rt;
+      return {
+        datos: {
+          tallas: (rt.datos || []).map((t) => ({ producto: t.prd_codigo, talla: t.pta_talla === 'U' ? null : t.pta_talla, cantidad: t.pta_cantidad })),
+          movimientos: rm.error ? null : (rm.datos || []).map((m) => ({
+            id: m.mst_codigo, producto: m.prd_codigo, talla: m.pta_talla === 'U' ? null : m.pta_talla, motivo: m.mst_motivo, cantidad: m.mst_cantidad,
+            antes: m.mst_stock_anterior, despues: m.mst_stock_nuevo, fecha: m.mst_fecha,
+            pedido: m.ped_numero ? { id: m.ped_numero, numero: codigoPedido(m.ped_numero, m.pedido ? m.pedido.ped_fecha : m.mst_fecha) } : null
+          }))
+        }
+      };
+    },
     activar(codigo, activo) { return ejecutar(sb.from('producto').update({ prd_visible: activo }).eq('prd_codigo', codigo)); },
     async borrarProducto(codigo) {
       const r = await ejecutar(sb.from('producto').delete().eq('prd_codigo', codigo).select('prd_codigo'));
@@ -300,7 +318,7 @@ const Api = (() => {
       return mapear(r, (g) => ({
         codigo: g.pag_codigo, pedido: g.ped_numero, numeroPedido: codigoPedido(g.ped_numero, g.pedido ? g.pedido.ped_fecha : g.pag_fecha),
         cliente: g.pedido && g.pedido.cliente ? `${g.pedido.cliente.cli_nombres} ${g.pedido.cliente.cli_apellidos}` : '',
-        detalle: g.pag_forma === 'En tienda' ? 'Pago en la tienda al retirar' : `${g.pag_marca} •••• ${g.pag_ultimos4}`,
+        detalle: g.pag_forma === 'En tienda' ? 'Efectivo en la tienda al retirar' : `${g.pag_marca} •••• ${g.pag_ultimos4}`,
         monto: g.pag_monto, fecha: g.pag_fecha, estado: g.pag_estado
       }));
     }
@@ -487,7 +505,7 @@ const Api = (() => {
       const asunto = `Pedido ${p.numero} confirmado · código de retiro ${p.codigo}`;
       const html = plantillaCorreo({
         nombre: p.nombre, titulo: '¡Gracias por tu compra! 🎉', paso: 1,
-        parrafo: p.enTienda ? `Recibimos tu pedido <b>${h(p.numero)}</b> y ya reservamos tus productos. <b>Pagas ${plata(p.total)} en la caja de la tienda</b> (en efectivo o con tarjeta) cuando lo retires. Este es el detalle:` : `Recibimos tu pedido <b>${h(p.numero)}</b> y tu pago con ${h(p.pagoTexto)} fue aprobado. Este es el detalle:`,
+        parrafo: p.enTienda ? `Recibimos tu pedido <b>${h(p.numero)}</b> y ya reservamos tus productos. <b>Pagas ${plata(p.total)} en efectivo en la caja de la tienda</b> cuando lo retires. Este es el detalle:` : `Recibimos tu pedido <b>${h(p.numero)}</b> y tu pago con ${h(p.pagoTexto)} fue aprobado. Este es el detalle:`,
         cuerpo: `${tablaDetalle(items, totales)}
           ${cajaRetiro({ numero: p.numero, codigo: p.codigo, tienda, nota: `Estará listo${listo || ` ${h(ENTREGA.retiro)}`}. Te avisaremos por correo.` })}
           <div style="margin:0 0 18px;font-size:14px;line-height:1.7"><b>¿Qué sigue?</b><br>1. Preparamos tus productos.<br>2. Te escribimos cuando esté <b>listo para retirar</b>.<br>3. Vas a la tienda con tu cédula y tu número de pedido.</div>
@@ -499,7 +517,7 @@ const Api = (() => {
       return enviar(CONFIG.emailjs.plantillaCliente, {
         to_email: p.correo, nombre: p.nombre, numero: p.numero, tienda: p.tienda, horario: p.horario, total: Number(p.total).toFixed(2),
         asunto, enlace,
-        mensaje: `Gracias por tu compra. ${p.enTienda ? `Pagas $${Number(p.total).toFixed(2)} en la tienda al retirar.` : `Tu pago con ${p.pagoTexto} fue aprobado.`} Retira tu pedido en ${p.tienda} con tu cédula y tu número de pedido ${p.numero} (código de retiro ${p.codigo}). Descarga tu factura en PDF desde tu orden de pedido.`,
+        mensaje: `Gracias por tu compra. ${p.enTienda ? `Pagas $${Number(p.total).toFixed(2)} en efectivo en la tienda al retirar.` : `Tu pago con ${p.pagoTexto} fue aprobado.`} Retira tu pedido en ${p.tienda} con tu cédula y tu número de pedido ${p.numero} (código de retiro ${p.codigo}). Descarga tu factura en PDF desde tu orden de pedido.`,
         detalle_html: detalleRespaldo(items, totales)
       });
     },
@@ -529,7 +547,7 @@ const Api = (() => {
         html = plantillaCorreo({
           nombre, titulo: '¡Tu pedido está listo para retirar! ✅', paso: 3,
           parrafo: `Tu pedido <b>${h(p.numero)}</b> ya te espera en la tienda. Esto es lo que vas a retirar:`,
-          cuerpo: `${detalle}${cajaRetiro({ numero: p.numero, codigo: p.codigoRetiro, tienda, nota: d.pendiente ? `💵 <b>Recuerda:</b> pagas ${plata(d.total)} en la caja al retirar (efectivo o tarjeta).` : '' })}${queLlevar()}`,
+          cuerpo: `${detalle}${cajaRetiro({ numero: p.numero, codigo: p.codigoRetiro, tienda, nota: d.pendiente ? `💵 <b>Recuerda:</b> pagas ${plata(d.total)} en efectivo en la caja al retirar.` : '' })}${queLlevar()}`,
           boton: ['Ver mi orden de pedido', enlace]
         });
       } else if (estadoNuevo === 'Retirado') {
@@ -581,7 +599,7 @@ const Api = (() => {
             <div style="font-size:15px;font-weight:bold;margin-bottom:6px">👤 Cliente</div>
             <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px">${fila('Nombre', h(p.cliente))}${fila('Cédula', h(p.cedula))}${fila('Celular', h(p.telefono))}${fila('Correo', h(p.correo))}${p.direccion ? fila('Dirección', h(p.direccion)) : ''}${fila('Pago', h(p.pagoTexto || ''))}</table>
           </div>
-          ${cajaRetiro({ numero: p.numero, codigo: p.codigo, tienda, nota: p.enTienda ? `💵 El cliente paga ${plata(p.total)} en caja al retirar.` : '✅ Pago con tarjeta aprobado.' })}`,
+          ${cajaRetiro({ numero: p.numero, codigo: p.codigo, tienda, nota: p.enTienda ? `💵 El cliente paga ${plata(p.total)} en efectivo al retirar.` : '✅ Pago con tarjeta aprobado.' })}`,
         boton: ['Abrir panel de pedidos', `${BASE()}admin.html?estado=Recibido`], boton2: ['Ver orden de pedido', enlaceOrden(p.id)],
         pie: 'Aviso automático para el administrador de ATHLETIX.', conAyuda: false
       });

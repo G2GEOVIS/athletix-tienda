@@ -29,7 +29,7 @@ function vistaInicio() {
       <ul class="beneficios__lista">
         <li class="beneficio"><span class="beneficio__icono">${icono('tienda')}</span><p><strong>Retiro gratis en tienda</strong><span>Quito y Guayaquil</span></p></li>
         <li class="beneficio"><span class="beneficio__icono">${icono('correo')}</span><p><strong>Te avisamos por correo</strong><span>Cuando tu pedido esté listo</span></p></li>
-        <li class="beneficio"><span class="beneficio__icono">${icono('escudo')}</span><p><strong>Paga como prefieras</strong><span>Todas las tarjetas o en la tienda al retirar</span></p></li>
+        <li class="beneficio"><span class="beneficio__icono">${icono('escudo')}</span><p><strong>Paga como prefieras</strong><span>Todas las tarjetas o efectivo al retirar</span></p></li>
         <li class="beneficio"><span class="beneficio__icono">${icono('estrella')}</span><p><strong>Opiniones reales</strong><span>Solo de clientes que compraron</span></p></li>
       </ul>
     </section>
@@ -310,7 +310,7 @@ function vistaProducto(partes) {
           <ul class="lista-iconos">
             <li>${icono('tienda')}Retiro gratis en tienda, listo de 1 a 3 horas</li>
             <li>${icono('correo')}Te avisamos por correo cuando esté listo</li>
-            <li>${icono('escudo')}Paga con cualquier tarjeta o en la tienda al retirar</li>
+            <li>${icono('escudo')}Paga con cualquier tarjeta o en efectivo al retirar</li>
           </ul>
         </section>
       </div>
@@ -702,7 +702,7 @@ function vistaCarrito() {
             <button class="boton boton--principal boton--bloque" type="button" id="continuar-compra">Continuar con la compra</button>
             <a class="boton boton--secundario boton--bloque" href="productos.html">${icono('izquierda')}Seguir comprando</a>
             <div style="text-align:center;margin-top:.5rem"><button class="boton-icono" type="button" id="vaciar">${icono('basura')}Vaciar carrito</button></div>
-            <p class="texto-suave" style="margin-top:1rem;display:flex;gap:.5rem">${icono('candado')}Paga con cualquier tarjeta (Visa, Mastercard, American Express, Diners y más) o en la tienda al retirar.</p>`)}
+            <p class="texto-suave" style="margin-top:1rem;display:flex;gap:.5rem">${icono('candado')}Paga con cualquier tarjeta (Visa, Mastercard, American Express, Diners y más) o en efectivo al retirar.</p>`)}
         </div>`}
     </div>`,
     montar(main) {

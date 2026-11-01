@@ -30,7 +30,7 @@ function comoFuncionaPago() {
     <details class="como-funciona" open>
       <summary>${icono('info')}¿Cómo funciona el pago? (simulación)</summary>
       <ol>
-        <li><strong>Eliges cómo pagar:</strong> con cualquier tarjeta (Visa, Mastercard, American Express, Diners Club y más) o en la tienda al retirar.</li>
+        <li><strong>Eliges cómo pagar:</strong> con cualquier tarjeta (Visa, Mastercard, American Express, Diners Club y más) o en efectivo en la tienda al retirar.</li>
         <li><strong>La tienda revisa los datos:</strong> que el número de la tarjeta sea válido (algoritmo de Luhn), la fecha de vencimiento y el CVV.</li>
         <li><strong>Aprobación simulada:</strong> el pago se aprueba al instante. <strong>No se mueve dinero real</strong> ni se contacta a ningún banco.</li>
         <li><strong>Registro en la base de datos:</strong> se guarda el pago con la marca y los últimos 4 dígitos de la tarjeta, el monto, la fecha y el estado.</li>
@@ -161,10 +161,10 @@ async function vistaPago() {
             <fieldset class="formas-pago">
               <legend class="solo-lector">Forma de pago</legend>
               <label class="opcion opcion--caja"><input type="radio" name="forma" value="tarjeta" checked> ${icono('tarjeta')}<span><strong>Tarjeta de crédito o débito</strong><span class="texto-suave d-bloque">Visa, Mastercard, American Express, Diners Club, Discover, JCB, UnionPay y Maestro</span></span></label>
-              <label class="opcion opcion--caja"><input type="radio" name="forma" value="tienda"> ${icono('tienda')}<span><strong>Pagar en la tienda al retirar</strong><span class="texto-suave d-bloque">En efectivo o con tarjeta en la caja de ${esc(tienda.nombre)}</span></span></label>
+              <label class="opcion opcion--caja"><input type="radio" name="forma" value="tienda"> ${icono('tienda')}<span><strong>Efectivo en la tienda al retirar</strong><span class="texto-suave d-bloque">Pagas en efectivo en la caja de ${esc(tienda.nombre)} cuando retiras tu pedido</span></span></label>
             </fieldset>
             <div id="pago-en-tienda" hidden>
-              <p class="alerta alerta--info">${icono('info')}<span>Reservamos tus productos y los preparamos igual. Pagas <strong>${dinero(total)}</strong> en la caja cuando retires tu pedido, presentando tu cédula y tu número de pedido.</span></p>
+              <p class="alerta alerta--info">${icono('info')}<span>Reservamos tus productos y los preparamos igual. Pagas <strong>${dinero(total)} en efectivo</strong> en la caja cuando retires tu pedido, presentando tu cédula y tu número de pedido.</span></p>
             </div>
             <div id="pago-tarjeta" class="formulario">
               ${comoFuncionaPago()}
@@ -203,7 +203,7 @@ async function vistaPago() {
         $('#pago-tarjeta', form).hidden = enTienda();
         $('#nota-tarjeta', form).hidden = enTienda();
         $('#pago-en-tienda', form).hidden = !enTienda();
-        $('#boton-pagar', form).innerHTML = enTienda() ? `${icono('check')}Confirmar pedido · pagas ${dinero(total)} en la tienda` : `${icono('candado')}Pagar ${dinero(total)}`;
+        $('#boton-pagar', form).innerHTML = enTienda() ? `${icono('check')}Confirmar pedido · pagas ${dinero(total)} en efectivo` : `${icono('candado')}Pagar ${dinero(total)}`;
       };
       form.addEventListener('change', (e) => {
         if (e.target.name === 'forma') { pintarForma(); ocultarResumen(form); }
@@ -258,7 +258,7 @@ async function vistaPago() {
         // Factura en PDF (se adjunta al correo) con el detalle de lo que compró
         const items = estado.carrito.map((l) => { const pr = producto(l.id); return { codigo: pr.dbId, nombre: pr.nombre, talla: l.talla, cantidad: l.cantidad, precio: pr.precio }; });
         const datosFactura = {
-          id: fila.id, pedido: fila.numero, fecha: new Date(), codigoRetiro: fila.codigoRetiro, items, pago: textoPago(pago, datosTarjeta),
+          id: fila.factura || fila.id, pedido: fila.numero, fecha: new Date(), codigoRetiro: fila.codigoRetiro, items, pago: textoPago(pago, datosTarjeta),
           cliente: { ...estado.cliente, correo: correoSesion() }, tienda: { nombre: tienda.nombre, direccion: tienda.direccion },
           subtotal: subtotalCarrito(), iva: ivaCarrito(), total: Number(fila.total)
         };
@@ -266,7 +266,7 @@ async function vistaPago() {
         try { pdf = await Promise.race([Factura.generar(datosFactura), new Promise((ok) => setTimeout(() => ok(null), 4000))]); } catch (err) { pdf = null; }
         const correos = Promise.allSettled([
           Api.correo.compraConfirmada({ correo: correoSesion(), nombre: estado.cliente.nombres, numero: fila.numero, total: fila.total, codigo: fila.codigoRetiro, pagoTexto: textoPago(pago, datosTarjeta), enTienda: pago.tarjeta === null, id: fila.id, ...detalleEntrega,
-            items, subtotal: datosFactura.subtotal, iva: datosFactura.iva, numeroFactura: Factura.numero(fila.id), factura: pdf ? pdf.dataUri : '' }),
+            items, subtotal: datosFactura.subtotal, iva: datosFactura.iva, numeroFactura: Factura.numero(fila.factura || fila.id), factura: pdf ? pdf.dataUri : '' }),
           Api.correo.nuevoPedido({
             numero: fila.numero, total: fila.total, tienda: detalleEntrega.tienda,
             cliente: `${estado.cliente.nombres} ${estado.cliente.apellidos}`, cedula: estado.cliente.cedula,
@@ -282,7 +282,7 @@ async function vistaPago() {
 }
 function textoPago(pago, datosTarjeta) {
   if (!pago) return '';
-  if (pago.tarjeta === null) return 'Pago en la tienda al retirar (pendiente)';
+  if (pago.tarjeta === null) return 'Efectivo en la tienda al retirar (pendiente)';
   if (datosTarjeta) return `Tarjeta ${datosTarjeta.registro.marca} terminada en ${datosTarjeta.registro.ultimos4}`;
   return 'Tarjeta guardada';
 }

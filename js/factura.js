@@ -24,7 +24,7 @@ const Factura = (() => {
   const plata = (n) => '$' + Number(n || 0).toFixed(2);
   const fechaLarga = (f) => new Date(f).toLocaleDateString('es-EC', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  /* d = { id, pedido, fecha, cliente: {nombres, apellidos, cedula, direccion, telefono, correo},
+  /* d = { id (número de factura, propio y secuencial: PEDIDO.ped_factura), pedido, fecha, cliente: {nombres, apellidos, cedula, direccion, telefono, correo},
            tienda: {nombre, direccion}, items: [{codigo, nombre, talla, cantidad, precio}],
            subtotal, iva, total, pago, codigoRetiro } */
   async function generar(d) {
@@ -121,7 +121,7 @@ const Factura = (() => {
   /* Datos de la factura a partir de un pedido guardado (orden de pedido, Mis pedidos) */
   function desdePedido(p, cliente) {
     return {
-      id: p.id, pedido: p.numero, fecha: p.creado_en, cliente, codigoRetiro: p.codigoRetiro,
+      id: p.factura || p.id, pedido: p.numero, fecha: p.creado_en, cliente, codigoRetiro: p.codigoRetiro,
       tienda: { nombre: p.tiendas ? p.tiendas.nombre : '', direccion: p.tiendas ? p.tiendas.direccion : '' },
       items: p.detalle_pedido.map((x) => { const pr = productoPorDbId(x.producto_id); return { codigo: x.producto_id, nombre: pr ? pr.nombre : x.producto_id, talla: x.talla, cantidad: x.cantidad, precio: Number(x.precio_unitario) }; }),
       subtotal: p.subtotal, iva: p.iva, total: p.total, pago: p.pagoTexto

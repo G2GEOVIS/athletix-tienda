@@ -118,7 +118,9 @@ function actualizarContador() {
 function renderCuenta() {
   const zona = $('#zona-cuenta');
   if (!estado.sesion) {
-    zona.innerHTML = `<a class="cuenta__boton" href="login.html" data-ruta="ingresar">${icono('usuario')}<span class="cuenta__nombre-largo">Ingresar</span></a>`;
+    zona.innerHTML = `<a class="cuenta__boton" href="${conVolver('login.html', paginaActual())}" data-ruta="ingresar">${icono('usuario')}<span class="cuenta__nombre-largo">Ingresar</span></a>`;
+    // Se calcula al hacer clic porque los filtros cambian la dirección sin recargar la página
+    $('a', zona).addEventListener('click', (e) => { e.currentTarget.href = conVolver('login.html', paginaActual()); });
     return;
   }
   const nombre = estado.cliente ? nombreCliente() : 'Mi cuenta';
@@ -365,8 +367,10 @@ async function iniciar() {
     const volver = leerTemporal('volver');
     const conGoogle = (estado.sesion.user.app_metadata || {}).provider === 'google';
     aviso(estado.cliente ? `¡Bienvenido, ${nombreCliente()}!` + (conGoogle ? '' : ' Tu correo está confirmado.') : (conGoogle ? '¡Ingresaste con Google! Completa tu perfil con tu cédula y celular.' : '¡Correo confirmado! Completa tu perfil.'));
-    if (!estado.cliente) { ir('completar-perfil.html'); return; }
-    if (volver === 'retiro' && estado.carrito.length) { guardarTemporal('volver', null); ir('retiro.html'); return; }
+    if (!estado.cliente) { ir(conVolver('completar-perfil.html', volver)); return; }
+    guardarTemporal('volver', null);
+    const destino = destinoTrasIngreso(volver);
+    if (destino !== 'index.html') { ir(destino); return; }
   }
   // Se espera el catálogo de la base (máximo 5 s); si tarda más se muestra el de respaldo y luego se actualiza
   $('#contenido').innerHTML = cargandoHtml();

@@ -85,7 +85,7 @@ async function vistaRetiro() {
               <dt>Correo</dt><dd>${esc(correoSesion())}</dd>
             </dl>
             <div style="margin-top:1rem">${campo({ id: 'direccion', etiqueta: 'Dirección de domicilio', ayuda: 'Calle principal, número y calle secundaria, ciudad. Aparece en tu factura.', valor: c.direccion || '', max: 150, extra: 'autocomplete="street-address"' })}</div>
-            <p class="alerta alerta--info" style="margin-top:1.25rem">${icono('correo')}<span>Al pagar recibes la <strong>orden de pedido</strong> con un código de 6 caracteres. Preséntalo junto con tu cédula al retirar tu pedido en la tienda.</span></p>
+            <p class="alerta alerta--info" style="margin-top:1.25rem">${icono('correo')}<span>Al pagar recibes la <strong>orden de pedido</strong> con tu número de pedido y un código de retiro de 6 caracteres. En la tienda presenta tu <strong>cédula</strong> y tu <strong>número de pedido</strong> (o el código) para verificar tu compra.</span></p>
           </section>
         </form>
         <div id="zona-resumen">${resumenPedido(botonesEntrega())}</div>
@@ -329,7 +329,7 @@ async function vistaConfirmacion(partes, params) {
         <div class="codigo-retiro" role="group" aria-label="Código de retiro">
           <span>Tu código de retiro</span>
           <strong>${esc(p.codigoRetiro)}</strong>
-          <span class="texto-suave">Preséntalo con tu cédula en la tienda</span>
+          <span class="texto-suave">En la tienda presenta tu cédula y tu número de pedido (o este código)</span>
         </div>
         <dl class="datos-lista panel panel--gris detalle-pedido">
           <dt>Productos</dt><dd>${plural(p.detalle_pedido.reduce((s, d) => s + d.cantidad, 0), 'producto', 'productos')}</dd>
@@ -372,7 +372,7 @@ async function vistaOrden(partes, params) {
         </header>
         <div class="codigo-retiro codigo-retiro--orden">
           <span>Código de retiro</span><strong>${esc(p.codigoRetiro)}</strong>
-          <span class="texto-suave">Preséntalo en la tienda junto con tu cédula.</span>
+          <span class="texto-suave">En la tienda presenta tu cédula y tu número de pedido (o este código).</span>
         </div>
         <div class="orden-pedido__grilla">
           <section aria-labelledby="orden-cliente"><h2 id="orden-cliente">Cliente</h2>

@@ -105,7 +105,7 @@ const Factura = (() => {
     // Pie
     y = Math.max(y + 6, 262);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...SUAVE);
-    doc.text(`Retira tu pedido en ${d.tienda.nombre}${d.tienda.direccion ? ' (' + d.tienda.direccion + ')' : ''} con tu cédula y el código ${d.codigoRetiro}.`, m, y, { maxWidth: ancho - 2 * m });
+    doc.text(`Retira tu pedido en ${d.tienda.nombre}${d.tienda.direccion ? ' (' + d.tienda.direccion + ')' : ''} con tu cédula y tu número de pedido ${d.pedido} (o el código ${d.codigoRetiro}).`, m, y, { maxWidth: ancho - 2 * m });
     doc.text('Documento sin validez tributaria: no está autorizado por el SRI. Pago simulado, sin cobro real.', m, y + 10);
     doc.setTextColor(...VERDE); doc.setFont('helvetica', 'bold'); doc.text('¡Gracias por comprar en ATHLETIX!', m, y + 16);
 

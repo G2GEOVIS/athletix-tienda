@@ -8,11 +8,34 @@ const Api = (() => {
   let sb = null;
   try {
     if (window.supabase && CONFIG.supabase.url && CONFIG.supabase.clave) {
-      // La sesión vive solo mientras la pestaña está abierta (sessionStorage): al volver a abrir la tienda
+      // La sesión vive solo mientras la tienda está abierta: se guarda en sessionStorage y se comparte entre
+      // las pestañas abiertas de la tienda (BroadcastChannel). Al cerrar todas, al volver a abrir el enlace
       // nadie aparece con la sesión iniciada. Se borra la sesión que antes quedaba guardada en localStorage.
       try { Object.keys(localStorage).filter((k) => /^sb-.*-auth-token/.test(k)).forEach((k) => localStorage.removeItem(k)); } catch (e) { /* sin almacenamiento */ }
       let almacen;
-      try { sessionStorage.setItem('athletix-prueba', '1'); sessionStorage.removeItem('athletix-prueba'); almacen = sessionStorage; } catch (e) { almacen = undefined; }
+      try {
+        sessionStorage.setItem('athletix-prueba', '1'); sessionStorage.removeItem('athletix-prueba');
+        const canal = 'BroadcastChannel' in window ? new BroadcastChannel('athletix-sesion') : null;
+        if (canal) {
+          canal.onmessage = ({ data }) => {
+            if (!data || !/^sb-.*-auth-token/.test(data.clave || '')) return;
+            if (data.tipo === 'pedir') { const v = sessionStorage.getItem(data.clave); if (v) canal.postMessage({ tipo: 'dar', clave: data.clave, valor: v }); }
+            else if (data.tipo === 'dar' || data.tipo === 'guardar') sessionStorage.setItem(data.clave, data.valor);
+            else if (data.tipo === 'borrar') sessionStorage.removeItem(data.clave);
+          };
+        }
+        almacen = {
+          getItem(clave) {
+            const v = sessionStorage.getItem(clave);
+            if (v || !canal || !/^sb-.*-auth-token$/.test(clave)) return v;
+            // Pestaña nueva: pregunta a las otras pestañas abiertas si ya hay una sesión
+            canal.postMessage({ tipo: 'pedir', clave });
+            return new Promise((ok) => setTimeout(() => ok(sessionStorage.getItem(clave)), 250));
+          },
+          setItem(clave, valor) { sessionStorage.setItem(clave, valor); if (canal) canal.postMessage({ tipo: 'guardar', clave, valor }); },
+          removeItem(clave) { sessionStorage.removeItem(clave); if (canal) canal.postMessage({ tipo: 'borrar', clave }); }
+        };
+      } catch (e) { almacen = undefined; }
       sb = window.supabase.createClient(CONFIG.supabase.url, CONFIG.supabase.clave, {
         auth: { persistSession: true, storage: almacen, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'implicit' }
       });
@@ -296,72 +319,96 @@ const Api = (() => {
       return { error: 'No se pudo enviar el correo' + (e && e.text ? ` (${e.text})` : '') + '.' };
     }
   };
+  /* Partes comunes de los correos al cliente */
+  const BASE = () => location.origin + location.pathname.replace(/[^/]*$/, '');
+  const enlaceOrden = (id) => `${BASE()}orden.html?pedido=${id}`;
+  const h = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const plata = (n) => '$' + Number(n || 0).toFixed(2);
+  const CELDA = 'padding:10px 8px;border-bottom:1px solid #dde3ea;';
+  // En la tienda se verifica la cédula con el número de pedido (o el código de retiro)
+  const cajaRetiro = (numero, codigo, tienda, horario, nota) => `<div style="margin:20px 0;padding:14px 16px;background:#E6F4F2;border-left:4px solid #0F766E;border-radius:6px;line-height:1.6">
+      <b>Retiro en local físico:</b> ${h(tienda)}<br>${horario ? `<b>Horario:</b> ${h(horario)}<br>` : ''}<b>Número de pedido:</b> ${h(numero)}<br>${codigo ? `<b>Código de retiro:</b> <span style="font-size:18px;font-weight:bold;letter-spacing:2px">${h(codigo)}</span><br>` : ''}Presenta tu <b>cédula</b> y tu <b>número de pedido</b> (o el código de retiro) en la tienda.${nota ? ' ' + nota : ''}
+    </div>`;
+  const plantillaCorreo = ({ nombre, parrafo, detalle = '', caja = '', extra = '', boton }) => `<div style="background:#F3F5F7;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;color:#1E293B">
+<div style="max-width:620px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #dde3ea">
+  <div style="background:#0B1F3A;padding:20px 24px;color:#ffffff"><div style="font-size:24px;font-weight:bold;font-style:italic">ATHLETIX</div><div style="font-size:13px;opacity:.85">Tienda deportiva en línea</div></div>
+  <div style="padding:24px">
+    <p style="margin:0 0 12px;font-size:16px">Hola ${h(nombre)},</p>
+    <p style="margin:0 0 16px;line-height:1.5">${parrafo}</p>
+    ${detalle}${caja}
+    ${extra ? `<p style="margin:0 0 18px;line-height:1.5">${extra}</p>` : ''}
+    ${boton ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0"><tr><td style="background:#0F766E;border-radius:6px"><a href="${boton[1]}" style="display:inline-block;color:#ffffff;text-decoration:none;padding:12px 22px;font-weight:bold;font-size:15px">${h(boton[0])}</a></td></tr></table>
+    <p style="margin:12px 0 0;font-size:12px;color:#45556B">Si el botón no abre, copia este enlace en tu navegador: <a href="${boton[1]}" style="color:#0F766E">${boton[1]}</a></p>` : ''}
+  </div>
+  <div style="padding:14px 24px;background:#F3F5F7;font-size:12px;color:#45556B">Te escribimos porque hiciste un pedido en ATHLETIX. Pago simulado, sin cobro real.</div>
+</div></div>`;
+  // Envía por el Gmail de la tienda (función de Supabase). Devuelve null si no se pudo, para usar EmailJS.
+  async function porGmail(cuerpo) {
+    if (!sb) return null;
+    try {
+      const { data, error } = await Promise.race([
+        sb.functions.invoke('correo-compra', { body: cuerpo }),
+        new Promise((ok) => setTimeout(() => ok({ error: 'tiempo' }), 12000))
+      ]);
+      return !error && data && data.ok ? { datos: true } : null;
+    } catch (e) { return null; }
+  }
   const correo = {
     configurado() { return !!(window.emailjs && CONFIG.emailjs.servicio && CONFIG.emailjs.plantillaCliente && CONFIG.emailjs.clavePublica); },
     /* Al cliente, apenas paga: detalle de lo que pidió y la factura en PDF adjunta.
        Sale desde el Gmail de la tienda con la función "correo-compra" de Supabase (EmailJS gratis no adjunta archivos);
        si la función falla, se envía igual por EmailJS con el detalle, pero sin el PDF. */
     async compraConfirmada(p) {
-      const base = location.origin + location.pathname.replace(/[^/]*$/, '');
-      const h = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-      const plata = (n) => '$' + Number(n || 0).toFixed(2);
-      const celda = 'padding:10px 8px;border-bottom:1px solid #dde3ea;';
-      const filas = (p.items || []).map((it) => `<tr><td style="${celda}">${h(it.nombre)}${it.talla ? `<br><span style="color:#45556B;font-size:13px">Talla ${h(it.talla)}</span>` : ''}</td><td style="${celda}text-align:center">${it.cantidad}</td><td style="${celda}text-align:right">${plata(it.precio)}</td><td style="${celda}text-align:right">${plata(it.precio * it.cantidad)}</td></tr>`).join('');
+      const enlace = enlaceOrden(p.id);
+      const filas = (p.items || []).map((it) => `<tr><td style="${CELDA}">${h(it.nombre)}${it.talla ? `<br><span style="color:#45556B;font-size:13px">Talla ${h(it.talla)}</span>` : ''}</td><td style="${CELDA}text-align:center">${it.cantidad}</td><td style="${CELDA}text-align:right">${plata(it.precio)}</td><td style="${CELDA}text-align:right">${plata(it.precio * it.cantidad)}</td></tr>`).join('');
       const detalle = `<table role="presentation" style="width:100%;border-collapse:collapse;font-size:14px;color:#1E293B">
         <tr style="background:#F3F5F7"><th style="padding:10px 8px;text-align:left">Producto</th><th style="padding:10px 8px">Cant.</th><th style="padding:10px 8px;text-align:right">Precio</th><th style="padding:10px 8px;text-align:right">Subtotal</th></tr>${filas}
         <tr><td colspan="3" style="padding:6px 8px;text-align:right">Subtotal</td><td style="padding:6px 8px;text-align:right">${plata(p.subtotal)}</td></tr>
         <tr><td colspan="3" style="padding:6px 8px;text-align:right">IVA 15 %</td><td style="padding:6px 8px;text-align:right">${plata(p.iva)}</td></tr>
         <tr><td colspan="3" style="padding:6px 8px;text-align:right">Retiro en tienda</td><td style="padding:6px 8px;text-align:right">Gratis</td></tr>
         <tr><td colspan="3" style="padding:10px 8px;text-align:right;font-weight:bold;font-size:17px">Total pagado</td><td style="padding:10px 8px;text-align:right;font-weight:bold;font-size:17px">${plata(p.total)}</td></tr></table>`;
-      const enlace = `${base}orden.html?pedido=${p.id}`;
       const asunto = `Pedido ${p.numero} confirmado · código de retiro ${p.codigo}`;
-      const html = `<div style="background:#F3F5F7;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;color:#1E293B">
-<div style="max-width:620px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #dde3ea">
-  <div style="background:#0B1F3A;padding:20px 24px;color:#ffffff"><div style="font-size:24px;font-weight:bold;font-style:italic">ATHLETIX</div><div style="font-size:13px;opacity:.85">Tienda deportiva en línea</div></div>
-  <div style="padding:24px">
-    <p style="margin:0 0 12px;font-size:16px">Hola ${h(p.nombre)},</p>
-    <p style="margin:0 0 16px;line-height:1.5">¡Gracias por tu compra! Tu pago con ${h(p.pagoTexto)} fue aprobado. Este es el resumen de tu pedido <b>${h(p.numero)}</b>:</p>
-    ${detalle}
-    <div style="margin:20px 0;padding:14px 16px;background:#E6F4F2;border-left:4px solid #0F766E;border-radius:6px;line-height:1.6">
-      <b>Retiro en local físico:</b> ${h(p.tienda)}<br>${p.horario ? `<b>Horario:</b> ${h(p.horario)}<br>` : ''}<b>Código de retiro:</b> <span style="font-size:18px;font-weight:bold;letter-spacing:2px">${h(p.codigo)}</span><br>Presenta tu cédula y este código. Tu pedido estará listo en menos de ${h(ENTREGA.retiro)}.
-    </div>
-    <p style="margin:0 0 18px;line-height:1.5">Adjuntamos tu factura en PDF (N.º ${h(p.numeroFactura)}).</p>
-    <p style="margin:0 0 8px"><a href="${enlace}" style="display:inline-block;background:#0F766E;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:6px;font-weight:bold">Ver mi orden de pedido</a></p>
-  </div>
-  <div style="padding:14px 24px;background:#F3F5F7;font-size:12px;color:#45556B">Te escribimos porque hiciste un pedido en ATHLETIX. Pago simulado, sin cobro real.</div>
-</div></div>`;
-      if (sb) {
-        try {
-          const { data, error } = await Promise.race([
-            sb.functions.invoke('correo-compra', { body: { pedido: p.id, asunto, html, pdf: p.factura || '', archivo: `Factura-${p.numeroFactura}.pdf` } }),
-            new Promise((ok) => setTimeout(() => ok({ error: 'tiempo' }), 12000))
-          ]);
-          if (!error && data && data.ok) return { datos: true };
-        } catch (e) { /* se usa EmailJS */ }
-      }
+      const html = plantillaCorreo({
+        nombre: p.nombre,
+        parrafo: `¡Gracias por tu compra! Tu pago con ${h(p.pagoTexto)} fue aprobado. Este es el resumen de tu pedido <b>${h(p.numero)}</b>:`,
+        detalle,
+        caja: cajaRetiro(p.numero, p.codigo, p.tienda, p.horario, `Tu pedido estará listo en menos de ${h(ENTREGA.retiro)}.`),
+        extra: `Adjuntamos tu factura en PDF (N.º ${h(p.numeroFactura)}).`,
+        boton: ['Ver mi orden de pedido', enlace]
+      });
+      const r = await porGmail({ tipo: 'compra', pedido: p.id, asunto, html, pdf: p.factura || '', archivo: `Factura-${p.numeroFactura}.pdf` });
+      if (r) return r;
       return enviar(CONFIG.emailjs.plantillaCliente, {
         to_email: p.correo, nombre: p.nombre, numero: p.numero, tienda: p.tienda, horario: p.horario, total: Number(p.total).toFixed(2),
-        asunto,
-        mensaje: `Gracias por tu compra. Tu pago con ${p.pagoTexto} fue aprobado. Retira tu pedido en ${p.tienda} con tu cédula y el código ${p.codigo}. Descarga tu factura en PDF desde tu orden de pedido: ${enlace}`,
+        asunto, enlace,
+        mensaje: `Gracias por tu compra. Tu pago con ${p.pagoTexto} fue aprobado. Retira tu pedido en ${p.tienda} con tu cédula y tu número de pedido ${p.numero} (código de retiro ${p.codigo}). Descarga tu factura en PDF desde tu orden de pedido.`,
         detalle_html: detalle
       });
     },
-    /* Al cliente, cada vez que el administrador cambia el estado de su pedido */
-    pedidoActualizado(p, estadoNuevo) {
-      const base = location.origin + location.pathname.replace(/[^/]*$/, '');
-      const codigo = p.codigoRetiro ? ` y tu código ${p.codigoRetiro}` : '';
+    /* Al cliente, cada vez que el administrador cambia el estado de su pedido (desde el Gmail de la tienda) */
+    async pedidoActualizado(p, estadoNuevo) {
+      const enlace = enlaceOrden(p.id);
       const textos = {
-        Preparando: [`Estamos preparando tu pedido ${p.numero}`, `Ya empezamos a preparar tu pedido ${p.numero}. Estará listo para retirar en menos de ${ENTREGA.retiro}.`],
-        Listo: [`Tu pedido ${p.numero} está listo para retirar`, `Tu pedido ${p.numero} ya está listo. Retíralo en ${p.tienda} con tu cédula${codigo}.`],
-        Retirado: [`Retiraste tu pedido ${p.numero}`, `Registramos el retiro de tu pedido ${p.numero}. ¡Gracias por comprar en ATHLETIX! Puedes dejar tu reseña desde Mis pedidos.`],
-        Cancelado: [`Tu pedido ${p.numero} fue cancelado`, `Tu pedido ${p.numero} fue cancelado y el pago simulado quedó anulado. Si tienes dudas, escríbenos desde la sección Ayuda.`]
+        Preparando: [`Estamos preparando tu pedido ${p.numero}`, `Ya empezamos a preparar tu pedido <b>${h(p.numero)}</b>. Estará listo para retirar en menos de ${h(ENTREGA.retiro)}.`],
+        Listo: [`Tu pedido ${p.numero} está listo para retirar`, `¡Buenas noticias! Tu pedido <b>${h(p.numero)}</b> ya está listo. Pasa a retirarlo cuando quieras.`],
+        Retirado: [`Retiraste tu pedido ${p.numero}`, `Registramos el retiro de tu pedido <b>${h(p.numero)}</b>. ¡Gracias por comprar en ATHLETIX! Cuéntanos qué te pareció dejando tu reseña desde Mis pedidos.`],
+        Cancelado: [`Tu pedido ${p.numero} fue cancelado`, `Tu pedido <b>${h(p.numero)}</b> fue cancelado y el pago simulado quedó anulado. Si tienes dudas, escríbenos desde la sección Ayuda.`]
       };
-      const [asunto, mensaje] = textos[estadoNuevo] || [];
-      if (!asunto) return Promise.resolve({});
+      const [asunto, parrafo] = textos[estadoNuevo] || [];
+      if (!asunto) return {};
+      const conRetiro = estadoNuevo === 'Preparando' || estadoNuevo === 'Listo';
+      const html = plantillaCorreo({
+        nombre: String(p.cliente || '').split(' ')[0], parrafo,
+        caja: conRetiro ? cajaRetiro(p.numero, p.codigoRetiro, p.tienda, p.horario, '') : '',
+        boton: [estadoNuevo === 'Retirado' ? 'Dejar mi reseña' : 'Ver mi pedido', estadoNuevo === 'Retirado' ? `${BASE()}pedidos.html` : enlace]
+      });
+      const r = await porGmail({ tipo: 'estado', pedido: p.id, asunto, html });
+      if (r) return r;
+      const texto = parrafo.replace(/<[^>]+>/g, '');
       return enviar(CONFIG.emailjs.plantillaCliente, {
         to_email: p.correo, nombre: p.cliente, numero: p.numero, total: Number(p.total).toFixed(2), tienda: p.tienda, horario: p.horario,
-        asunto, mensaje: mensaje + ` Mira tu orden de pedido aquí: ${base}orden.html?pedido=${p.id}`, detalle_html: ''
-      }).then((r) => (r.error ? { error: r.error + ' El estado sí se guardó.' } : r));
+        asunto, mensaje: texto, enlace, detalle_html: ''
+      }).then((x) => (x.error ? { error: x.error + ' El estado sí se guardó.' } : x));
     },
     /* Al administrador, cada vez que un cliente hace un pedido */
     nuevoPedido(p) {

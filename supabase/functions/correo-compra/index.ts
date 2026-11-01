@@ -1,7 +1,10 @@
 // ATHLETIX · Edge Function "correo-compra"
-// Envía al cliente el correo de compra con la factura en PDF adjunta, desde el Gmail de la tienda.
-// Seguridad: solo la puede llamar un cliente con sesión iniciada, solo para un pedido suyo,
-// y el correo siempre va a la dirección de su propia cuenta (nadie puede usarla para escribir a otros).
+// Envía los correos al cliente desde el Gmail de la tienda (llegan a la bandeja de entrada, no por un servicio externo):
+//   tipo "compra": correo de compra con la factura en PDF adjunta. Lo pide el propio cliente, solo para un pedido suyo,
+//                  y siempre va al correo de su cuenta.
+//   tipo "estado": aviso de cambio de estado del pedido. Solo lo puede pedir el administrador y va al correo
+//                  del cliente dueño de ese pedido (se lee de la base, no del navegador).
+// Así nadie puede usar la función para escribir a cualquier dirección.
 // Secretos que se configuran en Supabase → Edge Functions → Secrets:
 //   GMAIL_USUARIO     correo de Gmail que envía (el de la tienda)
 //   GMAIL_CLAVE_APP   contraseña de aplicación de ese Gmail (16 letras)
@@ -31,18 +34,28 @@ Deno.serve(async (req) => {
   const { data: { user } } = await supabase.auth.getUser(autorizacion.replace(/^Bearer\s+/i, ''));
   if (!user || !user.email) return responder({ error: 'Inicia sesión para recibir tu factura.' }, 401);
 
-  let datos: { pedido?: number; asunto?: string; html?: string; pdf?: string; archivo?: string };
+  let datos: { tipo?: string; pedido?: number; asunto?: string; html?: string; pdf?: string; archivo?: string };
   try { datos = await req.json(); } catch { return responder({ error: 'Solicitud no válida.' }, 400); }
-  const { pedido, asunto, html, pdf, archivo } = datos;
+  const { tipo = 'compra', pedido, asunto, html, pdf, archivo } = datos;
   if (!Number.isInteger(pedido) || !asunto || !html) return responder({ error: 'Faltan datos del pedido.' }, 400);
   if (asunto.length > 200 || html.length > 60000 || (pdf && pdf.length > 3_000_000)) return responder({ error: 'El correo es demasiado grande.' }, 413);
 
-  // Con la sesión del cliente, las reglas RLS solo dejan ver sus propios pedidos
-  const { data: fila } = await supabase.from('pedido').select('ped_numero').eq('ped_numero', pedido).maybeSingle();
-  if (!fila) return responder({ error: 'No encontramos ese pedido en tu cuenta.' }, 404);
+  let destino = user.email;
+  if (tipo === 'estado') {
+    const { data: admin } = await supabase.rpc('es_admin');
+    if (admin !== true) return responder({ error: 'Solo el administrador puede avisar cambios de estado.' }, 403);
+    const { data: fila } = await supabase.from('pedido').select('ped_numero, cliente(cli_correo)').eq('ped_numero', pedido).maybeSingle();
+    const correo = fila && (fila as { cliente?: { cli_correo?: string } }).cliente?.cli_correo;
+    if (!correo) return responder({ error: 'No encontramos el correo del cliente de ese pedido.' }, 404);
+    destino = correo;
+  } else {
+    // Con la sesión del cliente, las reglas RLS solo dejan ver sus propios pedidos
+    const { data: fila } = await supabase.from('pedido').select('ped_numero').eq('ped_numero', pedido).maybeSingle();
+    if (!fila) return responder({ error: 'No encontramos ese pedido en tu cuenta.' }, 404);
+  }
 
   const adjuntos = [];
-  if (pdf) {
+  if (pdf && tipo === 'compra') {
     const base64 = pdf.includes(',') ? pdf.slice(pdf.indexOf(',') + 1) : pdf;
     const nombre = /^[\w.\-]{1,80}\.pdf$/.test(archivo || '') ? archivo! : `Factura-${pedido}.pdf`;
     adjuntos.push({ filename: nombre, content: base64, encoding: 'base64', contentType: 'application/pdf' });
@@ -53,7 +66,9 @@ Deno.serve(async (req) => {
       host: 'smtp.gmail.com', port: 465, secure: true, auth: { user: usuarioGmail, pass: claveGmail }
     });
     await transporte.sendMail({
-      from: `"ATHLETIX" <${usuarioGmail}>`, to: user.email, subject: asunto, html, attachments: adjuntos
+      from: `"ATHLETIX" <${usuarioGmail}>`, to: destino, subject: asunto, html, attachments: adjuntos,
+      // Versión en texto plano: los filtros de spam desconfían de los correos que solo traen HTML
+      text: html.replace(/<(br|\/p|\/div|\/tr|\/h\d)[^>]*>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\n\s*\n+/g, '\n\n').trim()
     });
     return responder({ ok: true });
   } catch (e) {

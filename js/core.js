@@ -77,6 +77,24 @@ function leerTemporal(clave) {
   try { return JSON.parse(sessionStorage.getItem(clave)); } catch (e) { return null; }
 }
 
+/* ======================= Volver después de iniciar sesión ======================= */
+// Solo se vuelve a páginas de la propia tienda (nunca a un enlace externo ni a las páginas de ingreso)
+const NO_VOLVER = /^(login|registro|recuperar|completar-perfil|nueva-clave|confirmar-correo|cambiar-clave|404)\.html/;
+function volverSeguro(v) {
+  v = String(v || '');
+  if (v === 'retiro') return 'retiro.html';
+  return /^[a-z0-9-]+\.html(\?[\w=&%.+-]*)?$/.test(v) && !NO_VOLVER.test(v) ? v : '';
+}
+function paginaActual() { return (location.pathname.split('/').pop() || 'index.html') + location.search; }
+function conVolver(pagina, volver) { const v = volverSeguro(volver); return v && v !== 'index.html' ? `${pagina}?volver=${encodeURIComponent(v)}` : pagina; }
+// Después de ingresar: a la página donde estaba; si no hay, al carrito cuando tiene productos; si no, al inicio
+function destinoTrasIngreso(volver) {
+  const v = volverSeguro(volver);
+  if (v === 'retiro.html') return estado.carrito.length ? 'retiro.html' : 'carrito.html';
+  if (v) return v;
+  return estado.carrito.length ? 'carrito.html' : 'index.html';
+}
+
 /* ======================= Utilidades ======================= */
 const $ = (sel, raiz = document) => raiz.querySelector(sel);
 const $$ = (sel, raiz = document) => Array.from(raiz.querySelectorAll(sel));
@@ -119,6 +137,7 @@ const ICONOS = {
   chevronIzq: '<path d="m15 5-7 7 7 7"/>',
   chevronDer: '<path d="m9 5 7 7-7 7"/>',
   chevronAbajo: '<path d="m6 9 6 6 6-6"/>',
+  filtro: '<path d="M4 6h16M7 12h10M10 18h4"/>',
   menos: '<path d="M5 12h14"/>',
   mas: '<path d="M12 5v14M5 12h14"/>',
   basura: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
@@ -287,6 +306,23 @@ function activarEnlacesError(form) {
   form.addEventListener('click', (e) => {
     const a = e.target.closest('[data-enfocar]');
     if (a) { e.preventDefault(); const el = $('#' + a.dataset.enfocar, form); if (el) el.focus(); }
+  });
+}
+function atajosCorreo(id) {
+  return `<div class="atajos" role="group" aria-label="Completar el correo">
+    <button class="chip" type="button" data-correo="${id}" data-dominio="@gmail.com">@gmail.com</button>
+    <button class="chip" type="button" data-correo="${id}" data-dominio="@hotmail.com">@hotmail.com</button>
+  </div>`;
+}
+function activarAtajosCorreo(raiz) {
+  raiz.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-dominio]');
+    if (!b) return;
+    const input = $('#' + b.dataset.correo, raiz);
+    const usuario = input.value.split('@')[0].trim();
+    input.value = usuario + b.dataset.dominio;
+    input.focus();
+    anunciar(`Correo: ${input.value}`);
   });
 }
 /* Valida un campo al salir de él (después del primer intento), sin molestar mientras se escribe */

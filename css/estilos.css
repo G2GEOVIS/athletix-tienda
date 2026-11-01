@@ -257,31 +257,51 @@ svg { width: 1.25rem; height: 1.25rem; flex-shrink: 0; fill: none; stroke: curre
 .tarjeta-categoria p { color: var(--texto-suave); margin-block: .25rem .75rem; }
 
 /* ---------- Catálogo ---------- */
-.catalogo { display: grid; gap: 1.5rem; }
+.catalogo { display: grid; gap: 1.5rem; grid-template-columns: minmax(0, 1fr); }
+.catalogo > * { min-width: 0; }
 @media (min-width: 62rem) { .catalogo { grid-template-columns: 15rem 1fr; gap: 2.5rem; align-items: start; } }
-/* Los filtros acompañan al usuario mientras baja por los productos (debajo del encabezado fijo) */
+/* Los filtros acompañan al usuario mientras baja por los productos (debajo del encabezado fijo).
+   En celular y tablet: la categoría queda siempre a la vista como botones que se deslizan, y género y precio
+   se abren con un botón que muestra lo elegido. En computadora es una columna a la izquierda. */
 .filtros {
-  border: 1px solid var(--borde); border-radius: var(--radio); padding: .75rem 1.25rem; background: var(--blanco);
+  border: 1px solid var(--borde); border-radius: var(--radio); padding: .75rem 1rem; background: var(--blanco);
   position: sticky; top: calc(var(--alto-encabezado, 8rem) + .5rem); z-index: 20; box-shadow: 0 6px 16px rgba(11, 31, 58, .08);
 }
-.filtros__cuerpo.abierto { max-height: calc(100vh - var(--alto-encabezado, 8rem) - 6rem); overflow-y: auto; overscroll-behavior: contain; }
-.filtros__abrir { display: flex; width: 100%; justify-content: space-between; align-items: center; background: none; border: 0; font-weight: 700; font-size: 1.05rem; min-height: 2.75rem; cursor: pointer; padding: 0; }
-.filtros__abrir svg { transition: transform .15s; }
-.filtros__abrir[aria-expanded="true"] svg { transform: rotate(180deg); }
-.filtros__cuerpo { display: none; padding-top: .5rem; }
-.filtros__cuerpo.abierto { display: block; }
+.grupo-filtro { border: 0; margin: 0 0 1.25rem; padding: 0; min-width: 0; }
+.grupo-filtro legend { font-weight: 700; font-size: .85rem; letter-spacing: .06em; text-transform: uppercase; margin-bottom: .5rem; padding: 0; }
+.opcion { display: flex; align-items: center; gap: .6rem; min-height: 2.5rem; cursor: pointer; }
+.opcion input { width: 1.2rem; height: 1.2rem; accent-color: var(--verde); margin: 0; }
+.filtros__abrir { display: flex; width: 100%; justify-content: space-between; align-items: center; gap: .5rem; background: var(--gris); border: 1px solid var(--borde); border-radius: .6rem; font-weight: 700; font-size: 1rem; min-height: 2.75rem; cursor: pointer; padding: .4rem .75rem; color: var(--texto); text-align: left; }
+.filtros__abrir > span { display: inline-flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.filtros__resumen { font-weight: 600; color: var(--verde-oscuro, var(--verde)); }
+.filtros__resumen::before { content: "·"; margin-right: .5rem; color: var(--texto-suave); }
+.filtros__abrir svg { transition: transform .15s; flex-shrink: 0; }
+.filtros__abrir[aria-expanded="true"] > svg { transform: rotate(180deg); }
+.filtros__mas { display: none; padding-top: .75rem; }
+.filtros__mas.abierto { display: block; max-height: calc(100vh - var(--alto-encabezado, 8rem) - 12rem); overflow-y: auto; overscroll-behavior: contain; }
+@media (max-width: 61.99rem) {
+  .grupo-filtro--categoria { margin-bottom: .6rem; }
+  .grupo-filtro--categoria legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .grupo-filtro__opciones { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .grupo-filtro--categoria .grupo-filtro__opciones { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -.25rem; padding: .1rem .25rem; }
+  .grupo-filtro--categoria .grupo-filtro__opciones::-webkit-scrollbar { display: none; }
+  .grupo-filtro__opciones .opcion {
+    position: relative; flex-shrink: 0; min-height: 2.75rem; padding: .4rem 1rem; border: 1px solid var(--borde-fuerte); border-radius: 999px;
+    background: var(--blanco); font-weight: 600; white-space: nowrap; gap: 0;
+  }
+  .grupo-filtro__opciones .opcion input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .grupo-filtro__opciones .opcion:has(input:checked) { background: var(--verde); border-color: var(--verde); color: #fff; }
+  .grupo-filtro__opciones .opcion:has(input:focus-visible) { outline: 3px solid var(--azul); outline-offset: 2px; }
+  .filtros__mas .grupo-filtro { margin-bottom: 1rem; }
+}
 @media (min-width: 62rem) {
   .filtros {
     top: calc(var(--alto-encabezado, 5rem) + 1rem); border: 0; padding: 0 .25rem 0 0; box-shadow: none;
     max-height: calc(100vh - var(--alto-encabezado, 5rem) - 2rem); overflow-y: auto; overscroll-behavior: contain;
   }
   .filtros__abrir { display: none; }
-  .filtros__cuerpo { display: block; padding: 0; }
+  .filtros__mas { display: block; padding: 0; }
 }
-.grupo-filtro { border: 0; margin: 0 0 1.25rem; padding: 0; }
-.grupo-filtro legend { font-weight: 700; font-size: .85rem; letter-spacing: .06em; text-transform: uppercase; margin-bottom: .5rem; padding: 0; }
-.opcion { display: flex; align-items: center; gap: .6rem; min-height: 2.5rem; cursor: pointer; }
-.opcion input { width: 1.2rem; height: 1.2rem; accent-color: var(--verde); margin: 0; }
 
 .resultados__info { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1rem; margin-bottom: 1.25rem; }
 .grilla-productos { list-style: none; display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 13.5rem), 1fr)); }
@@ -320,6 +340,8 @@ svg { width: 1.25rem; height: 1.25rem; flex-shrink: 0; fill: none; stroke: curre
 .calificacion { display: inline-flex; align-items: center; gap: .4rem; font-weight: 600; font-size: .95rem; }
 
 .sin-resultados { text-align: center; background: var(--gris); border-radius: var(--radio); padding: 2.5rem 1.25rem; }
+.atajos { display: flex; flex-wrap: wrap; gap: .5rem; }
+.atajos .chip { min-height: 2.25rem; font-size: .95rem; }
 .chips { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center; margin-top: 1rem; list-style: none; }
 .chip {
   display: inline-flex; align-items: center; min-height: 2.5rem; padding: .35rem 1rem; border-radius: 999px;

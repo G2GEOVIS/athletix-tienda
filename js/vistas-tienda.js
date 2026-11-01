@@ -133,6 +133,13 @@ function tituloCatalogo(f) {
   return 'Todos los productos';
 }
 
+/* Lo elegido en género y precio, para verlo en el celular sin abrir el panel */
+function resumenFiltros(f) {
+  const partes = [];
+  if (f.pub && f.pub !== 'todos' && f.cat !== 'entrenamiento') partes.push(f.pub);
+  if (f.precio && f.precio !== 'todos') partes.push(RANGOS[f.precio][0]);
+  return partes.length ? partes.join(' · ') : 'Todos';
+}
 function vistaProductos(partes, params) {
   const f = filtrar(params);
   const radio = (grupo, valor, texto, actual) =>
@@ -154,21 +161,23 @@ function vistaProductos(partes, params) {
       </div>
       <div class="catalogo">
         <aside class="filtros" aria-label="Filtros">
-          <button class="filtros__abrir" type="button" aria-expanded="false" aria-controls="filtros-cuerpo">Filtros ${icono('chevronAbajo')}</button>
           <form class="filtros__cuerpo" id="filtros-cuerpo">
-            <fieldset class="grupo-filtro">
+            <fieldset class="grupo-filtro grupo-filtro--categoria">
               <legend>Categoría</legend>
-              ${radio('cat', 'todas', 'Todas', f.cat)}${radio('cat', 'calzado', 'Calzado', f.cat)}${radio('cat', 'tecnologia', 'Tecnología deportiva', f.cat)}${radio('cat', 'entrenamiento', 'Entrenamiento', f.cat)}
+              <div class="grupo-filtro__opciones">${radio('cat', 'todas', 'Todas', f.cat)}${radio('cat', 'calzado', 'Calzado', f.cat)}${radio('cat', 'tecnologia', 'Tecnología deportiva', f.cat)}${radio('cat', 'entrenamiento', 'Entrenamiento', f.cat)}</div>
             </fieldset>
-            <fieldset class="grupo-filtro" id="grupo-publico" ${f.cat === 'entrenamiento' ? 'hidden' : ''}>
-              <legend>Género</legend>
-              ${radio('pub', 'todos', 'Todos', f.pub)}${radio('pub', 'Hombre', 'Hombre', f.pub)}${radio('pub', 'Mujer', 'Mujer', f.pub)}
-            </fieldset>
-            <fieldset class="grupo-filtro">
-              <legend>Precio</legend>
-              ${Object.entries(RANGOS).map(([k, [t]]) => radio('precio', k, t, f.precio)).join('')}
-            </fieldset>
-            <button class="boton boton--secundario boton--bloque" type="button" id="limpiar-filtros">Limpiar filtros</button>
+            <button class="filtros__abrir" type="button" aria-expanded="false" aria-controls="filtros-mas"><span>${icono('filtro')}<span>Género y precio</span><span class="filtros__resumen" id="filtros-resumen">${resumenFiltros(f)}</span></span>${icono('chevronAbajo')}</button>
+            <div class="filtros__mas" id="filtros-mas">
+              <fieldset class="grupo-filtro" id="grupo-publico" ${f.cat === 'entrenamiento' ? 'hidden' : ''}>
+                <legend>Género</legend>
+                <div class="grupo-filtro__opciones">${radio('pub', 'todos', 'Todos', f.pub)}${radio('pub', 'Hombre', 'Hombre', f.pub)}${radio('pub', 'Mujer', 'Mujer', f.pub)}</div>
+              </fieldset>
+              <fieldset class="grupo-filtro">
+                <legend>Precio</legend>
+                <div class="grupo-filtro__opciones">${Object.entries(RANGOS).map(([k, [t]]) => radio('precio', k, t, f.precio)).join('')}</div>
+              </fieldset>
+              <button class="boton boton--secundario boton--bloque" type="button" id="limpiar-filtros">Limpiar filtros</button>
+            </div>
           </form>
         </aside>
         <section aria-labelledby="titulo-catalogo" id="resultados">${htmlResultados(f)}</section>
@@ -177,10 +186,11 @@ function vistaProductos(partes, params) {
     montar(main) {
       const form = $('#filtros-cuerpo', main);
       const abrir = $('.filtros__abrir', main);
+      const mas = $('#filtros-mas', main);
       abrir.addEventListener('click', () => {
         const ab = abrir.getAttribute('aria-expanded') !== 'true';
         abrir.setAttribute('aria-expanded', ab);
-        form.classList.toggle('abierto', ab);
+        mas.classList.toggle('abierto', ab);
       });
       // Al tocar un filtro se deja la búsqueda escrita y se muestra la categoría elegida; al cambiar el orden la búsqueda se mantiene
       const aplicar = (conBusqueda) => {
@@ -206,7 +216,8 @@ function vistaProductos(partes, params) {
         $('#conteo', main).textContent = plural(f2.lista.length, 'producto', 'productos');
         document.title = `${f2.cat !== 'todas' ? CATEGORIAS[f2.cat] : 'Productos'} | ATHLETIX`;
         // En celular el panel de filtros se cierra para dejar ver los productos (el botón «Filtros» sigue arriba)
-        if (abrir.offsetParent && abrir.getAttribute('aria-expanded') === 'true') { abrir.setAttribute('aria-expanded', 'false'); form.classList.remove('abierto'); }
+        if (abrir.offsetParent && abrir.getAttribute('aria-expanded') === 'true') { abrir.setAttribute('aria-expanded', 'false'); mas.classList.remove('abierto'); }
+        $('#filtros-resumen', main).textContent = resumenFiltros(f2);
         // Lleva la vista al inicio de los productos para ver el resultado del filtro
         const reducir = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
         $('#resultados', main).scrollIntoView({ behavior: reducir ? 'auto' : 'smooth', block: 'start' });
@@ -425,7 +436,11 @@ function vistaProducto(partes) {
         const agregadas = agregarAlCarrito(p.id, talla, cantidad);
         cantidad = 1;
         pintarCantidad();
-        mostrarProductoAgregado(p, talla, agregadas);
+        // Al agregar se va directo al carrito para ver lo que lleva; si ya no hay más stock se avisa aquí
+        if (agregadas > 0) {
+          aviso(`Agregaste ${plural(agregadas, 'unidad', 'unidades')} de ${p.nombre}${talla ? ` (talla ${talla})` : ''} a tu carrito.`);
+          ir('carrito.html');
+        } else mostrarProductoAgregado(p, talla, agregadas);
       });
 
       cargarResenas(p, main);
@@ -486,7 +501,7 @@ async function pintarZonaEscribir(p, main, mia) {
   const zona = $('#zona-escribir', main);
   if (!zona) return;
   if (!estado.sesion) {
-    zona.innerHTML = `<p class="texto-suave">¿Compraste este producto? <a href="login.html">Inicia sesión</a> para dejar tu opinión.</p>`;
+    zona.innerHTML = `<p class="texto-suave">¿Compraste este producto? <a href="${conVolver('login.html', paginaActual())}">Inicia sesión</a> para dejar tu opinión.</p>`;
     return;
   }
   if (!estado.cliente) { zona.innerHTML = ''; return; }

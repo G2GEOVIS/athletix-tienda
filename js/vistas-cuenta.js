@@ -18,8 +18,8 @@ function activarGoogle(main, volver) {
 
 /* ======================= Ingresar ======================= */
 function vistaIngresar(partes, params) {
-  if (estado.sesion) { ir(estado.cliente ? 'perfil.html' : 'completar-perfil.html'); return null; }
-  const volver = params.get('volver') === 'retiro' ? 'retiro' : '';
+  const volver = volverSeguro(params.get('volver'));
+  if (estado.sesion) { ir(estado.cliente ? destinoTrasIngreso(volver) : conVolver('completar-perfil.html', volver)); return null; }
   return {
     titulo: 'Inicia sesión',
     seccion: 'ingresar',
@@ -27,23 +27,24 @@ function vistaIngresar(partes, params) {
     <div class="contenedor pagina">
       <div class="panel formulario-centro">
         <h1 class="titulo-pagina">Inicia sesión</h1>
-        <p class="subtitulo cabecera-pagina">${volver ? 'Ingresa con tu cuenta para finalizar tu compra.' : 'Ingresa para comprar y ver tus pedidos.'}</p>
+        <p class="subtitulo cabecera-pagina">${volver === 'retiro.html' ? 'Ingresa con tu cuenta para finalizar tu compra.' : 'Ingresa para comprar y ver tus pedidos.'}</p>
         ${botonGoogle()}
         <form class="formulario" id="form-ingresar" novalidate>
           <div class="alerta alerta-errores" tabindex="-1" role="alert" hidden></div>
           ${campo({ id: 'correo', etiqueta: 'Correo electrónico', tipo: 'email', extra: 'autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false"' })}
+          ${atajosCorreo('correo')}
           ${campoClave({ id: 'clave', etiqueta: 'Contraseña' })}
           <button class="boton boton--principal boton--bloque" type="submit">Ingresar</button>
           <a class="boton boton--texto" href="recuperar.html">¿Olvidaste tu contraseña?</a>
         </form>
         <div id="zona-reenviar"></div>
         <p class="separador-texto" style="margin-block:1.25rem">¿No tienes cuenta?</p>
-        <a class="boton boton--secundario boton--bloque" href="registro.html${volver ? '?volver=' + volver : ''}">Crear cuenta</a>
+        <a class="boton boton--secundario boton--bloque" href="${conVolver('registro.html', volver)}">Crear cuenta</a>
       </div>
     </div>`,
     montar(main) {
       const form = $('#form-ingresar', main);
-      activarEnlacesError(form); activarVerClave(form); activarGoogle(main, volver);
+      activarAtajosCorreo(form); activarEnlacesError(form); activarVerClave(form); activarGoogle(main, volver);
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const correo = $('#correo', form).value.trim().toLowerCase();
@@ -62,8 +63,8 @@ function vistaIngresar(partes, params) {
         }
         await alIniciarSesion(r.datos.session);
         aviso(estado.cliente ? `Hola, ${nombreCliente()}. Iniciaste sesión.` : 'Iniciaste sesión. Completa tu perfil para comprar.');
-        if (!estado.cliente) { ir('completar-perfil.html' + (volver ? '?volver=' + volver : '')); return; }
-        ir(volver && estado.carrito.length ? 'retiro.html' : 'index.html');
+        if (!estado.cliente) { ir(conVolver('completar-perfil.html', volver)); return; }
+        ir(destinoTrasIngreso(volver));
       });
     }
   };
@@ -81,8 +82,8 @@ function mostrarReenviar(zona, correo) {
 
 /* ======================= Registro ======================= */
 function vistaRegistro(partes, params) {
-  if (estado.sesion) { ir(estado.cliente ? 'perfil.html' : 'completar-perfil.html'); return null; }
-  const volver = params.get('volver') === 'retiro' ? 'retiro' : '';
+  const volver = volverSeguro(params.get('volver'));
+  if (estado.sesion) { ir(estado.cliente ? destinoTrasIngreso(volver) : conVolver('completar-perfil.html', volver)); return null; }
   return {
     titulo: 'Crea tu cuenta',
     seccion: 'ingresar',
@@ -95,7 +96,7 @@ function vistaRegistro(partes, params) {
         <form class="formulario" id="form-registro" novalidate>
           <div class="alerta alerta-errores" tabindex="-1" role="alert" hidden></div>
           ${camposDatosPersonales({})}
-          <div>${campo({ id: 'correo-r', etiqueta: 'Correo electrónico', tipo: 'email', ayuda: 'Usa un correo al que tengas acceso: ahí te llegará la confirmación y el aviso de tus pedidos.', extra: 'autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false"' })}</div>
+          <div>${campo({ id: 'correo-r', etiqueta: 'Correo electrónico', tipo: 'email', ayuda: 'Usa un correo al que tengas acceso: ahí te llegará la confirmación y el aviso de tus pedidos.', extra: 'autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false"' })}<div style="margin-top:.5rem">${atajosCorreo('correo-r')}</div></div>
           <div class="formulario__fila formulario__fila--doble">
             ${campoClave({ id: 'clave-r', etiqueta: 'Contraseña', ayuda: 'Mínimo 8 caracteres, con letras y números', autocomplete: 'new-password' })}
             ${campoClave({ id: 'clave-r2', etiqueta: 'Confirmar contraseña', ayuda: 'Escríbela otra vez', autocomplete: 'new-password' })}
@@ -103,12 +104,12 @@ function vistaRegistro(partes, params) {
           <button class="boton boton--principal boton--bloque" type="submit">Crear cuenta</button>
         </form>
         <p class="separador-texto" style="margin-block:1.25rem">¿Ya tienes cuenta?</p>
-        <a class="boton boton--secundario boton--bloque" href="login.html${volver ? '?volver=' + volver : ''}">Iniciar sesión</a>
+        <a class="boton boton--secundario boton--bloque" href="${conVolver('login.html', volver)}">Iniciar sesión</a>
       </div>
     </div>`,
     montar(main) {
       const form = $('#form-registro', main);
-      activarEnlacesError(form); activarVerClave(form); activarGoogle(main, volver);
+      activarAtajosCorreo(form); activarEnlacesError(form); activarVerClave(form); activarGoogle(main, volver);
       activarDatosPersonales(form);
       validarAlSalir(form, 'correo-r', (v) => Validar.correo(v));
       validarAlSalir(form, 'clave-r', (v) => Validar.clave(v));
@@ -142,7 +143,7 @@ function vistaRegistro(partes, params) {
         if (r.error) { errorGeneral(form, r.error); return; }
         if (r.datos && r.datos.session) {
           await alIniciarSesion(r.datos.session);
-          ir(volver && estado.carrito.length ? 'retiro.html' : 'perfil.html');
+          ir(destinoTrasIngreso(volver));
           return;
         }
         guardarTemporal('correo-pendiente', correo);
@@ -234,7 +235,7 @@ function vistaCompletarPerfil(partes, params) {
   const meta = estado.sesion.user.user_metadata || {};
   const [nombreG, ...apellidoG] = String(meta.full_name || meta.name || '').split(' ');
   const v = { nombres: meta.nombres || nombreG || '', apellidos: meta.apellidos || apellidoG.join(' '), cedula: meta.cedula || '', telefono: meta.telefono || '', direccion: meta.direccion || '' };
-  const volver = params.get('volver') === 'retiro' || leerTemporal('volver') === 'retiro';
+  const volver = volverSeguro(params.get('volver') || leerTemporal('volver'));
   return {
     titulo: 'Completa tu perfil',
     seccion: 'perfil',
@@ -271,7 +272,7 @@ function vistaCompletarPerfil(partes, params) {
         renderCuenta();
         guardarTemporal('volver', null);
         aviso(`¡Listo, ${nombreCliente()}! Tu perfil está completo.`);
-        ir(volver && estado.carrito.length ? 'retiro.html' : 'perfil.html');
+        ir(destinoTrasIngreso(volver));
       });
     }
   };
@@ -352,8 +353,8 @@ function vistaNuevaClave() {
 
 /* ======================= Perfil ======================= */
 function protegerCuenta(volver = '') {
-  if (!estado.sesion) { ir('login.html' + (volver ? '?volver=' + volver : '')); return false; }
-  if (!estado.cliente) { ir('completar-perfil.html' + (volver ? '?volver=' + volver : '')); return false; }
+  if (!estado.sesion) { ir(conVolver('login.html', volver || paginaActual())); return false; }
+  if (!estado.cliente) { ir(conVolver('completar-perfil.html', volver || paginaActual())); return false; }
   return true;
 }
 

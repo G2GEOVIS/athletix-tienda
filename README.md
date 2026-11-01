@@ -25,7 +25,7 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - Administrador: pedidos (cambiar estado; al cancelar se devuelve el stock y se anula el pago), productos (crear, editar, ocultar y borrar, con subida de fotos) y pagos recibidos.
 - Stock en vivo para el administrador (página Stock): existencias por talla, última reducción (stock anterior → nuevo, pedido y hora) y todos los movimientos; se actualiza sola cada 15 segundos. Un trigger de la base registra cada cambio en MOVIMIENTO_STOCK (venta, cancelación, ajuste).
 - Cada factura tiene su propio número secuencial (001-001-000000001, …) que nunca se repite.
-- Fotos de productos en alta resolución (1600 × 1600) con imágenes responsivas: cada pantalla descarga el WebP justo (600, 1000 o 1600 px) según su tamaño y densidad. En el producto, zoom al pasar el mouse y botón «Ampliar» (en celular se puede pellizcar).
+- Fotos de productos en alta resolución (1600 × 1600) con imágenes responsivas: cada pantalla descarga el WebP justo (600, 1000 o 1600 px) según su tamaño y densidad.
 - Compras seguras ante concurrencia: el stock se descuenta con bloqueo por fila en una sola transacción y cada intento de pago tiene una clave única para no duplicar pedidos.
 - Carrito y favoritos guardados en la base (tablas CARRITO y FAVORITO): con la cuenta se ven iguales en la computadora y en el celular. Sin sesión se guardan en el navegador (localStorage) y se suman a la cuenta al ingresar.
 - Mis pedidos y el panel del administrador muestran la foto de cada producto pedido. Favoritos tiene un botón para agregar todos al carrito (pide la talla si hace falta).

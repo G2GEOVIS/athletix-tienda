@@ -189,7 +189,7 @@ const RE_FOTO = /(?:^|\/)img\/productos\/([a-z0-9]+-\d)\.jpg(?:\?.*)?$/;
 const srcsetFoto = (src, lados = [600, 1000, 1600]) => { const m = RE_FOTO.exec(src || ''); return m ? lados.map((l) => `img/productos/w/${m[1]}-${l}.webp ${l}w`).join(', ') : ''; };
 function mejorarFoto(im) {
   const src = im.getAttribute('src');
-  if (im.dataset.fotoDe === src || im.dataset.zoom) return;
+  if (im.dataset.fotoDe === src) return;
   const set = srcsetFoto(src);
   im.dataset.fotoDe = src;
   if (!set) { im.removeAttribute('srcset'); return; }

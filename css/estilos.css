@@ -935,14 +935,3 @@ fieldset.panel { margin: 0; min-width: 0; }
 .cuenta__menu { min-width: 15rem; width: max-content; max-width: min(22rem, calc(100vw - 2rem)); }
 .cuenta__quien strong, .cuenta__quien span { overflow-wrap: normal; word-break: normal; }
 .cuenta__quien span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; display: block; }
-.galeria__principal img { transition: transform .15s ease-out; }
-.galeria__principal--zoom { cursor: zoom-in; }
-.galeria__principal--zoom img { transform: scale(2.2); }
-@media (prefers-reduced-motion: reduce) { .galeria__principal img { transition: none; } }
-.galeria__ampliar {
-  position: absolute; right: .75rem; bottom: .75rem; display: inline-flex; align-items: center; gap: .35rem; min-height: 2.75rem; padding: .4rem .8rem;
-  border: 1px solid var(--borde); border-radius: 999px; background: var(--blanco); color: var(--azul); font-weight: 700; cursor: pointer; box-shadow: var(--sombra);
-}
-.galeria__ampliar svg { width: 1.2rem; height: 1.2rem; }
-.foto-ampliada { margin-top: 1rem; background: var(--gris); border-radius: var(--radio); overflow: auto; touch-action: pinch-zoom; max-height: 75vh; }
-.foto-ampliada img { width: 100%; height: auto; display: block; mix-blend-mode: multiply; }

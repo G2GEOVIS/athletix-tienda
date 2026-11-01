@@ -538,7 +538,9 @@ function activarCamposTarjeta(form) {
     if (formateado !== tarjeta.value) tarjeta.value = formateado;
     const info = Validar.datosMarca(d);
     $('#marca-tarjeta', form).textContent = d.length >= 2
-      ? (info ? `Tarjeta ${info.marca} · ${d.length} de ${info.largos.length === 1 ? info.largos[0] : info.largos.join('/')} dígitos` : 'No reconocemos esta tarjeta')
+      ? (!info ? 'No reconocemos esta tarjeta'
+        : info.largos.includes(d.length) ? `Tarjeta ${info.marca} · ${d.length} dígitos`
+        : `Tarjeta ${info.marca} · llevas ${d.length} de ${info.largos.find((n) => n > d.length) || Math.max(...info.largos)} dígitos`)
       : '';
   });
   validarAlSalir(form, 'tarjeta', (v) => Validar.tarjeta(v));

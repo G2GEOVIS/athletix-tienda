@@ -334,7 +334,7 @@ async function vistaAdminPagos() {
     <div class="contenedor pagina">
       ${menuAdmin('pagos')}
       <h1 class="titulo-pagina">Pagos</h1>
-      <p class="subtitulo cabecera-pagina">Cada pago (tarjeta o transferencia) queda guardado en la tabla PAGO de la base de datos. Son pagos simulados.</p>
+      <p class="subtitulo cabecera-pagina">Cada pago con tarjeta queda guardado en la tabla PAGO de la base de datos. Son pagos simulados.</p>
       <dl class="tarjetas-resumen">
         <div><dt>Pagos registrados</dt><dd>${lista.length}</dd></div>
         <div><dt>Aprobados</dt><dd>${lista.filter((g) => g.estado === 'Aprobado').length}</dd></div>
@@ -344,8 +344,8 @@ async function vistaAdminPagos() {
       ${!lista.length ? `<div class="panel panel--gris vacio">${icono('tarjeta')}<p>Todavía no hay pagos.</p></div>` : `
       <div class="tabla-desplazable" tabindex="0" role="region" aria-label="Pagos registrados">
         <table class="tabla-admin">
-          <thead><tr><th scope="col">N.º</th><th scope="col">Fecha</th><th scope="col">Pedido</th><th scope="col">Cliente</th><th scope="col">Método</th><th scope="col">Detalle</th><th scope="col" class="num">Monto</th><th scope="col">Estado</th></tr></thead>
-          <tbody>${lista.map((g) => `<tr><td>${g.codigo}</td><td>${fechaHora(g.fecha)}</td><td><a href="orden.html?pedido=${g.pedido}">${esc(g.numeroPedido)}</a></td><td>${esc(g.cliente)}</td><td>${esc(g.metodo)}</td><td>${esc(g.detalle)}</td><td class="num">${dinero(g.monto)}</td><td><span class="estado ${g.estado === 'Aprobado' ? 'estado--listo' : 'estado--cancelado'}">${esc(g.estado)}</span></td></tr>`).join('')}</tbody>
+          <thead><tr><th scope="col">N.º</th><th scope="col">Fecha</th><th scope="col">Pedido</th><th scope="col">Cliente</th><th scope="col">Tarjeta</th><th scope="col" class="num">Monto</th><th scope="col">Estado</th></tr></thead>
+          <tbody>${lista.map((g) => `<tr><td>${g.codigo}</td><td>${fechaHora(g.fecha)}</td><td><a href="orden.html?pedido=${g.pedido}">${esc(g.numeroPedido)}</a></td><td>${esc(g.cliente)}</td><td>${esc(g.detalle)}</td><td class="num">${dinero(g.monto)}</td><td><span class="estado ${g.estado === 'Aprobado' ? 'estado--listo' : 'estado--cancelado'}">${esc(g.estado)}</span></td></tr>`).join('')}</tbody>
         </table>
       </div>`}
     </div>`

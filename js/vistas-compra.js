@@ -30,10 +30,10 @@ function comoFuncionaPago() {
     <details class="como-funciona" open>
       <summary>${icono('info')}¿Cómo funciona el pago? (simulación)</summary>
       <ol>
-        <li><strong>Eliges cómo pagar:</strong> tarjeta Visa o Mastercard, o transferencia bancaria.</li>
-        <li><strong>La tienda revisa los datos:</strong> que el número de la tarjeta sea válido (algoritmo de Luhn), la fecha de vencimiento y el CVV; o, en la transferencia, el banco y el número de comprobante.</li>
+        <li><strong>Eliges tu tarjeta:</strong> Visa o Mastercard (solo tarjetas de prueba).</li>
+        <li><strong>La tienda revisa los datos:</strong> que el número de la tarjeta sea válido (algoritmo de Luhn), la fecha de vencimiento y el CVV.</li>
         <li><strong>Aprobación simulada:</strong> el pago se aprueba al instante. <strong>No se mueve dinero real</strong> ni se contacta a ningún banco.</li>
-        <li><strong>Registro en la base de datos:</strong> se guarda el pago con su método, monto, fecha y estado (de la tarjeta solo los últimos 4 dígitos).</li>
+        <li><strong>Registro en la base de datos:</strong> se guarda el pago con la marca y los últimos 4 dígitos de la tarjeta, el monto, la fecha y el estado.</li>
         <li><strong>Confirmación:</strong> ves tu orden de pedido y te llega un correo con el número y el código de retiro.</li>
       </ol>
     </details>`;
@@ -111,7 +111,7 @@ function textoEntrega(e, tienda) {
   return `<strong style="font-size:1rem">Retiro en ${esc(tienda ? tienda.nombre : '')} · listo en ${ENTREGA.retiro}</strong><p class="texto-suave">${esc(tienda ? tienda.direccion : '')}</p>`;
 }
 
-/* ======================= Pago (simulado): tarjeta o transferencia ======================= */
+/* ======================= Pago (simulado) con tarjeta ======================= */
 async function vistaPago() {
   if (!protegerCompra()) return null;
   const rTiendas = await cargarTiendas();
@@ -145,18 +145,10 @@ async function vistaPago() {
       ${avisos.length ? `<div class="alerta alerta--info" role="status" style="margin-bottom:1.25rem">${icono('info')}<ul style="margin:0">${avisos.map((a) => `<li>${esc(a)}</li>`).join('')}</ul></div>` : ''}
       <div class="compra-grilla">
         <section class="panel" aria-labelledby="titulo-pago" id="zona-pago">
-          <h2 id="titulo-pago">¿Cómo quieres pagar?</h2>
+          <h2 id="titulo-pago">Pago con tarjeta</h2>
           ${comoFuncionaPago()}
           <form class="formulario" id="form-pago" novalidate>
             <div class="alerta alerta-errores" tabindex="-1" role="alert" hidden></div>
-            <fieldset class="grupo-tarjetas">
-              <legend class="solo-lector">Método de pago</legend>
-              <div class="metodos-pago">
-                <label class="opcion opcion--caja"><input type="radio" name="forma" value="Tarjeta" checked> ${icono('tarjeta')}<span><strong>Tarjeta</strong> <span class="texto-suave">Visa o Mastercard</span></span></label>
-                <label class="opcion opcion--caja"><input type="radio" name="forma" value="Transferencia"> ${icono('banco')}<span><strong>Transferencia bancaria</strong> <span class="texto-suave">desde tu banco</span></span></label>
-              </div>
-            </fieldset>
-
             <div id="pago-tarjeta" class="formulario">
               ${avisoTarjetasPrueba()}
               ${tarjetas.length ? `
@@ -169,26 +161,6 @@ async function vistaPago() {
               <div id="tarjeta-nueva" ${tarjetas.length ? 'hidden' : ''}>
                 <div class="formulario">${camposTarjeta()}</div>
               </div>
-            </div>
-
-            <div id="pago-transferencia" class="formulario" hidden>
-              <section class="cuenta-tienda" aria-labelledby="titulo-cuenta">
-                <h3 id="titulo-cuenta">${icono('banco')}Transfiere a esta cuenta (simulada)</h3>
-                <dl class="datos-lista datos-lista--compacta">
-                  <dt>Banco</dt><dd>${esc(CUENTA_TIENDA.banco)}</dd>
-                  <dt>Tipo</dt><dd>${esc(CUENTA_TIENDA.tipo)}</dd>
-                  <dt>Número</dt><dd>${esc(CUENTA_TIENDA.numero)}</dd>
-                  <dt>Titular</dt><dd>${esc(CUENTA_TIENDA.titular)}</dd>
-                  <dt>Monto</dt><dd>${dinero(total)}</dd>
-                </dl>
-                <p class="texto-suave" style="margin-top:.5rem">Es una cuenta de ejemplo: no transfieras dinero real. Escribe cualquier número de comprobante de 6 a 12 dígitos.</p>
-              </section>
-              <div class="campo">
-                <label for="banco">Banco desde el que transferiste <span class="requerido" aria-hidden="true">*</span></label>
-                <select id="banco" name="banco" aria-describedby="banco-error"><option value="">Elige tu banco</option>${BANCOS.map((b) => `<option>${esc(b)}</option>`).join('')}</select>
-                <p class="campo__error" id="banco-error" hidden>${icono('alerta')}<span></span></p>
-              </div>
-              ${campo({ id: 'comprobante', etiqueta: 'Número de comprobante', ayuda: 'De 6 a 12 números, aparece en el recibo de tu banco', max: 12, extra: 'inputmode="numeric" autocomplete="off"' })}
             </div>
 
             <p class="alerta alerta--info">${icono('candado')}<span>Pago simulado: no se cobra dinero real. <strong>Una vez pagado, el pedido no se puede modificar.</strong></span></p>
@@ -206,16 +178,9 @@ async function vistaPago() {
       activarCamposTarjeta(form);
       const cvvG = $('#cvv-g', form);
       if (cvvG) filtrarEntrada(cvvG, NO_DIGITOS, 3);
-      filtrarEntrada($('#comprobante', form), NO_DIGITOS, 12);
       const nueva = $('#tarjeta-nueva', form);
-      const forma = () => (($('input[name="forma"]:checked', form) || {}).value) || 'Tarjeta';
       const usarNueva = () => !tarjetas.length || (($('input[name="metodo"]:checked', form) || {}).value === 'nueva');
       form.addEventListener('change', (e) => {
-        if (e.target.name === 'forma') {
-          $('#pago-tarjeta', form).hidden = forma() !== 'Tarjeta';
-          $('#pago-transferencia', form).hidden = forma() !== 'Transferencia';
-          ocultarResumen(form);
-        }
         if (e.target.name === 'metodo') {
           nueva.hidden = !usarNueva();
           $('#cvv-guardada', form).hidden = usarNueva();
@@ -227,22 +192,14 @@ async function vistaPago() {
         e.preventDefault();
         let pago;
         let datosTarjeta = null;
-        if (forma() === 'Transferencia') {
-          const banco = $('#banco', form).value;
-          const ref = $('#comprobante', form).value.trim();
-          const errBanco = banco ? '' : 'Elige el banco desde el que transferiste.';
-          const eb = $('#banco-error', form); eb.hidden = !errBanco; $('span', eb).textContent = errBanco;
-          $('#banco', form).setAttribute('aria-invalid', errBanco ? 'true' : 'false');
-          if (!validarFormulario(form, [['banco', errBanco], ['comprobante', /^[0-9]{6,12}$/.test(ref) ? '' : 'El comprobante debe tener de 6 a 12 números.']], 'Revisa la transferencia:')) return;
-          pago = { metodo: 'Transferencia', banco, referencia: ref };
-        } else if (usarNueva()) {
+        if (usarNueva()) {
           datosTarjeta = leerTarjeta(form);
           if (!datosTarjeta) return;
           if (datosTarjeta.resultado === 'rechazada') { validarFormulario(form, [['tarjeta', 'Tu banco rechazó el pago. Prueba con otra tarjeta.']], 'Pago rechazado:'); return; }
           if (datosTarjeta.resultado === 'sin fondos') { validarFormulario(form, [['tarjeta', 'La tarjeta no tiene fondos suficientes. Prueba con otra tarjeta.']], 'Pago rechazado:'); return; }
         } else {
           if (!validarFormulario(form, [['cvv-g', Validar.cvv(cvvG.value)]], 'Revisa el pago:')) return;
-          pago = { metodo: 'Tarjeta', tarjeta: Number($('input[name="metodo"]:checked', form).value) };
+          pago = { tarjeta: Number($('input[name="metodo"]:checked', form).value) };
         }
         const boton = $('button[type="submit"]', form);
         const r = await conEspera(boton, 'Procesando pago…', async () => {
@@ -250,12 +207,12 @@ async function vistaPago() {
           if (datosTarjeta) {
             const rg = await Api.cliente.guardarTarjeta(datosTarjeta.registro);
             if (rg.error) return rg;
-            pago = { metodo: 'Tarjeta', tarjeta: rg.datos.id };
+            pago = { tarjeta: rg.datos.id };
           }
           const items = estado.carrito.map((l) => ({ producto: producto(l.id).dbId, talla: l.talla || '', cantidad: l.cantidad }));
           if (items.some((i) => !i.producto)) return { error: 'Algunos productos no están disponibles en este momento. Recarga la página.' };
           guardarPendiente();
-          const rp = await Api.pedidos.crear({ items, clave: clavePago, tienda: tienda.id, pago });
+          const rp = await Api.pedidos.crear({ items, clave: clavePago, tienda: tienda.id, tarjeta: pago.tarjeta });
           if (rp.error) borrarPendiente();
           return rp;
         });
@@ -287,7 +244,6 @@ async function vistaPago() {
 }
 function textoPago(pago, datosTarjeta) {
   if (!pago) return '';
-  if (pago.metodo === 'Transferencia') return `Transferencia desde ${pago.banco}, comprobante ${pago.referencia}`;
   if (datosTarjeta) return `Tarjeta ${datosTarjeta.registro.marca} terminada en ${datosTarjeta.registro.ultimos4}`;
   return 'Tarjeta guardada';
 }

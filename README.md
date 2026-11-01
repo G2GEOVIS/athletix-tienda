@@ -15,7 +15,7 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - Ingreso con cuenta de Google (OAuth de Supabase). El botón aparece solo cuando el proveedor Google está activado en Supabase; al primer ingreso el cliente completa su cédula y celular.
 - Carrito: agregar, cambiar cantidad y quitar productos. Se puede comprar todo el stock de una talla (botón «Llevar todo»).
 - Solo retiro en tienda: el cliente elige la tienda y su pedido está listo en 1 hora (código de retiro de 6 caracteres). No hay envíos a domicilio.
-- Pago simulado, sin dinero real: tarjeta de prueba validada (Luhn, fecha y CVV) o transferencia con número de comprobante. Cada pago queda guardado en la tabla PAGO.
+- Pago simulado solo con tarjeta de prueba (sin dinero real): se valida el número con Luhn, la fecha y el CVV, y solo se guardan la marca y los últimos 4 dígitos. Cada pago queda en la tabla PAGO.
 - Orden de pedido imprimible con lo que el cliente debe retirar y el código para identificar su pedido.
 - Correo al cliente cuando compra y cada vez que cambia el estado de su pedido (en preparación, listo o en camino, entregado o cancelado) (EmailJS), a cualquier correo (Gmail, Outlook, Hotmail, etc.).
 - Mis pedidos con su estado, orden, seguimiento y reseña de cada producto comprado.
@@ -46,7 +46,7 @@ completar-perfil.html    Datos que faltan después de confirmar
 recuperar.html           Recuperar contraseña
 nueva-clave.html         Crear nueva contraseña
 retiro.html              Paso 2: tienda de retiro
-pago.html                Paso 3: pago simulado con tarjeta o transferencia
+pago.html                Paso 3: pago simulado con tarjeta
 confirmacion.html        Paso 4: compra realizada
 orden.html               Orden de pedido imprimible (?pedido=N)
 pedidos.html             Mis pedidos
@@ -87,7 +87,8 @@ bd/06_datos_productos.sql        Características, ficha técnica y fotos de cad
 bd/07_fotos_storage.sql          Carpeta pública de fotos (solo el administrador sube)
 bd/08_quitar_edad.sql            Quita la edad: el producto se clasifica solo por género
 bd/10_renombrar_atributos.sql    Nombres de atributos más claros (prd_genero, prd_visible, mtp_ ...) para una base que ya existía
-bd/11_solo_retiro.sql            Solo retiro en tienda: quita las columnas de domicilio (base nueva: 01-08 y luego 11)
+bd/11_solo_retiro.sql            Solo retiro en tienda: quita las columnas de domicilio
+bd/12_solo_tarjeta.sql           Solo pago con tarjeta: quita las columnas de transferencia (base nueva: 01-08, 11 y 12)
 bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner

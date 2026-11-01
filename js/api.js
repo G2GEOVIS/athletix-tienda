@@ -100,9 +100,9 @@ const Api = (() => {
   const aCliente = (c) => ({ id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_celular, correo: c.cli_correo, creado_en: c.cli_fecha_registro });
   const aTarjeta = (t) => ({ id: t.mtp_codigo, marca: t.mtp_marca, ultimos4: t.mtp_ultimos4, titular: t.mtp_titular, mes_vence: t.mtp_mes_vence, anio_vence: t.mtp_anio_vence });
   const CAMPOS_PEDIDO = 'ped_numero, ped_estado, ped_subtotal, ped_iva, ped_total, ped_fecha, ped_codigo_retiro, ped_hora_estimada, '
-    + 'tienda(tie_nombre, tie_direccion, tie_horario, tie_ciudad), pago(pag_metodo, pag_marca, pag_ultimos4, pag_banco, pag_comprobante, pag_monto, pag_fecha, pag_estado), '
+    + 'tienda(tie_nombre, tie_direccion, tie_horario, tie_ciudad), pago(pag_marca, pag_ultimos4, pag_monto, pag_fecha, pag_estado), '
     + 'detalle_pedido(prd_codigo, dpe_talla, dpe_cantidad, dpe_precio)';
-  const textoDePago = (g) => (!g ? 'Sin registro de pago' : g.pag_metodo === 'Tarjeta' ? `Tarjeta ${g.pag_marca} •••• ${g.pag_ultimos4}` : `Transferencia desde ${g.pag_banco} · comprobante ${g.pag_comprobante}`);
+  const textoDePago = (g) => (!g ? 'Sin registro de pago' : `Tarjeta ${g.pag_marca} •••• ${g.pag_ultimos4}`);
   const aPedido = (p) => {
     const g = Array.isArray(p.pago) ? p.pago[0] : p.pago;
     const c = p.cliente;
@@ -111,7 +111,7 @@ const Api = (() => {
       subtotal: p.ped_subtotal, iva: p.ped_iva, total: p.ped_total, creado_en: p.ped_fecha,
       codigoRetiro: p.ped_codigo_retiro, horaEstimada: p.ped_hora_estimada,
       tiendas: p.tienda ? { nombre: p.tienda.tie_nombre, direccion: p.tienda.tie_direccion, horario: p.tienda.tie_horario, ciudad: p.tienda.tie_ciudad } : null,
-      pago: g ? { metodo: g.pag_metodo, estado: g.pag_estado, fecha: g.pag_fecha, monto: g.pag_monto } : null,
+      pago: g ? { estado: g.pag_estado, fecha: g.pag_fecha, monto: g.pag_monto } : null,
       pagoTexto: textoDePago(g),
       cliente: c ? { id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_celular, correo: c.cli_correo } : null,
       detalle_pedido: (p.detalle_pedido || []).map((d) => ({ producto_id: d.prd_codigo, talla: d.dpe_talla === 'U' ? null : d.dpe_talla, cantidad: d.dpe_cantidad, precio_unitario: d.dpe_precio }))
@@ -171,8 +171,8 @@ const Api = (() => {
   /* ---------- Pedidos ---------- */
   const pedidos = {
     // "clave" identifica el intento de pago: si se reenvía (doble clic, recarga, red lenta) la base devuelve el mismo pedido
-    async crear({ items, clave, tienda, pago }) {
-      const r = await ejecutar(sb.rpc('crear_pedido', { p_items: items, p_clave: clave, p_tienda: tienda, p_pago: pago }));
+    async crear({ items, clave, tienda, tarjeta }) {
+      const r = await ejecutar(sb.rpc('crear_pedido', { p_items: items, p_clave: clave, p_tienda: tienda, p_tarjeta: tarjeta }));
       if (r.error) return r;
       // La función devuelve una tabla (lista) con una sola fila: se toma esa fila
       const x = Array.isArray(r.datos) ? r.datos[0] : r.datos;
@@ -250,12 +250,12 @@ const Api = (() => {
     },
     async pagos() {
       const r = await ejecutar(sb.from('pago')
-        .select('pag_codigo, ped_numero, pag_metodo, pag_marca, pag_ultimos4, pag_banco, pag_comprobante, pag_monto, pag_fecha, pag_estado, pedido(ped_fecha, cliente(cli_nombres, cli_apellidos))')
+        .select('pag_codigo, ped_numero, pag_marca, pag_ultimos4, pag_monto, pag_fecha, pag_estado, pedido(ped_fecha, cliente(cli_nombres, cli_apellidos))')
         .order('pag_fecha', { ascending: false }).limit(500));
       return mapear(r, (g) => ({
         codigo: g.pag_codigo, pedido: g.ped_numero, numeroPedido: codigoPedido(g.ped_numero, g.pedido ? g.pedido.ped_fecha : g.pag_fecha),
         cliente: g.pedido && g.pedido.cliente ? `${g.pedido.cliente.cli_nombres} ${g.pedido.cliente.cli_apellidos}` : '',
-        metodo: g.pag_metodo, detalle: g.pag_metodo === 'Tarjeta' ? `${g.pag_marca} •••• ${g.pag_ultimos4}` : `${g.pag_banco} · comprobante ${g.pag_comprobante}`,
+        detalle: `${g.pag_marca} •••• ${g.pag_ultimos4}`,
         monto: g.pag_monto, fecha: g.pag_fecha, estado: g.pag_estado
       }));
     }

@@ -5,9 +5,6 @@
 const TIEMPO_LISTO = '1 hora';
 const ENTREGA = { retiro: '1 hora' };
 
-/* Pago simulado por transferencia: cuenta de la tienda (ficticia) y bancos aceptados */
-const CUENTA_TIENDA = { banco: 'Banco Pichincha', tipo: 'Cuenta corriente', numero: '2200456789', titular: 'ATHLETIX Tienda Académica', ruc: '1799999999001' };
-const BANCOS = ['Banco Pichincha', 'Banco Guayaquil', 'Produbanco', 'Banco del Pacífico', 'Banco Internacional'];
 
 /* Nombre de cada estado para mostrar al cliente */
 const nombreEstado = (estadoPedido) => NOMBRE_ESTADO[estadoPedido];
@@ -721,7 +718,7 @@ const AYUDA = [
   ['¿Cómo compro?', 'Elige un producto (y tu talla si es calzado), agrégalo al carrito, inicia sesión, elige la tienda donde lo retiras y paga con tarjeta.'],
   ['¿Qué necesito para crear mi cuenta?', 'Tu nombre, apellido, cédula ecuatoriana, celular y un correo al que tengas acceso. Te enviaremos un enlace para confirmar el correo antes de tu primera compra. También puedes entrar con tu cuenta de Google y completar tu cédula y celular.'],
   ['No me llega el correo de confirmación', 'Revisa la carpeta de spam o promociones. Si no aparece en unos minutos, en «Iniciar sesión» puedes pedir que te lo enviemos otra vez.'],
-  ['¿Cómo puedo pagar?', 'Con tarjeta Visa o Mastercard o con transferencia bancaria. Es una simulación: no se mueve dinero real. Con tarjeta, usa las tarjetas de prueba de la pantalla de pago (validamos el número, la fecha y el CVV, y solo guardamos los últimos 4 dígitos). Con transferencia, eliges tu banco y escribes el número del comprobante. Cada pago queda registrado en la base de datos.'],
+  ['¿Cómo puedo pagar?', 'Solo con tarjeta Visa o Mastercard. Es una simulación: no se mueve dinero real. Usa las tarjetas de prueba que aparecen en la pantalla de pago; validamos el número, la fecha y el CVV, y solo guardamos los últimos 4 dígitos.'],
   ['¿Entregan factura?', 'No. Esta es una tienda académica y no emite facturas. Recibes una orden de pedido con el detalle de tu compra.'],
   ['¿Cómo recibo mi pedido?', 'Lo retiras gratis en la tienda que elijas; está listo en 1 hora. Te enviamos la orden de pedido con un código de 6 caracteres: preséntalo en la tienda junto con tu cédula. No hacemos envíos a domicilio.'],
   ['Privacidad: ¿qué datos guardan?', 'Solo los necesarios para tu cuenta y tus pedidos: nombre, cédula, celular, correo, tus pedidos y los últimos 4 dígitos de las tarjetas de prueba. Tu contraseña se guarda cifrada (bcrypt) y nadie puede verla. Si entras con Google, solo recibimos tu nombre y tu correo. En tu navegador (localStorage) guardamos tu carrito, tus favoritos, tus últimos filtros y la última tienda de retiro que elegiste, separados por cuenta; se borran si limpias los datos del navegador. No vendemos ni compartimos tus datos. Es una tienda académica (PUCE).'],

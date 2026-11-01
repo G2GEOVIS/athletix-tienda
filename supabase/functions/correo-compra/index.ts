@@ -23,8 +23,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   if (req.method !== 'POST') return responder({ error: 'Método no permitido.' }, 405);
 
-  const usuarioGmail = Deno.env.get('GMAIL_USUARIO');
-  const claveGmail = Deno.env.get('GMAIL_CLAVE_APP');
+  // Se limpian espacios: Google muestra la contraseña de aplicación en grupos de 4 letras ("abcd efgh ...")
+  const usuarioGmail = (Deno.env.get('GMAIL_USUARIO') || '').trim().toLowerCase();
+  const claveGmail = (Deno.env.get('GMAIL_CLAVE_APP') || '').replace(/\s+/g, '');
   if (!usuarioGmail || !claveGmail) return responder({ error: 'El correo de la tienda no está configurado.' }, 500);
 
   const autorizacion = req.headers.get('Authorization') || '';
@@ -73,6 +74,7 @@ Deno.serve(async (req) => {
     return responder({ ok: true });
   } catch (e) {
     console.error(e);
-    return responder({ error: 'No se pudo enviar el correo.' }, 502);
+    const credenciales = String((e as { code?: string })?.code) === 'EAUTH';
+    return responder({ error: credenciales ? 'Gmail rechazó el usuario o la contraseña de aplicación de la tienda.' : 'No se pudo enviar el correo.' }, 502);
   }
 });

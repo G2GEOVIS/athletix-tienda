@@ -30,7 +30,7 @@ function comoFuncionaPago() {
     <details class="como-funciona" open>
       <summary>${icono('info')}¿Cómo funciona el pago? (simulación)</summary>
       <ol>
-        <li><strong>Eliges tu tarjeta:</strong> Visa, Mastercard, American Express, Diners Club u otra marca reconocida.</li>
+        <li><strong>Eliges cómo pagar:</strong> con cualquier tarjeta (Visa, Mastercard, American Express, Diners Club y más) o en la tienda al retirar.</li>
         <li><strong>La tienda revisa los datos:</strong> que el número de la tarjeta sea válido (algoritmo de Luhn), la fecha de vencimiento y el CVV.</li>
         <li><strong>Aprobación simulada:</strong> el pago se aprueba al instante. <strong>No se mueve dinero real</strong> ni se contacta a ningún banco.</li>
         <li><strong>Registro en la base de datos:</strong> se guarda el pago con la marca y los últimos 4 dígitos de la tarjeta, el monto, la fecha y el estado.</li>
@@ -57,7 +57,7 @@ async function vistaRetiro() {
     <div class="contenedor pagina">
       ${pasos(2)}
       <h1 class="titulo-pagina cabecera-pagina">Retiro en tienda</h1>
-      <p class="subtitulo" style="margin-bottom:1rem">Retiras tu pedido gratis en la tienda que elijas. Estará listo en <strong>${ENTREGA.retiro}</strong> y te avisamos por correo.</p>
+      <p class="subtitulo" style="margin-bottom:1rem">Retiras tu pedido gratis en la tienda que elijas. Con los productos de tu carrito estará listo en aprox. <strong>${textoDuracion(minutosRetiro(estado.carrito))}</strong> y te avisamos por correo.</p>
       ${recordada ? `<p class="alerta alerta--info" style="margin-bottom:1rem">${icono('info')}<span>Usamos la última tienda que elegiste. Puedes cambiarla si quieres.</span></p>` : ''}
       <div class="compra-grilla">
         <form id="form-retiro" class="formulario" style="display:grid;gap:1.5rem" novalidate>
@@ -118,7 +118,7 @@ function botonesEntrega() {
   return `<button class="boton boton--principal boton--bloque" type="submit" form="form-retiro">Continuar al pago</button><a class="boton boton--texto boton--bloque" href="carrito.html">${icono('izquierda')}Volver al carrito</a>`;
 }
 function textoEntrega(e, tienda) {
-  return `<strong style="font-size:1rem">Retiro en ${esc(tienda ? tienda.nombre : '')} · listo en ${ENTREGA.retiro}</strong><p class="texto-suave">${esc(tienda ? tienda.direccion : '')}</p>`;
+  return `<strong style="font-size:1rem">Retiro en ${esc(tienda ? tienda.nombre : '')} · listo en aprox. ${textoDuracion(minutosRetiro(estado.carrito))}</strong><p class="texto-suave">${esc(tienda ? tienda.direccion : '')}</p>`;
 }
 
 /* ======================= Pago (simulado) con tarjeta ======================= */
@@ -155,11 +155,19 @@ async function vistaPago() {
       ${avisos.length ? `<div class="alerta alerta--info" role="status" style="margin-bottom:1.25rem">${icono('info')}<ul style="margin:0">${avisos.map((a) => `<li>${esc(a)}</li>`).join('')}</ul></div>` : ''}
       <div class="compra-grilla">
         <section class="panel" aria-labelledby="titulo-pago" id="zona-pago">
-          <h2 id="titulo-pago">Pago con tarjeta</h2>
-          ${comoFuncionaPago()}
+          <h2 id="titulo-pago">¿Cómo quieres pagar?</h2>
           <form class="formulario" id="form-pago" novalidate>
             <div class="alerta alerta-errores" tabindex="-1" role="alert" hidden></div>
+            <fieldset class="formas-pago">
+              <legend class="solo-lector">Forma de pago</legend>
+              <label class="opcion opcion--caja"><input type="radio" name="forma" value="tarjeta" checked> ${icono('tarjeta')}<span><strong>Tarjeta de crédito o débito</strong><span class="texto-suave d-bloque">Visa, Mastercard, American Express, Diners Club, Discover, JCB, UnionPay y Maestro</span></span></label>
+              <label class="opcion opcion--caja"><input type="radio" name="forma" value="tienda"> ${icono('tienda')}<span><strong>Pagar en la tienda al retirar</strong><span class="texto-suave d-bloque">En efectivo o con tarjeta en la caja de ${esc(tienda.nombre)}</span></span></label>
+            </fieldset>
+            <div id="pago-en-tienda" hidden>
+              <p class="alerta alerta--info">${icono('info')}<span>Reservamos tus productos y los preparamos igual. Pagas <strong>${dinero(total)}</strong> en la caja cuando retires tu pedido, presentando tu cédula y tu número de pedido.</span></p>
+            </div>
             <div id="pago-tarjeta" class="formulario">
+              ${comoFuncionaPago()}
               ${avisoTarjetasPrueba()}
               ${tarjetas.length ? `
               <fieldset class="grupo-tarjetas">
@@ -173,8 +181,8 @@ async function vistaPago() {
               </div>
             </div>
 
-            <p class="alerta alerta--info">${icono('candado')}<span>Pago simulado: no se cobra dinero real. <strong>Una vez pagado, el pedido no se puede modificar.</strong></span></p>
-            <button class="boton boton--principal boton--bloque" type="submit">${icono('candado')}Pagar ${dinero(total)}</button>
+            <p class="alerta alerta--info" id="nota-tarjeta">${icono('candado')}<span>Pago simulado: no se cobra dinero real. <strong>Una vez pagado, el pedido no se puede modificar.</strong></span></p>
+            <button class="boton boton--principal boton--bloque" type="submit" id="boton-pagar">${icono('candado')}Pagar ${dinero(total)}</button>
             <a class="boton boton--texto" href="retiro.html">${icono('izquierda')}Volver a elegir tienda</a>
           </form>
         </section>
@@ -190,7 +198,15 @@ async function vistaPago() {
       if (cvvG) filtrarEntrada(cvvG, NO_DIGITOS, 3);
       const nueva = $('#tarjeta-nueva', form);
       const usarNueva = () => !tarjetas.length || (($('input[name="metodo"]:checked', form) || {}).value === 'nueva');
+      const enTienda = () => (($('input[name="forma"]:checked', form) || {}).value === 'tienda');
+      const pintarForma = () => {
+        $('#pago-tarjeta', form).hidden = enTienda();
+        $('#nota-tarjeta', form).hidden = enTienda();
+        $('#pago-en-tienda', form).hidden = !enTienda();
+        $('#boton-pagar', form).innerHTML = enTienda() ? `${icono('check')}Confirmar pedido · pagas ${dinero(total)} en la tienda` : `${icono('candado')}Pagar ${dinero(total)}`;
+      };
       form.addEventListener('change', (e) => {
+        if (e.target.name === 'forma') { pintarForma(); ocultarResumen(form); }
         if (e.target.name === 'metodo') {
           nueva.hidden = !usarNueva();
           $('#cvv-guardada', form).hidden = usarNueva();
@@ -202,7 +218,9 @@ async function vistaPago() {
         e.preventDefault();
         let pago;
         let datosTarjeta = null;
-        if (usarNueva()) {
+        if (enTienda()) {
+          pago = { tarjeta: null };
+        } else if (usarNueva()) {
           datosTarjeta = leerTarjeta(form);
           if (!datosTarjeta) return;
         } else {
@@ -210,7 +228,7 @@ async function vistaPago() {
           pago = { tarjeta: Number($('input[name="metodo"]:checked', form).value) };
         }
         const boton = $('button[type="submit"]', form);
-        const r = await conEspera(boton, 'Procesando pago…', async () => {
+        const r = await conEspera(boton, enTienda() ? 'Confirmando pedido…' : 'Procesando pago…', async () => {
           mostrarProcesando(main, true);
           if (datosTarjeta) {
             const rg = await Api.cliente.guardarTarjeta(datosTarjeta.registro);
@@ -232,7 +250,7 @@ async function vistaPago() {
           return;
         }
         const fila = r.datos;
-        const detalleEntrega = { tienda: `${tienda.nombre} (${tienda.direccion})`, horario: `Listo en ${ENTREGA.retiro} · ${tienda.horario}` };
+        const detalleEntrega = { tienda: `${tienda.nombre} (${tienda.direccion})`, horario: `Listo aprox. a las ${horaCorta(fila.horaEstimada)} · ${tienda.horario}` };
         const productosTexto = estado.carrito.map((l) => `${l.cantidad} × ${producto(l.id).nombre}${l.talla ? ' (talla ' + l.talla + ')' : ''}`).join(', ');
         // Correos de confirmación al cliente y de aviso al administrador (no detienen la compra si fallan).
         // Se esperan como máximo 6 segundos antes de cambiar de página para que alcancen a salir.
@@ -247,12 +265,14 @@ async function vistaPago() {
         let pdf = null;
         try { pdf = await Promise.race([Factura.generar(datosFactura), new Promise((ok) => setTimeout(() => ok(null), 4000))]); } catch (err) { pdf = null; }
         const correos = Promise.allSettled([
-          Api.correo.compraConfirmada({ correo: correoSesion(), nombre: estado.cliente.nombres, numero: fila.numero, total: fila.total, codigo: fila.codigoRetiro, pagoTexto: textoPago(pago, datosTarjeta), id: fila.id, ...detalleEntrega,
+          Api.correo.compraConfirmada({ correo: correoSesion(), nombre: estado.cliente.nombres, numero: fila.numero, total: fila.total, codigo: fila.codigoRetiro, pagoTexto: textoPago(pago, datosTarjeta), enTienda: pago.tarjeta === null, id: fila.id, ...detalleEntrega,
             items, subtotal: datosFactura.subtotal, iva: datosFactura.iva, numeroFactura: Factura.numero(fila.id), factura: pdf ? pdf.dataUri : '' }),
           Api.correo.nuevoPedido({
             numero: fila.numero, total: fila.total, tienda: detalleEntrega.tienda,
             cliente: `${estado.cliente.nombres} ${estado.cliente.apellidos}`, cedula: estado.cliente.cedula,
-            correo: correoSesion(), telefono: estado.cliente.telefono, productos: productosTexto
+            correo: correoSesion(), telefono: estado.cliente.telefono, productos: productosTexto,
+            id: fila.id, codigo: fila.codigoRetiro, direccion: estado.cliente.direccion, items, subtotal: datosFactura.subtotal, iva: datosFactura.iva,
+            enTienda: pago.tarjeta === null, pagoTexto: textoPago(pago, datosTarjeta)
           })]);
         await Promise.race([correos, new Promise((ok) => setTimeout(ok, 6000))]);
         terminarCompra(fila);
@@ -262,6 +282,7 @@ async function vistaPago() {
 }
 function textoPago(pago, datosTarjeta) {
   if (!pago) return '';
+  if (pago.tarjeta === null) return 'Pago en la tienda al retirar (pendiente)';
   if (datosTarjeta) return `Tarjeta ${datosTarjeta.registro.marca} terminada en ${datosTarjeta.registro.ultimos4}`;
   return 'Tarjeta guardada';
 }
@@ -336,7 +357,7 @@ async function vistaConfirmacion(partes, params) {
           <dt>Total pagado</dt><dd>${dinero(p.total)}</dd>
           <dt>Pago</dt><dd>${esc(p.pagoTexto)} · ${esc(p.pago ? p.pago.estado : 'Aprobado')}</dd>
           <dt>Retiro en</dt><dd>${esc(p.tiendas.nombre)} · ${esc(p.tiendas.direccion)}</dd>
-          <dt>Listo aprox.</dt><dd>${horaCorta(p.horaEstimada)} (${ENTREGA.retiro})</dd>
+          <dt>Listo aprox.</dt><dd>${horaCorta(p.horaEstimada)} (en ${textoDuracion(Math.max(60, Math.round((new Date(p.horaEstimada) - new Date(p.creado_en)) / 60000)))})</dd>
         </dl>
         <div class="botones-fila" style="margin-top:1.5rem">
           <a class="boton boton--principal" href="orden.html?pedido=${p.id}">${icono('documento')}Ver orden de pedido</a>

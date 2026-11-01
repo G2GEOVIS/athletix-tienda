@@ -10,7 +10,7 @@ function activarGoogle(main, volver) {
   const b = $('#con-google', main);
   if (!b) return;
   b.addEventListener('click', async () => {
-    if (volver) guardarTemporal('volver', volver);
+    if (volver) guardarVolverPendiente(volver);
     const r = await conEspera(b, 'Abriendo Google…', () => Api.auth.ingresarConGoogle());
     if (r && r.error) aviso(r.error, 'error');
   });
@@ -98,7 +98,7 @@ function vistaRegistro(partes, params) {
           ${camposDatosPersonales({})}
           <div>${campo({ id: 'correo-r', etiqueta: 'Correo electrónico', tipo: 'email', ayuda: 'Usa un correo al que tengas acceso: ahí te llegará la confirmación y el aviso de tus pedidos.', extra: 'autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false"' })}<div style="margin-top:.5rem">${atajosCorreo('correo-r')}</div></div>
           <div class="formulario__fila formulario__fila--doble">
-            ${campoClave({ id: 'clave-r', etiqueta: 'Contraseña', ayuda: 'Mínimo 8 caracteres, con letras y números', autocomplete: 'new-password' })}
+            ${campoClave({ id: 'clave-r', etiqueta: 'Contraseña', ayuda: 'Mínimo 8 caracteres, con letras, números y un carácter especial (! @ # $ % * ?)', autocomplete: 'new-password' })}
             ${campoClave({ id: 'clave-r2', etiqueta: 'Confirmar contraseña', ayuda: 'Escríbela otra vez', autocomplete: 'new-password' })}
           </div>
           <button class="boton boton--principal boton--bloque" type="submit">Crear cuenta</button>
@@ -148,7 +148,7 @@ function vistaRegistro(partes, params) {
           return;
         }
         guardarTemporal('correo-pendiente', correo);
-        if (volver) guardarTemporal('volver', volver);
+        if (volver) guardarVolverPendiente(volver);
         ir('confirmar-correo.html');
       });
     }
@@ -159,8 +159,8 @@ function vistaRegistro(partes, params) {
 function camposDatosPersonales(v, { cedulaFija = false } = {}) {
   return `
     <div class="formulario__fila formulario__fila--doble">
-      ${campo({ id: 'nombres', etiqueta: 'Nombres', ayuda: 'Solo letras, por ejemplo: Ana María', valor: v.nombres || '', max: 60, extra: 'autocomplete="given-name" autocapitalize="words"' })}
-      ${campo({ id: 'apellidos', etiqueta: 'Apellidos', ayuda: 'Solo letras, por ejemplo: Pérez López', valor: v.apellidos || '', max: 60, extra: 'autocomplete="family-name" autocapitalize="words"' })}
+      ${campo({ id: 'nombres', etiqueta: 'Nombres', ayuda: 'Solo letras, por ejemplo: Ana', valor: v.nombres || '', max: 60, extra: 'autocomplete="given-name" autocapitalize="words"' })}
+      ${campo({ id: 'apellidos', etiqueta: 'Apellidos', ayuda: 'Solo letras, por ejemplo: Pérez', valor: v.apellidos || '', max: 60, extra: 'autocomplete="family-name" autocapitalize="words"' })}
     </div>
     <div class="formulario__fila formulario__fila--doble">
       ${cedulaFija
@@ -225,7 +225,22 @@ function vistaVerificaCorreo() {
         <a class="boton boton--texto" href="login.html">Ya lo confirmé, iniciar sesión</a>
       </div>
     </div>`,
-    montar(main) { mostrarReenviar($('#zona-reenviar', main), correo); }
+    montar(main) {
+      mostrarReenviar($('#zona-reenviar', main), correo);
+      // Si confirma el correo en otra pestaña, la sesión llega aquí también: se continúa sola (al carrito o a la tienda de retiro)
+      const revisar = setInterval(async () => {
+        if (!main.isConnected) { clearInterval(revisar); return; }
+        const sesion = await Api.auth.sesion();
+        if (!sesion) return;
+        clearInterval(revisar);
+        await alIniciarSesion(sesion);
+        guardarTemporal('correo-pendiente', null);
+        const volver = leerVolverPendiente();
+        guardarVolverPendiente(null);
+        aviso(estado.cliente ? '¡Correo confirmado! Tu perfil quedó guardado.' : '¡Correo confirmado! Completa tu perfil.');
+        ir(estado.cliente ? destinoTrasIngreso(volver) : conVolver('completar-perfil.html', volver));
+      }, 3000);
+    }
   };
 }
 
@@ -236,7 +251,7 @@ function vistaCompletarPerfil(partes, params) {
   const meta = estado.sesion.user.user_metadata || {};
   const [nombreG, ...apellidoG] = String(meta.full_name || meta.name || '').split(' ');
   const v = { nombres: meta.nombres || nombreG || '', apellidos: meta.apellidos || apellidoG.join(' '), cedula: meta.cedula || '', telefono: meta.telefono || '', direccion: meta.direccion || '' };
-  const volver = volverSeguro(params.get('volver') || leerTemporal('volver'));
+  const volver = volverSeguro(params.get('volver') || leerVolverPendiente());
   return {
     titulo: 'Completa tu perfil',
     seccion: 'perfil',
@@ -274,7 +289,7 @@ function vistaCompletarPerfil(partes, params) {
         if (r.error) { errorGeneral(form, r.error); return; }
         estado.cliente = r.datos;
         renderCuenta();
-        guardarTemporal('volver', null);
+        guardarVolverPendiente(null);
         aviso(`¡Listo, ${nombreCliente()}! Tu perfil está completo.`);
         ir(destinoTrasIngreso(volver));
       });
@@ -320,7 +335,7 @@ function formularioNuevaClave(idForm) {
   return `
     <form class="formulario" id="${idForm}" novalidate>
       <div class="alerta alerta-errores" tabindex="-1" role="alert" hidden></div>
-      ${campoClave({ id: 'nueva', etiqueta: 'Nueva contraseña', ayuda: 'Mínimo 8 caracteres, con letras y números', autocomplete: 'new-password' })}
+      ${campoClave({ id: 'nueva', etiqueta: 'Nueva contraseña', ayuda: 'Mínimo 8 caracteres, con letras, números y un carácter especial (! @ # $ % * ?)', autocomplete: 'new-password' })}
       ${campoClave({ id: 'nueva2', etiqueta: 'Confirmar nueva contraseña', autocomplete: 'new-password' })}
       <button class="boton boton--principal boton--bloque" type="submit">Guardar contraseña</button>
     </form>`;
@@ -368,11 +383,24 @@ const SECCIONES_PERFIL = [
   ['pagos', 'Métodos de pago', 'tarjeta'],
   ['seguridad', 'Contraseña', 'candado']
 ];
+/* Nombre completo, correo y cédula del cliente, con sus iniciales */
+function tarjetaCliente() {
+  const c = estado.cliente || {};
+  const completo = `${c.nombres || ''} ${c.apellidos || ''}`.trim();
+  const iniciales = ((c.nombres || ' ')[0] + (c.apellidos || ' ')[0]).trim().toUpperCase();
+  return `<div class="cliente-tarjeta cabecera-pagina">
+      <span class="cliente-tarjeta__avatar" aria-hidden="true">${esc(iniciales)}</span>
+      <div class="cliente-tarjeta__datos">
+        <p class="cliente-tarjeta__nombre">${esc(completo)}${estado.esAdmin ? ' <span class="insignia-rol">Administrador</span>' : ''}</p>
+        <p class="texto-suave">${esc(c.correo || correoSesion())}${c.cedula ? ` · C.I. ${esc(c.cedula)}` : ''}</p>
+      </div>
+    </div>`;
+}
 function marcoPerfil(actual, contenido) {
   return `
     <div class="contenedor pagina">
       <h1 class="titulo-pagina">Mi perfil</h1>
-      <p class="subtitulo cabecera-pagina">Hola, ${esc(nombreCliente())}. Aquí administras tu cuenta.</p>
+      ${tarjetaCliente()}
       <div class="perfil">
         <nav class="perfil__menu" aria-label="Secciones del perfil">
           <ul>

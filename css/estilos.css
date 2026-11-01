@@ -880,3 +880,22 @@ fieldset.panel { margin: 0; min-width: 0; }
 #resultados { scroll-margin-top: 8rem; }
 
 .opciones-correo { display: grid; gap: .6rem; margin-top: 1rem; }
+.formas-pago { border: 0; padding: 0; margin: 0 0 .5rem; display: grid; gap: .6rem; }
+.formas-pago .opcion--caja { align-items: flex-start; }
+.fila-fav { grid-template-columns: 3.5rem 1fr; align-items: center; column-gap: .75rem; }
+.fila-fav img { grid-row: span 2; width: 3.5rem; height: 3.5rem; object-fit: cover; border-radius: .5rem; background: var(--gris); }
+.fila-fav label { font-weight: 700; }
+/* Perfil: nombre completo del cliente */
+.cliente-tarjeta { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--gris); }
+.cliente-tarjeta__avatar { flex-shrink: 0; display: grid; place-items: center; width: 3.5rem; height: 3.5rem; border-radius: 50%; background: var(--azul); color: #fff; font-weight: 800; font-size: 1.25rem; }
+.cliente-tarjeta__datos { min-width: 0; }
+.cliente-tarjeta__nombre { font-size: 1.25rem; font-weight: 800; margin: 0; overflow-wrap: anywhere; }
+.cliente-tarjeta .texto-suave { margin: .15rem 0 0; overflow-wrap: anywhere; }
+.insignia-rol { display: inline-block; vertical-align: middle; margin-left: .35rem; padding: .1rem .55rem; border-radius: 999px; background: var(--verde); color: #fff; font-size: .75rem; font-weight: 700; }
+.cuenta__quien { display: grid; gap: .1rem; padding: .6rem .9rem .7rem; border-bottom: 1px solid var(--borde); margin-bottom: .25rem; }
+.cuenta__quien strong { overflow-wrap: anywhere; }
+.cuenta__quien span { font-size: .85rem; color: var(--texto-suave); overflow-wrap: anywhere; }
+.admin-productos { list-style: none; display: grid; gap: .5rem; margin: 0; padding: 0; }
+.admin-productos li { display: flex; align-items: center; gap: .75rem; }
+.admin-productos img, .admin-productos__sin { flex-shrink: 0; width: 4rem; height: 4rem; object-fit: cover; border-radius: .5rem; background: var(--gris); border: 1px solid var(--borde); }
+.admin-productos li > span { display: grid; gap: .1rem; min-width: 0; }

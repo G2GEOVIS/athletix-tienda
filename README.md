@@ -15,8 +15,8 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - No se permite registrar dos veces la misma cédula, el mismo celular ni el mismo correo (la base lo asegura con reglas únicas).
 - Ingreso con cuenta de Google (OAuth de Supabase). El botón aparece solo cuando el proveedor Google está activado en Supabase; al primer ingreso el cliente completa su cédula y celular.
 - Carrito: agregar, cambiar cantidad y quitar productos. Se puede comprar todo el stock de una talla (botón «Llevar todo»).
-- Solo retiro en tienda: el cliente elige la tienda y su pedido está listo en 1 hora (código de retiro de 6 caracteres). No hay envíos a domicilio.
-- Pago simulado solo con tarjeta (sin dinero real): acepta Visa, Mastercard, American Express, Diners Club, Discover, JCB, UnionPay y Maestro; reconoce la marca por los primeros dígitos, revisa la cantidad de dígitos de cada marca y el número con Luhn, la fecha y el CVV (3 dígitos). Solo se guardan la marca y los últimos 4 dígitos. Cada pago queda en la tabla PAGO.
+- Solo retiro en tienda: el cliente elige la tienda y su pedido está listo de 1 a 3 horas según cuánto y qué pidió (60 min + 10 por unidad desde la 4.ª + 15 por producto distinto desde el 3.º + 20 si hay calzado + 20 si hay tecnología). Código de retiro de 6 caracteres. No hay envíos a domicilio.
+- Dos formas de pago: en la tienda al retirar (efectivo o tarjeta en caja; el pago queda Pendiente y pasa a Aprobado al marcar el pedido como Retirado) o con tarjeta en línea. Pago con tarjeta simulado (sin dinero real): acepta Visa, Mastercard, American Express, Diners Club, Discover, JCB, UnionPay y Maestro; reconoce la marca por los primeros dígitos, revisa la cantidad de dígitos de cada marca y el número con Luhn, la fecha y el CVV (3 dígitos). Solo se guardan la marca y los últimos 4 dígitos. Cada pago queda en la tabla PAGO.
 - Orden de pedido imprimible con lo que el cliente debe retirar y el código para identificar su pedido.
 - Correo de compra con el detalle de lo pedido y la factura en PDF adjunta, y correo al cliente cada vez que cambia el estado de su pedido, con botón para ver su pedido. Salen desde el Gmail de la tienda (función de Supabase `correo-compra`); si falla, EmailJS envía una copia sin el PDF. Llegan a cualquier correo (Gmail, Outlook, Hotmail, etc.).
 - Factura en PDF (jsPDF) con los datos del cliente (nombre, cédula, dirección, celular y correo), productos, IVA y total; también se descarga desde la orden de pedido. Lleva la nota «Documento sin validez tributaria: no está autorizado por el SRI».
@@ -24,7 +24,9 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - Administrador: pedidos (cambiar estado; al cancelar se devuelve el stock y se anula el pago), productos (crear, editar, ocultar y borrar, con subida de fotos) y pagos recibidos.
 - Compras seguras ante concurrencia: el stock se descuenta con bloqueo por fila en una sola transacción y cada intento de pago tiene una clave única para no duplicar pedidos.
 - Carrito y favoritos guardados en la base (tablas CARRITO y FAVORITO): con la cuenta se ven iguales en la computadora y en el celular. Sin sesión se guardan en el navegador (localStorage) y se suman a la cuenta al ingresar.
-- Mis pedidos muestra la foto de cada producto comprado.
+- Mis pedidos y el panel del administrador muestran la foto de cada producto pedido. Favoritos tiene un botón para agregar todos al carrito (pide la talla si hace falta).
+- Contraseñas de al menos 8 caracteres con letras, números y un carácter especial.
+- El administrador recibe el aviso de pedido nuevo con el mismo diseño que el cliente: detalle con fotos, datos del cliente, pago y retiro.
 - El correo de contacto abre el correo web del cliente (Gmail, Outlook/Hotmail o Yahoo, según su cuenta); sin sesión le deja elegir.
 - Reseñas de compra verificada: la base verifica que el cliente compró el producto (pedido no cancelado); una reseña por cliente y producto, de 1 a 5 estrellas. La calificación del producto es el promedio de sus reseñas. Cada reseña muestra el nombre del cliente (nombre e inicial del apellido), la fecha y la marca «Compra verificada».
 
@@ -101,6 +103,7 @@ bd/14_direccion_y_marcas.sql     Dirección del cliente (para la factura) y toda
 bd/15_limpiar_datos.sql          Borra pedidos y clientes (menos el administrador) y devuelve el stock
 bd/16_favoritos_y_carrito.sql    Tablas FAVORITO y CARRITO de cada cuenta (ejecutar antes del 15)
 bd/17_celular_unico.sql          Un celular por cuenta (regla única y función celular_registrado)
+bd/18_pago_en_tienda.sql         Pago en la tienda (PAGO.pag_forma, estado Pendiente) y tiempo de retiro de 1 a 3 horas
 bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner

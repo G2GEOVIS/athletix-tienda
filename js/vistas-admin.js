@@ -18,6 +18,14 @@ async function vistaAdmin(partes, params) {
   const filtro = ['Recibido', 'Preparando', 'Listo', 'Retirado', 'Cancelado'].includes(params.get('estado')) ? params.get('estado') : '';
   const todos = r.datos || [];
   const lista = filtro ? todos.filter((p) => p.estado === filtro) : todos;
+  const rd = await Api.pedidos.detalles(lista.slice(0, 200).map((p) => p.id));
+  const detalles = rd.error ? {} : rd.datos;
+  // Fotos de lo que pidió el cliente; si no se pudo leer el detalle, se muestra el texto de siempre
+  const productosHtml = (p) => {
+    const ds = detalles[p.id];
+    if (!ds || !ds.length) return `<dt>Productos</dt><dd>${esc(p.productos)}</dd>`;
+    return `<dt>Productos</dt><dd><ul class="admin-productos">${ds.map((d) => { const pr = productoPorDbId(d.producto_id); return `<li>${pr ? `<img src="${img(pr)}" alt="" width="64" height="64" loading="lazy">` : '<span class="admin-productos__sin"></span>'}<span><strong>${esc(pr ? pr.nombre : d.producto_id)}</strong><span class="texto-suave">${d.cantidad} × ${dinero(d.precio_unitario)}${d.talla ? ` · Talla ${esc(d.talla)}` : ''} · Cód. ${esc(d.producto_id)}</span></span></li>`; }).join('')}</ul></dd>`;
+  };
   const cuenta = (e) => todos.filter((p) => p.estado === e).length;
   const resaltar = leerTemporal('pedido-resaltado');
   return {
@@ -44,7 +52,7 @@ async function vistaAdmin(partes, params) {
           <dl class="datos-lista datos-lista--compacta" style="margin-top:.75rem">
             <dt>Cliente</dt><dd>${esc(p.cliente)} · C.I. ${esc(p.cedula)}</dd>
             <dt>Contacto</dt><dd>${esc(p.correo)} · ${esc(p.telefono)}</dd>
-            <dt>Productos</dt><dd>${esc(p.productos)}</dd>
+            ${productosHtml(p)}
             <dt>Código</dt><dd><strong>${esc(p.codigoRetiro || '')}</strong> · listo aprox. ${p.horaEstimada ? fechaHora(p.horaEstimada) : ''}</dd>
             <dt>Pago</dt><dd>${esc(p.pagoTexto)}</dd>
             <dt>Total</dt><dd>${dinero(p.total)}</dd>

@@ -133,6 +133,7 @@ function renderCuenta() {
       ${estado.esAdmin ? `<span class="insignia insignia--flotante" data-nuevos ${estado.nuevos ? '' : 'hidden'} aria-hidden="true">${estado.nuevos}</span>` : ''}
     </button>
     <ul class="cuenta__menu" id="menu-cuenta" hidden>
+      ${estado.cliente ? `<li class="cuenta__quien" role="presentation"><strong>${esc(`${estado.cliente.nombres} ${estado.cliente.apellidos}`)}</strong><span>${esc(estado.cliente.correo || correoSesion())}</span></li>` : ''}
       <li><a href="perfil.html">${icono('usuario')}Mi perfil</a></li>
       <li><a href="pedidos.html">${icono('paquete')}Mis pedidos</a></li>
       ${estado.esAdmin ? `<li><a href="admin.html?estado=Recibido">${icono('ajustes')}Panel de pedidos<span class="insignia" data-nuevos ${estado.nuevos ? '' : 'hidden'}>${estado.nuevos}<span class="solo-lector"> pedidos nuevos</span></span></a></li><li><a href="admin-productos.html">${icono('tienda')}Productos</a></li><li><a href="admin-pagos.html">${icono('tarjeta')}Pagos</a></li>` : ''}
@@ -400,11 +401,11 @@ async function iniciar() {
     ir('nueva-clave.html'); return;
   } else if (regreso && estado.sesion && !esRecuperacion) {
     guardarTemporal('correo-pendiente', null);
-    const volver = leerTemporal('volver');
+    const volver = leerVolverPendiente();
     const conGoogle = (estado.sesion.user.app_metadata || {}).provider === 'google';
     aviso(estado.cliente ? `¡Bienvenido, ${nombreCliente()}!` + (conGoogle ? '' : ' Tu correo está confirmado.') : (conGoogle ? '¡Ingresaste con Google! Completa tu perfil con tu cédula y celular.' : '¡Correo confirmado! Completa tu perfil.'));
     if (!estado.cliente) { ir(conVolver('completar-perfil.html', volver)); return; }
-    guardarTemporal('volver', null);
+    guardarVolverPendiente(null);
     const destino = destinoTrasIngreso(volver);
     if (destino !== 'index.html') { ir(destino); return; }
   }

@@ -128,12 +128,41 @@ function volverSeguro(v) {
 }
 function paginaActual() { return (location.pathname.split('/').pop() || 'index.html') + location.search; }
 function conVolver(pagina, volver) { const v = volverSeguro(volver); return v && v !== 'index.html' ? `${pagina}?volver=${encodeURIComponent(v)}` : pagina; }
+// A dónde volver después de confirmar el correo o de entrar con Google. Se guarda en localStorage (2 horas)
+// porque el enlace de confirmación se abre en otra pestaña: así, si estaba comprando, sigue con la tienda de retiro.
+function guardarVolverPendiente(v) {
+  try { if (v) localStorage.setItem('athletix-volver', JSON.stringify({ v, t: Date.now() })); else localStorage.removeItem('athletix-volver'); } catch (e) { /* sin almacenamiento */ }
+}
+function leerVolverPendiente() {
+  try { const x = JSON.parse(localStorage.getItem('athletix-volver')); return x && Date.now() - x.t < 2 * 3600 * 1000 ? volverSeguro(x.v) : ''; } catch (e) { return ''; }
+}
 // Después de ingresar: a la página donde estaba; si no hay, al carrito cuando tiene productos; si no, al inicio
 function destinoTrasIngreso(volver) {
   const v = volverSeguro(volver);
   if (v === 'retiro.html') return estado.carrito.length ? 'retiro.html' : 'carrito.html';
   if (v) return v;
   return estado.carrito.length ? 'carrito.html' : 'index.html';
+}
+
+/* ======================= Tiempo de retiro ======================= */
+/* Igual que en la base (crear_pedido): de 1 a 3 horas según cuánto y qué se pide.
+   60 min + 10 por unidad desde la 4.ª + 15 por producto distinto desde el 3.º + 20 si hay calzado + 20 si hay tecnología */
+function minutosRetiro(lineas) {
+  let unidades = 0, calzado = false, tecnologia = false;
+  const distintos = new Set();
+  lineas.forEach((l) => {
+    const p = producto(l.id);
+    if (!p) return;
+    unidades += l.cantidad; distintos.add(`${l.id}|${l.talla || 'U'}`);
+    calzado = calzado || p.categoria === 'calzado'; tecnologia = tecnologia || p.categoria === 'tecnologia';
+  });
+  const m = 60 + 10 * Math.max(unidades - 3, 0) + 15 * Math.max(distintos.size - 2, 0) + (calzado ? 20 : 0) + (tecnologia ? 20 : 0);
+  return Math.min(180, Math.max(60, Math.ceil(m / 5) * 5));
+}
+function textoDuracion(min) {
+  const h = Math.floor(min / 60), m = min % 60;
+  if (h && m) return `${h} h ${m} min`;
+  return h === 1 ? '1 hora' : `${h} horas`;
 }
 
 /* ======================= Utilidades ======================= */

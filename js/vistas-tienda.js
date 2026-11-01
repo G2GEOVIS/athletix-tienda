@@ -29,7 +29,7 @@ function vistaInicio() {
       <ul class="beneficios__lista">
         <li class="beneficio"><span class="beneficio__icono">${icono('tienda')}</span><p><strong>Retiro gratis en tienda</strong><span>Quito y Guayaquil</span></p></li>
         <li class="beneficio"><span class="beneficio__icono">${icono('correo')}</span><p><strong>Te avisamos por correo</strong><span>Cuando tu pedido esté listo</span></p></li>
-        <li class="beneficio"><span class="beneficio__icono">${icono('escudo')}</span><p><strong>Pago seguro</strong><span>Visa y Mastercard</span></p></li>
+        <li class="beneficio"><span class="beneficio__icono">${icono('escudo')}</span><p><strong>Paga como prefieras</strong><span>Todas las tarjetas o en la tienda al retirar</span></p></li>
         <li class="beneficio"><span class="beneficio__icono">${icono('estrella')}</span><p><strong>Opiniones reales</strong><span>Solo de clientes que compraron</span></p></li>
       </ul>
     </section>
@@ -308,9 +308,9 @@ function vistaProducto(partes) {
           </form>
 
           <ul class="lista-iconos">
-            <li>${icono('tienda')}Retiro gratis en tienda, listo en ${ENTREGA.retiro}</li>
+            <li>${icono('tienda')}Retiro gratis en tienda, listo de 1 a 3 horas</li>
             <li>${icono('correo')}Te avisamos por correo cuando esté listo</li>
-            <li>${icono('escudo')}Pago seguro con Visa o Mastercard</li>
+            <li>${icono('escudo')}Paga con cualquier tarjeta o en la tienda al retirar</li>
           </ul>
         </section>
       </div>
@@ -702,7 +702,7 @@ function vistaCarrito() {
             <button class="boton boton--principal boton--bloque" type="button" id="continuar-compra">Continuar con la compra</button>
             <a class="boton boton--secundario boton--bloque" href="productos.html">${icono('izquierda')}Seguir comprando</a>
             <div style="text-align:center;margin-top:.5rem"><button class="boton-icono" type="button" id="vaciar">${icono('basura')}Vaciar carrito</button></div>
-            <p class="texto-suave" style="margin-top:1rem;display:flex;gap:.5rem">${icono('candado')}Pago seguro con Visa o Mastercard.</p>`)}
+            <p class="texto-suave" style="margin-top:1rem;display:flex;gap:.5rem">${icono('candado')}Paga con cualquier tarjeta (Visa, Mastercard, American Express, Diners y más) o en la tienda al retirar.</p>`)}
         </div>`}
     </div>`,
     montar(main) {
@@ -837,8 +837,52 @@ function vistaFavoritos() {
         <h1 class="titulo-pagina">Mis favoritos</h1>
         <p class="subtitulo">${lista.length ? `${plural(lista.length, 'producto guardado', 'productos guardados')}. Pulsa el corazón para quitar uno.` : 'Guarda productos con el corazón para verlos aquí más tarde.'}</p>
       </div>
-      ${lista.length ? `<ul class="grilla-productos">${lista.map(tarjetaProducto).join('')}</ul>`
+      ${lista.length ? `<div class="botones-fila" style="margin-bottom:1.25rem"><button class="boton boton--principal" type="button" id="todo-al-carrito">${icono('carrito')}Agregar todos al carrito</button></div>
+        <ul class="grilla-productos">${lista.map(tarjetaProducto).join('')}</ul>`
         : `<div class="vacio panel">${icono('corazon')}<p>Todavía no tienes favoritos.</p><a class="boton boton--principal" href="productos.html">Ver productos</a></div>`}
-    </div>`
+    </div>`,
+    montar(main) {
+      const boton = $('#todo-al-carrito', main);
+      if (boton) boton.addEventListener('click', () => agregarFavoritosAlCarrito(lista));
+    }
   };
+}
+
+/* Agrega al carrito todos los favoritos con stock (1 unidad de cada uno).
+   Los que tienen tallas piden elegir la talla en una ventana antes de agregarse. */
+function agregarFavoritosAlCarrito(lista) {
+  const conStock = lista.filter((p) => (p.tallas.length ? p.tallas.some((t) => stockDe(p, t) > 0) : stockDe(p, null) > 0));
+  const sinStock = lista.length - conStock.length;
+  const conTalla = conStock.filter((p) => p.tallas.length);
+  const sinTalla = conStock.filter((p) => !p.tallas.length);
+  const terminar = (elegidas) => {
+    let n = 0;
+    sinTalla.forEach((p) => { n += agregarAlCarrito(p.id, null, 1) > 0 ? 1 : 0; });
+    elegidas.forEach(([id, talla]) => { n += agregarAlCarrito(id, talla, 1) > 0 ? 1 : 0; });
+    const extra = sinStock ? ` ${plural(sinStock, 'producto está agotado', 'productos están agotados')} y no se agregó.` : '';
+    abrirDialogo(`
+      <h2 class="dialogo__titulo" id="dialogo-titulo"><span class="icono-ok">${icono(n ? 'check' : 'info')}</span>${n ? `Agregamos ${plural(n, 'producto', 'productos')} al carrito` : 'No se agregó ningún producto'}</h2>
+      <p>${n ? `Tienes ${plural(unidadesCarrito(), 'unidad', 'unidades')} en tu carrito · Subtotal ${dinero(subtotalCarrito())}.` : 'No hay stock disponible de tus favoritos o ya tienes en el carrito todo lo disponible.'}${extra}</p>
+      <div class="dialogo__botones">
+        <a class="boton boton--secundario" href="productos.html">Seguir comprando</a>
+        <a class="boton boton--principal" href="carrito.html">${icono('carrito')}Ver carrito</a>
+      </div>`, { alAbrir: (d) => $('a.boton--principal', d).focus() });
+  };
+  if (!conTalla.length) { terminar([]); return; }
+  abrirDialogo(`
+    <h2 class="dialogo__titulo" id="dialogo-titulo">Elige las tallas</h2>
+    <p>Estos favoritos tienen tallas. Elige una para cada uno (o «No agregar»).</p>
+    <form id="form-tallas-fav" class="formulario" style="margin-top:1rem">
+      ${conTalla.map((p, i) => `<div class="campo fila-fav"><img src="${img(p)}" alt="" width="56" height="56"><label for="talla-fav-${i}">${esc(p.nombre)}</label>
+        <select id="talla-fav-${i}" data-id="${p.id}"><option value="">No agregar</option>${p.tallas.filter((t) => stockDe(p, t) > 0).map((t) => `<option value="${t}">Talla ${t}</option>`).join('')}</select></div>`).join('')}
+      <div class="dialogo__botones">
+        <button class="boton boton--secundario" type="button" data-cerrar-dialogo>Cancelar</button>
+        <button class="boton boton--principal" type="submit">${icono('carrito')}Agregar al carrito</button>
+      </div>
+    </form>`, { alAbrir: (d) => $('select', d).focus() });
+  $('#form-tallas-fav').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const elegidas = $$('#form-tallas-fav select').filter((sel) => sel.value).map((sel) => [sel.dataset.id, sel.value]);
+    terminar(elegidas);
+  });
 }

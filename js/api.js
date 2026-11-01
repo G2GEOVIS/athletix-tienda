@@ -134,9 +134,9 @@ const Api = (() => {
   const aCliente = (c) => ({ id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_celular, direccion: c.cli_direccion || '', correo: c.cli_correo, creado_en: c.cli_fecha_registro });
   const aTarjeta = (t) => ({ id: t.mtp_codigo, marca: t.mtp_marca, ultimos4: t.mtp_ultimos4, titular: t.mtp_titular, mes_vence: t.mtp_mes_vence, anio_vence: t.mtp_anio_vence });
   const CAMPOS_PEDIDO = 'ped_numero, ped_estado, ped_subtotal, ped_iva, ped_total, ped_fecha, ped_codigo_retiro, ped_hora_estimada, '
-    + 'tienda(tie_nombre, tie_direccion, tie_horario, tie_ciudad), pago(pag_marca, pag_ultimos4, pag_monto, pag_fecha, pag_estado), '
+    + 'tienda(tie_nombre, tie_direccion, tie_horario, tie_ciudad), pago(pag_forma, pag_marca, pag_ultimos4, pag_monto, pag_fecha, pag_estado), '
     + 'detalle_pedido(prd_codigo, dpe_talla, dpe_cantidad, dpe_precio)';
-  const textoDePago = (g) => (!g ? 'Sin registro de pago' : `Tarjeta ${g.pag_marca} •••• ${g.pag_ultimos4}`);
+  const textoDePago = (g) => (!g ? 'Sin registro de pago' : g.pag_forma === 'En tienda' ? `Pago en la tienda al retirar${g.pag_estado === 'Pendiente' ? ' (pendiente)' : ''}` : `Tarjeta ${g.pag_marca} •••• ${g.pag_ultimos4}`);
   const aPedido = (p) => {
     const g = Array.isArray(p.pago) ? p.pago[0] : p.pago;
     const c = p.cliente;
@@ -240,6 +240,15 @@ const Api = (() => {
         codigoRetiro: p.ped_codigo_retiro, horaEstimada: p.ped_hora_estimada, pagoTexto: p.pago || ''
       }));
     },
+    /* Productos de varios pedidos a la vez (para ver sus fotos en el panel del administrador) */
+    async detalles(numeros) {
+      if (!numeros.length) return { datos: {} };
+      const r = await ejecutar(sb.from('detalle_pedido').select('ped_numero, prd_codigo, dpe_talla, dpe_cantidad, dpe_precio').in('ped_numero', numeros));
+      if (r.error) return r;
+      const porPedido = {};
+      (r.datos || []).forEach((d) => { (porPedido[d.ped_numero] = porPedido[d.ped_numero] || []).push({ producto_id: d.prd_codigo, talla: d.dpe_talla === 'U' ? null : d.dpe_talla, cantidad: d.dpe_cantidad, precio_unitario: Number(d.dpe_precio) }); });
+      return { datos: porPedido };
+    },
     cambiarEstado(numero, estado) { return ejecutar(sb.rpc('cambiar_estado_pedido', { p_numero: numero, p_estado: estado })); }
   };
 
@@ -286,12 +295,12 @@ const Api = (() => {
     },
     async pagos() {
       const r = await ejecutar(sb.from('pago')
-        .select('pag_codigo, ped_numero, pag_marca, pag_ultimos4, pag_monto, pag_fecha, pag_estado, pedido(ped_fecha, cliente(cli_nombres, cli_apellidos))')
+        .select('pag_codigo, ped_numero, pag_forma, pag_marca, pag_ultimos4, pag_monto, pag_fecha, pag_estado, pedido(ped_fecha, cliente(cli_nombres, cli_apellidos))')
         .order('pag_fecha', { ascending: false }).limit(500));
       return mapear(r, (g) => ({
         codigo: g.pag_codigo, pedido: g.ped_numero, numeroPedido: codigoPedido(g.ped_numero, g.pedido ? g.pedido.ped_fecha : g.pag_fecha),
         cliente: g.pedido && g.pedido.cliente ? `${g.pedido.cliente.cli_nombres} ${g.pedido.cliente.cli_apellidos}` : '',
-        detalle: `${g.pag_marca} •••• ${g.pag_ultimos4}`,
+        detalle: g.pag_forma === 'En tienda' ? 'Pago en la tienda al retirar' : `${g.pag_marca} •••• ${g.pag_ultimos4}`,
         monto: g.pag_monto, fecha: g.pag_fecha, estado: g.pag_estado
       }));
     }
@@ -394,7 +403,7 @@ const Api = (() => {
       <tr><td></td><td style="padding:8px 6px 2px;text-align:right;font-size:14px">Subtotal</td><td style="padding:8px 6px 2px;text-align:right;font-size:14px">${plata(t.subtotal)}</td></tr>
       <tr><td></td><td style="padding:2px 6px;text-align:right;font-size:14px">IVA 15 %</td><td style="padding:2px 6px;text-align:right;font-size:14px">${plata(t.iva)}</td></tr>
       <tr><td></td><td style="padding:2px 6px;text-align:right;font-size:14px">Retiro en tienda</td><td style="padding:2px 6px;text-align:right;font-size:14px;color:${VERDE}">Gratis</td></tr>
-      <tr><td></td><td style="padding:8px 6px;text-align:right;font-size:17px;font-weight:bold">Total pagado</td><td style="padding:8px 6px;text-align:right;font-size:17px;font-weight:bold">${plata(t.total)}</td></tr></table>`;
+      <tr><td></td><td style="padding:8px 6px;text-align:right;font-size:17px;font-weight:bold">${t.pendiente ? 'Total a pagar en la tienda' : 'Total pagado'}</td><td style="padding:8px 6px;text-align:right;font-size:17px;font-weight:bold">${plata(t.total)}</td></tr></table>`;
   };
 
   // Datos del retiro: tienda con dirección y mapa, horario, número de pedido y código
@@ -414,7 +423,7 @@ const Api = (() => {
   const ayuda = () => `<p style="margin:18px 0 0;font-size:13px;color:${SUAVE};line-height:1.5">¿Tienes dudas? Responde a este correo, escríbenos a <a href="mailto:${CORREO_TIENDA}" style="color:${VERDE}">${CORREO_TIENDA}</a> o visita nuestra <a href="${BASE()}ayuda.html" style="color:${VERDE}">sección de Ayuda</a>.</p>`;
   const botonHtml = ([texto, url], principal = true) => `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 8px 8px 0;display:inline-table"><tr><td style="background:${principal ? VERDE : '#ffffff'};border:2px solid ${VERDE};border-radius:6px"><a href="${url}" style="display:inline-block;color:${principal ? '#ffffff' : VERDE};text-decoration:none;padding:10px 20px;font-weight:bold;font-size:15px">${h(texto)}</a></td></tr></table>`;
 
-  const plantillaCorreo = ({ nombre, titulo, parrafo, paso = 0, cuerpo = '', boton, boton2, pie = '' }) => `<div style="background:#F3F5F7;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;color:#1E293B">
+  const plantillaCorreo = ({ nombre, titulo, parrafo, paso = 0, cuerpo = '', boton, boton2, pie = '', conAyuda = true }) => `<div style="background:#F3F5F7;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;color:#1E293B">
 <div style="max-width:620px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid ${GRIS}">
   <div style="background:#0B1F3A;padding:20px 24px;color:#ffffff"><div style="font-size:24px;font-weight:bold;font-style:italic">ATHLETIX</div><div style="font-size:13px;opacity:.85">Tienda deportiva en línea</div></div>
   <div style="padding:24px">
@@ -425,7 +434,7 @@ const Api = (() => {
     ${cuerpo}
     ${boton ? `<div style="margin:6px 0 0">${botonHtml(boton)}${boton2 ? botonHtml(boton2, false) : ''}</div>
     <p style="margin:10px 0 0;font-size:12px;color:${SUAVE}">Si el botón no abre, copia este enlace en tu navegador: <a href="${boton[1]}" style="color:${VERDE}">${boton[1]}</a></p>` : ''}
-    ${ayuda()}
+    ${conAyuda ? ayuda() : ''}
   </div>
   <div style="padding:14px 24px;background:#F3F5F7;font-size:12px;color:${SUAVE};line-height:1.5">${pie || 'Te escribimos porque hiciste un pedido en ATHLETIX.'} Pago simulado, sin cobro real.</div>
 </div></div>`;
@@ -435,11 +444,12 @@ const Api = (() => {
     const vacio = { items: [], tienda: {}, subtotal: 0, iva: 0, total: 0, horaEstimada: '' };
     if (!sb) return vacio;
     const [rp, rd] = await Promise.all([
-      ejecutar(sb.from('pedido').select('ped_subtotal, ped_iva, ped_total, ped_hora_estimada, tienda(tie_nombre, tie_direccion, tie_ciudad, tie_horario)').eq('ped_numero', numero).maybeSingle()),
+      ejecutar(sb.from('pedido').select('ped_subtotal, ped_iva, ped_total, ped_hora_estimada, tienda(tie_nombre, tie_direccion, tie_ciudad, tie_horario), pago(pag_forma, pag_estado)').eq('ped_numero', numero).maybeSingle()),
       ejecutar(sb.from('detalle_pedido').select('prd_codigo, dpe_talla, dpe_cantidad, dpe_precio').eq('ped_numero', numero))
     ]);
-    const p = rp.datos || {}; const t = p.tienda || {};
+    const p = rp.datos || {}; const t = p.tienda || {}; const g = Array.isArray(p.pago) ? p.pago[0] : p.pago;
     return {
+      pendiente: !!(g && g.pag_forma === 'En tienda' && g.pag_estado === 'Pendiente'),
       subtotal: p.ped_subtotal, iva: p.ped_iva, total: p.ped_total, horaEstimada: p.ped_hora_estimada,
       tienda: { nombre: t.tie_nombre || '', direccion: t.tie_direccion || '', ciudad: t.tie_ciudad || '', horario: t.tie_horario || '' },
       items: (rd.datos || []).map((d) => {
@@ -471,15 +481,15 @@ const Api = (() => {
       const enlace = enlaceOrden(p.id);
       const d = await datosPedidoCorreo(p.id);
       const items = (p.items || []).map((it) => { const pr = typeof productoPorDbId === 'function' ? productoPorDbId(it.codigo) : null; return { ...it, foto: pr ? absoluta(img(pr)) : '' }; });
-      const totales = { subtotal: p.subtotal, iva: p.iva, total: p.total };
+      const totales = { subtotal: p.subtotal, iva: p.iva, total: p.total, pendiente: !!p.enTienda };
       const tienda = d.tienda.nombre ? d.tienda : { nombre: p.tienda, horario: p.horario };
-      const listo = d.horaEstimada ? ` (aprox. a las ${horaCorta(d.horaEstimada)})` : '';
+      const listo = d.horaEstimada ? ` aprox. a las ${horaCorta(d.horaEstimada)}` : '';
       const asunto = `Pedido ${p.numero} confirmado · código de retiro ${p.codigo}`;
       const html = plantillaCorreo({
         nombre: p.nombre, titulo: '¡Gracias por tu compra! 🎉', paso: 1,
-        parrafo: `Recibimos tu pedido <b>${h(p.numero)}</b> y tu pago con ${h(p.pagoTexto)} fue aprobado. Este es el detalle:`,
+        parrafo: p.enTienda ? `Recibimos tu pedido <b>${h(p.numero)}</b> y ya reservamos tus productos. <b>Pagas ${plata(p.total)} en la caja de la tienda</b> (en efectivo o con tarjeta) cuando lo retires. Este es el detalle:` : `Recibimos tu pedido <b>${h(p.numero)}</b> y tu pago con ${h(p.pagoTexto)} fue aprobado. Este es el detalle:`,
         cuerpo: `${tablaDetalle(items, totales)}
-          ${cajaRetiro({ numero: p.numero, codigo: p.codigo, tienda, nota: `Estará listo en menos de ${h(ENTREGA.retiro)}${listo}. Te avisaremos por correo.` })}
+          ${cajaRetiro({ numero: p.numero, codigo: p.codigo, tienda, nota: `Estará listo${listo || ` ${h(ENTREGA.retiro)}`}. Te avisaremos por correo.` })}
           <div style="margin:0 0 18px;font-size:14px;line-height:1.7"><b>¿Qué sigue?</b><br>1. Preparamos tus productos.<br>2. Te escribimos cuando esté <b>listo para retirar</b>.<br>3. Vas a la tienda con tu cédula y tu número de pedido.</div>
           <p style="margin:0 0 16px;font-size:14px">📄 Adjuntamos tu <b>factura en PDF</b> (N.º ${h(p.numeroFactura)}).</p>`,
         boton: ['Ver mi orden de pedido', enlace], boton2: ['Mis pedidos', `${BASE()}pedidos.html`]
@@ -489,7 +499,7 @@ const Api = (() => {
       return enviar(CONFIG.emailjs.plantillaCliente, {
         to_email: p.correo, nombre: p.nombre, numero: p.numero, tienda: p.tienda, horario: p.horario, total: Number(p.total).toFixed(2),
         asunto, enlace,
-        mensaje: `Gracias por tu compra. Tu pago con ${p.pagoTexto} fue aprobado. Retira tu pedido en ${p.tienda} con tu cédula y tu número de pedido ${p.numero} (código de retiro ${p.codigo}). Descarga tu factura en PDF desde tu orden de pedido.`,
+        mensaje: `Gracias por tu compra. ${p.enTienda ? `Pagas $${Number(p.total).toFixed(2)} en la tienda al retirar.` : `Tu pago con ${p.pagoTexto} fue aprobado.`} Retira tu pedido en ${p.tienda} con tu cédula y tu número de pedido ${p.numero} (código de retiro ${p.codigo}). Descarga tu factura en PDF desde tu orden de pedido.`,
         detalle_html: detalleRespaldo(items, totales)
       });
     },
@@ -509,7 +519,7 @@ const Api = (() => {
         html = plantillaCorreo({
           nombre, titulo: 'Estamos preparando tu pedido 📦', paso: 2,
           parrafo: `Nuestro equipo ya está alistando tu pedido <b>${h(p.numero)}</b> en <b>${h(tienda.nombre)}</b>.`,
-          cuerpo: `<div style="margin:0 0 18px;padding:14px 16px;background:#FFF7ED;border-left:4px solid ${NARANJA};border-radius:6px;font-size:14px;line-height:1.6">⏱️ ${hora ? `Estará listo aproximadamente a las <b>${hora}</b>.` : `Estará listo en menos de ${h(ENTREGA.retiro)}.`}<br>No necesitas hacer nada: te enviaremos otro correo cuando puedas retirarlo.</div>`,
+          cuerpo: `<div style="margin:0 0 18px;padding:14px 16px;background:#FFF7ED;border-left:4px solid ${NARANJA};border-radius:6px;font-size:14px;line-height:1.6">⏱️ ${hora ? `Estará listo aproximadamente a las <b>${hora}</b>.` : `Estará listo ${h(ENTREGA.retiro)}.`}<br>No necesitas hacer nada: te enviaremos otro correo cuando puedas retirarlo.</div>`,
           boton: ['Ver mi pedido', enlace]
         });
       } else if (estadoNuevo === 'Listo') {
@@ -519,7 +529,7 @@ const Api = (() => {
         html = plantillaCorreo({
           nombre, titulo: '¡Tu pedido está listo para retirar! ✅', paso: 3,
           parrafo: `Tu pedido <b>${h(p.numero)}</b> ya te espera en la tienda. Esto es lo que vas a retirar:`,
-          cuerpo: `${detalle}${cajaRetiro({ numero: p.numero, codigo: p.codigoRetiro, tienda })}${queLlevar()}`,
+          cuerpo: `${detalle}${cajaRetiro({ numero: p.numero, codigo: p.codigoRetiro, tienda, nota: d.pendiente ? `💵 <b>Recuerda:</b> pagas ${plata(d.total)} en la caja al retirar (efectivo o tarjeta).` : '' })}${queLlevar()}`,
           boton: ['Ver mi orden de pedido', enlace]
         });
       } else if (estadoNuevo === 'Retirado') {
@@ -555,8 +565,28 @@ const Api = (() => {
         asunto, mensaje: texto, enlace, detalle_html: detalle ? detalleRespaldo(d.items, d) : ''
       }).then((x) => (x.error ? { error: x.error + ' El estado sí se guardó.' } : x));
     },
-    /* Al administrador, cada vez que un cliente hace un pedido */
-    nuevoPedido(p) {
+    /* Al administrador (Gmail de la tienda), cada vez que un cliente hace un pedido: mismo diseño que el correo del cliente,
+       con el detalle y las fotos, los datos del cliente, el pago y la hora en que debe estar listo. */
+    async nuevoPedido(p) {
+      const d = await datosPedidoCorreo(p.id);
+      const items = (p.items || []).map((it) => { const pr = typeof productoPorDbId === 'function' ? productoPorDbId(it.codigo) : null; return { ...it, foto: pr ? absoluta(img(pr)) : '' }; });
+      const tienda = d.tienda.nombre ? d.tienda : { nombre: p.tienda };
+      const hora = horaCorta(d.horaEstimada);
+      const fila = (k, v) => `<tr><td style="padding:3px 10px 3px 0;color:${SUAVE};white-space:nowrap;vertical-align:top">${k}</td><td style="padding:3px 0"><b>${v}</b></td></tr>`;
+      const html = plantillaCorreo({
+        nombre: 'equipo ATHLETIX', titulo: `🛒 Nuevo pedido ${h(p.numero)}`, paso: 1,
+        parrafo: `Llegó un pedido nuevo de <b>${h(p.cliente)}</b> por <b>${plata(p.total)}</b>. ${hora ? `Debe estar listo para retirar a las <b>${hora}</b>.` : ''}`,
+        cuerpo: `${tablaDetalle(items.length ? items : d.items, { subtotal: p.subtotal ?? d.subtotal, iva: p.iva ?? d.iva, total: p.total, pendiente: !!p.enTienda })}
+          <div style="margin:20px 0;padding:16px;background:#F3F5F7;border-left:4px solid #0B1F3A;border-radius:6px;font-size:14px">
+            <div style="font-size:15px;font-weight:bold;margin-bottom:6px">👤 Cliente</div>
+            <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px">${fila('Nombre', h(p.cliente))}${fila('Cédula', h(p.cedula))}${fila('Celular', h(p.telefono))}${fila('Correo', h(p.correo))}${p.direccion ? fila('Dirección', h(p.direccion)) : ''}${fila('Pago', h(p.pagoTexto || ''))}</table>
+          </div>
+          ${cajaRetiro({ numero: p.numero, codigo: p.codigo, tienda, nota: p.enTienda ? `💵 El cliente paga ${plata(p.total)} en caja al retirar.` : '✅ Pago con tarjeta aprobado.' })}`,
+        boton: ['Abrir panel de pedidos', `${BASE()}admin.html?estado=Recibido`], boton2: ['Ver orden de pedido', enlaceOrden(p.id)],
+        pie: 'Aviso automático para el administrador de ATHLETIX.', conAyuda: false
+      });
+      const r = await porGmail({ tipo: 'admin', pedido: p.id, asunto: `🛒 Nuevo pedido ${p.numero} · ${p.cliente} · ${plata(p.total)}`, html });
+      if (r) return r;
       return enviar(CONFIG.emailjs.plantillaNuevoPedido, {
         numero: p.numero, cliente: p.cliente, cedula: p.cedula, correo_cliente: p.correo, telefono: p.telefono,
         tienda: p.tienda, productos: p.productos, total: Number(p.total).toFixed(2)

@@ -2,6 +2,8 @@
 // Envía los correos al cliente desde el Gmail de la tienda (llegan a la bandeja de entrada, no por un servicio externo):
 //   tipo "compra": correo de compra con la factura en PDF adjunta. Lo pide el propio cliente, solo para un pedido suyo,
 //                  y siempre va al correo de su cuenta.
+//   tipo "admin":  aviso de pedido nuevo al administrador. Lo pide el cliente que hizo el pedido y solo va al
+//                  Gmail de la tienda.
 //   tipo "estado": aviso de cambio de estado del pedido. Solo lo puede pedir el administrador y va al correo
 //                  del cliente dueño de ese pedido (se lee de la base, no del navegador).
 // Así nadie puede usar la función para escribir a cualquier dirección.
@@ -53,6 +55,7 @@ Deno.serve(async (req) => {
     // Con la sesión del cliente, las reglas RLS solo dejan ver sus propios pedidos
     const { data: fila } = await supabase.from('pedido').select('ped_numero').eq('ped_numero', pedido).maybeSingle();
     if (!fila) return responder({ error: 'No encontramos ese pedido en tu cuenta.' }, 404);
+    if (tipo === 'admin') destino = usuarioGmail;
   }
 
   const adjuntos = [];

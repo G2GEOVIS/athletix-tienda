@@ -59,6 +59,7 @@ const Validar = (() => {
     if (v.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
     if (v.length > 72) return 'La contraseña puede tener hasta 72 caracteres.';
     if (!/[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(v) || !/\d/.test(v)) return 'La contraseña debe tener letras y números.';
+    if (!/[^A-Za-zÁÉÍÓÚÑÜáéíóúñü0-9\s]/.test(v)) return 'Para que sea más segura, agrega al menos un carácter especial, por ejemplo: ! @ # $ % * ? .';
     return '';
   }
 

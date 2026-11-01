@@ -12,7 +12,7 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - El género es un atributo del producto: calzado y tecnología son solo de Hombre o de Mujer (al menos 10 de cada uno); entrenamiento es para todos (Unisex). Una regla en la base lo asegura.
 - La sesión dura mientras la tienda está abierta (se comparte entre sus pestañas): al cerrar el navegador y volver a abrir el enlace, nadie aparece con la sesión iniciada. Al iniciar sesión se vuelve a la página donde estaba el cliente (o al carrito si tiene productos).
 - Cuentas reales con Supabase: registro con cédula ecuatoriana validada (módulo 10), confirmación por correo, recuperar contraseña y botón para mostrar la contraseña. Las contraseñas se guardan cifradas con bcrypt (Supabase Auth); la tienda nunca las ve.
-- No se permite registrar dos veces la misma cédula ni el mismo correo.
+- No se permite registrar dos veces la misma cédula, el mismo celular ni el mismo correo (la base lo asegura con reglas únicas).
 - Ingreso con cuenta de Google (OAuth de Supabase). El botón aparece solo cuando el proveedor Google está activado en Supabase; al primer ingreso el cliente completa su cédula y celular.
 - Carrito: agregar, cambiar cantidad y quitar productos. Se puede comprar todo el stock de una talla (botón «Llevar todo»).
 - Solo retiro en tienda: el cliente elige la tienda y su pedido está listo en 1 hora (código de retiro de 6 caracteres). No hay envíos a domicilio.
@@ -100,6 +100,7 @@ bd/13_sin_unisex.sql             Calzado y tecnología solo Hombre o Mujer
 bd/14_direccion_y_marcas.sql     Dirección del cliente (para la factura) y todas las marcas de tarjeta (base nueva: 01-08, 11 a 14)
 bd/15_limpiar_datos.sql          Borra pedidos y clientes (menos el administrador) y devuelve el stock
 bd/16_favoritos_y_carrito.sql    Tablas FAVORITO y CARRITO de cada cuenta (ejecutar antes del 15)
+bd/17_celular_unico.sql          Un celular por cuenta (regla única y función celular_registrado)
 bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner

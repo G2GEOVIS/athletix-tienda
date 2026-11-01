@@ -29,7 +29,9 @@
 *, *::before, *::after { box-sizing: border-box; }
 /* Lo que tiene el atributo hidden nunca se muestra, aunque su clase use display */
 [hidden] { display: none !important; }
-html { -webkit-text-size-adjust: 100%; scroll-padding-top: 6rem; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--alto-encabezado, 6rem) + 1rem); }
+/* WCAG 2.4.11: al moverse con el teclado, lo enfocado no queda tapado por el encabezado ni por la barra de filtros fija */
+@media (max-width: 61.99rem) { html:has(.filtros) { scroll-padding-top: calc(var(--alto-encabezado, 8rem) + 9rem); } }
 body {
   margin: 0;
   font-family: var(--fuente);
@@ -523,15 +525,26 @@ svg { width: 1.25rem; height: 1.25rem; flex-shrink: 0; fill: none; stroke: curre
 .formulario-centro { max-width: 36rem; margin-inline: auto; }
 .formulario { display: grid; gap: 1.1rem; }
 .formulario__fila { display: grid; gap: 1.1rem; }
-@media (min-width: 40rem) { .formulario__fila--doble { grid-template-columns: 1fr 1fr; } }
-.campo { display: grid; gap: .35rem; }
+.campo { display: grid; gap: .35rem; align-content: start; }
+/* Dos campos lado a lado: cada parte (etiqueta, ayuda, cuadro de texto, error) ocupa la misma fila en ambos,
+   así los cuadros quedan alineados aunque uno muestre un error o su ayuda ocupe más líneas */
+@media (min-width: 40rem) {
+  .formulario__fila--doble { grid-template-columns: 1fr 1fr; grid-template-rows: repeat(4, auto); column-gap: 1.1rem; row-gap: .35rem; align-items: start; }
+  .formulario__fila--doble > .campo { grid-row: span 4; grid-template-rows: subgrid; gap: 0; row-gap: .35rem; }
+  .formulario__fila--doble > .campo > label, .formulario__fila--doble > .campo > :first-child { grid-row: 1; }
+  .formulario__fila--doble > .campo > .campo__ayuda { grid-row: 2; }
+  .formulario__fila--doble > .campo > input, .formulario__fila--doble > .campo > select, .formulario__fila--doble > .campo > textarea,
+  .formulario__fila--doble > .campo > .campo-clave, .formulario__fila--doble > .campo > .campo-fijo { grid-row: 3; align-self: start; }
+  .formulario__fila--doble > .campo > .campo__error { grid-row: 4; }
+  .formulario__fila--doble > :not(.campo) { grid-row: span 4; }
+}
 .campo label { font-weight: 700; }
 .campo__ayuda { font-size: .9rem; color: var(--texto-suave); }
 .campo input {
   width: 100%; min-height: 3rem; padding: .65rem .9rem; border: 1.5px solid var(--borde-fuerte); border-radius: var(--radio-sm); background: var(--blanco); font-size: 1.05rem;
 }
 .campo input:focus { outline: 3px solid var(--verde); outline-offset: 1px; border-color: var(--verde); }
-.campo input[aria-invalid="true"] { border-color: var(--naranja); border-width: 2px; }
+.campo input[aria-invalid="true"] { border-color: var(--naranja); box-shadow: 0 0 0 1px var(--naranja); }
 .campo__error { display: flex; gap: .4rem; align-items: flex-start; font-weight: 600; font-size: .95rem; }
 .campo__error svg { color: #C25E00; width: 1.1rem; height: 1.1rem; margin-top: .15rem; }
 .campo__error[hidden] { display: none; }
@@ -624,7 +637,7 @@ select, textarea { font: inherit; color: inherit; }
 }
 .campo textarea { min-height: 7rem; resize: vertical; line-height: 1.45; }
 .campo select:focus, .campo textarea:focus { outline: 3px solid var(--verde); outline-offset: 1px; border-color: var(--verde); }
-.campo textarea[aria-invalid="true"] { border-color: var(--naranja); border-width: 2px; }
+.campo textarea[aria-invalid="true"] { border-color: var(--naranja); box-shadow: 0 0 0 1px var(--naranja); }
 .campo-fijo { min-height: 3rem; display: flex; align-items: center; padding: .65rem .9rem; border-radius: var(--radio-sm); background: var(--gris); font-weight: 600; overflow-wrap: anywhere; }
 
 /* Contraseña con botón Mostrar */
@@ -685,8 +698,9 @@ select, textarea { font: inherit; color: inherit; }
 .selector-estrellas input:focus-visible + span { outline: 3px solid var(--verde); outline-offset: 2px; }
 
 /* Perfil */
-.perfil { display: grid; gap: 1.5rem; }
-@media (min-width: 56rem) { .perfil { grid-template-columns: 15rem 1fr; align-items: start; } }
+.perfil { display: grid; gap: 1.5rem; grid-template-columns: minmax(0, 1fr); }
+.perfil > * { min-width: 0; }
+@media (min-width: 56rem) { .perfil { grid-template-columns: 15rem minmax(0, 1fr); align-items: start; } }
 .perfil__menu ul { list-style: none; display: grid; gap: .25rem; }
 .perfil__menu a, .perfil__menu button {
   display: flex; align-items: center; gap: .6rem; width: 100%; min-height: 2.9rem; padding: .5rem .9rem; border-radius: var(--radio-sm);
@@ -695,8 +709,10 @@ select, textarea { font: inherit; color: inherit; }
 .perfil__menu a:hover, .perfil__menu button:hover { background: var(--gris); }
 .perfil__menu a[aria-current="page"] { background: var(--azul); color: var(--blanco); }
 @media (max-width: 55.99rem) {
-  .perfil__menu ul { display: flex; overflow-x: auto; gap: .4rem; padding-bottom: .4rem; }
-  .perfil__menu a, .perfil__menu button { white-space: nowrap; width: auto; border: 1px solid var(--borde); }
+  /* En celular las secciones del perfil se ven todas, una al lado de otra o en dos líneas */
+  .perfil__menu ul { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .perfil__menu li { flex: 1 1 auto; }
+  .perfil__menu a, .perfil__menu button { white-space: nowrap; justify-content: center; border: 1px solid var(--borde); }
 }
 .cabecera-seccion { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: .5rem; }
 .cabecera-seccion h2 { margin-bottom: 0 !important; }

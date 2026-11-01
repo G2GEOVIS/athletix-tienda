@@ -128,12 +128,13 @@ function vistaRegistro(partes, params) {
         if (!ok) return;
         const boton = $('button[type="submit"]', form);
         const r = await conEspera(boton, 'Creando cuenta…', async () => {
-          // No se permite registrar dos veces la misma cédula ni el mismo correo
-          const [ced, cor] = await Promise.all([Api.cliente.cedulaRegistrada(datos.cedula), Api.cliente.correoRegistrado(correo)]);
+          // No se permite registrar dos veces la misma cédula, el mismo celular ni el mismo correo
+          const [ced, cel, cor] = await Promise.all([Api.cliente.cedulaRegistrada(datos.cedula), Api.cliente.celularRegistrado(datos.telefono), Api.cliente.correoRegistrado(correo)]);
           if (ced.error) return ced;
           if (cor.error) return cor;
           const dobles = [];
           if (ced.datos) dobles.push(['cedula', 'Ya existe una cuenta con esta cédula. Inicia sesión.']);
+          if (cel.datos) dobles.push(['telefono', 'Este celular ya está registrado en otra cuenta.']);
           if (cor.datos) dobles.push(['correo-r', 'Ya existe una cuenta con este correo. Inicia sesión.']);
           if (dobles.length) return { dobles };
           return Api.auth.registrar(correo, clave, datos);
@@ -260,13 +261,16 @@ function vistaCompletarPerfil(partes, params) {
         const d = leerDatosPersonales(form);
         if (!validarFormulario(form, reglasDatosPersonales(d), 'Revisa estos datos:')) return;
         const r = await conEspera($('button[type="submit"]', form), 'Guardando…', async () => {
-          const ced = await Api.cliente.cedulaRegistrada(d.cedula);
+          const [ced, cel] = await Promise.all([Api.cliente.cedulaRegistrada(d.cedula), Api.cliente.celularRegistrado(d.telefono)]);
           if (ced.error) return ced;
-          if (ced.datos) return { doble: true };
+          const dobles = [];
+          if (ced.datos) dobles.push(['cedula', 'Ya existe otra cuenta con esta cédula.']);
+          if (cel.datos) dobles.push(['telefono', 'Este celular ya está registrado en otra cuenta.']);
+          if (dobles.length) return { dobles };
           return Api.cliente.crear({ id: estado.sesion.user.id, correo: correoSesion(), ...d });
         });
         if (!r) return;
-        if (r.doble) { validarFormulario(form, [['cedula', 'Ya existe otra cuenta con esta cédula.']], 'No pudimos guardar:'); return; }
+        if (r.dobles) { validarFormulario(form, r.dobles, 'No pudimos guardar:'); return; }
         if (r.error) { errorGeneral(form, r.error); return; }
         estado.cliente = r.datos;
         renderCuenta();
@@ -412,7 +416,14 @@ async function vistaPerfil(partes) {
         const d = leerDatosPersonales(form);
         delete d.cedula;
         if (!validarFormulario(form, reglasDatosPersonales(d), 'Revisa tus datos:')) return;
-        const r = await conEspera($('button[type="submit"]', form), 'Guardando…', () => Api.cliente.actualizar(c.id, d));
+        const r = await conEspera($('button[type="submit"]', form), 'Guardando…', async () => {
+          if (d.telefono !== c.telefono) {
+            const cel = await Api.cliente.celularRegistrado(d.telefono);
+            if (cel.datos) return { dobles: [['telefono', 'Este celular ya está registrado en otra cuenta.']] };
+          }
+          return Api.cliente.actualizar(c.id, d);
+        });
+        if (r && r.dobles) { validarFormulario(form, r.dobles, 'No pudimos guardar:'); return; }
         if (!r) return;
         if (r.error) { errorGeneral(form, r.error); return; }
         estado.cliente = r.datos;

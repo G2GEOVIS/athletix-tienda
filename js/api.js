@@ -59,6 +59,7 @@ const Api = (() => {
     if (m.includes('user already registered') || m.includes('already been registered')) return 'Ya existe una cuenta con este correo. Inicia sesión.';
     if (m.includes('pk_cliente') || (m.includes('duplicate') && m.includes('cedula'))) return 'Ya existe una cuenta con esta cédula.';
     if (m.includes('ak_cliente_correo') || m.includes('ak_cliente_usuario')) return 'Ya existe una cuenta con este correo.';
+    if (m.includes('ak_cliente_celular')) return 'Este celular ya está registrado en otra cuenta.';
     if (m.includes('cedula_valida') || m.includes('ckc_cli_cedula')) return 'La cédula no es válida.';
     if (m.includes('rate limit') || m.includes('too many') || m.includes('security purposes')) return 'Hiciste demasiados intentos seguidos. Espera un minuto y vuelve a intentarlo.';
     if (m.includes('password should be') || m.includes('weak')) return 'La contraseña es muy débil. Usa al menos 8 caracteres con letras y números.';
@@ -180,6 +181,8 @@ const Api = (() => {
   /* ---------- Cliente ---------- */
   const cliente = {
     async cedulaRegistrada(cedula) { const r = await ejecutar(sb.rpc('cedula_registrada', { p_cedula: cedula })); return r.error ? r : { datos: !!r.datos }; },
+    // Si la función todavía no existe en la base, se deja pasar (la regla única de la tabla igual lo impide)
+    async celularRegistrado(celular) { const r = await ejecutar(sb.rpc('celular_registrado', { p_celular: celular })); return r.error ? { datos: false } : { datos: !!r.datos }; },
     async correoRegistrado(correo) { const r = await ejecutar(sb.rpc('correo_registrado', { p_correo: correo })); return r.error ? r : { datos: !!r.datos }; },
     async perfil(usuario) { return mapear(await ejecutar(sb.from('cliente').select('*').eq('cli_usuario', usuario).maybeSingle()), aCliente); },
     async crear(d) {

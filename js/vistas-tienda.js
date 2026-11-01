@@ -436,11 +436,7 @@ function vistaProducto(partes) {
         const agregadas = agregarAlCarrito(p.id, talla, cantidad);
         cantidad = 1;
         pintarCantidad();
-        // Al agregar se va directo al carrito para ver lo que lleva; si ya no hay más stock se avisa aquí
-        if (agregadas > 0) {
-          aviso(`Agregaste ${plural(agregadas, 'unidad', 'unidades')} de ${p.nombre}${talla ? ` (talla ${talla})` : ''} a tu carrito.`);
-          ir('carrito.html');
-        } else mostrarProductoAgregado(p, talla, agregadas);
+        mostrarProductoAgregado(p, talla, agregadas);
       });
 
       cargarResenas(p, main);
@@ -626,9 +622,9 @@ function mostrarProductoAgregado(p, talla, agregadas) {
       <dt>Subtotal</dt><dd>${dinero(subtotalCarrito())}</dd>
     </dl>
     <div class="dialogo__botones">
-      <button class="boton boton--secundario" type="button" data-cerrar-dialogo>Seguir comprando</button>
+      <a class="boton boton--secundario" href="productos.html" id="seguir-comprando">Seguir comprando</a>
       <a class="boton boton--principal" href="carrito.html">${icono('carrito')}Ver carrito</a>
-    </div>`, { alAbrir: (d) => $('[data-cerrar-dialogo]', d).focus() });
+    </div>`, { alAbrir: (d) => $('#seguir-comprando', d).focus() });
 }
 
 function pasos(actual) {

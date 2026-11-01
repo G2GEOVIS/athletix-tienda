@@ -308,10 +308,13 @@ function activarEnlacesError(form) {
     if (a) { e.preventDefault(); const el = $('#' + a.dataset.enfocar, form); if (el) el.focus(); }
   });
 }
+// Los correos más usados por clientes de todas las edades
 function atajosCorreo(id) {
   return `<div class="atajos" role="group" aria-label="Completar el correo">
     <button class="chip" type="button" data-correo="${id}" data-dominio="@gmail.com">@gmail.com</button>
     <button class="chip" type="button" data-correo="${id}" data-dominio="@hotmail.com">@hotmail.com</button>
+    <button class="chip" type="button" data-correo="${id}" data-dominio="@outlook.com">@outlook.com</button>
+    <button class="chip" type="button" data-correo="${id}" data-dominio="@yahoo.com">@yahoo.com</button>
   </div>`;
 }
 function activarAtajosCorreo(raiz) {

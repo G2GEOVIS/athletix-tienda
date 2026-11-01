@@ -15,15 +15,15 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - Ingreso con cuenta de Google (OAuth de Supabase). El botón aparece solo cuando el proveedor Google está activado en Supabase; al primer ingreso el cliente completa su cédula y celular.
 - Carrito: agregar, cambiar cantidad y quitar productos. Se puede comprar todo el stock de una talla (botón «Llevar todo»).
 - Solo retiro en tienda: el cliente elige la tienda y su pedido está listo en 1 hora (código de retiro de 6 caracteres). No hay envíos a domicilio.
-- Pago simulado solo con tarjeta de prueba (sin dinero real): se valida el número con Luhn, la fecha y el CVV, y solo se guardan la marca y los últimos 4 dígitos. Cada pago queda en la tabla PAGO.
+- Pago simulado solo con tarjeta (sin dinero real): acepta Visa, Mastercard, American Express, Diners Club, Discover, JCB, UnionPay y Maestro; reconoce la marca por los primeros dígitos, revisa la cantidad de dígitos de cada marca y el número con Luhn, la fecha y el CVV (3 dígitos). Solo se guardan la marca y los últimos 4 dígitos. Cada pago queda en la tabla PAGO.
 - Orden de pedido imprimible con lo que el cliente debe retirar y el código para identificar su pedido.
-- Correo al cliente cuando compra y cada vez que cambia el estado de su pedido (en preparación, listo o en camino, entregado o cancelado) (EmailJS), a cualquier correo (Gmail, Outlook, Hotmail, etc.).
+- Correo de compra con el detalle de lo pedido y la factura en PDF adjunta (función de Supabase `correo-compra`, que envía desde el Gmail de la tienda). Correo al cliente cada vez que cambia el estado de su pedido (EmailJS). Llegan a cualquier correo (Gmail, Outlook, Hotmail, etc.).
+- Factura en PDF (jsPDF) con los datos del cliente (nombre, cédula, dirección, celular y correo), productos, IVA y total; también se descarga desde la orden de pedido. Lleva la nota «Documento sin validez tributaria: no está autorizado por el SRI».
 - Mis pedidos con su estado, orden, seguimiento y reseña de cada producto comprado.
 - Administrador: pedidos (cambiar estado; al cancelar se devuelve el stock y se anula el pago), productos (crear, editar, ocultar y borrar, con subida de fotos) y pagos recibidos.
 - Compras seguras ante concurrencia: el stock se descuenta con bloqueo por fila en una sola transacción y cada intento de pago tiene una clave única para no duplicar pedidos.
 - Datos guardados en el navegador (localStorage), separados por cuenta: carrito (no se pierde al cerrar la página o la sesión; lo agregado sin sesión se suma al ingresar), favoritos (página Mis favoritos), y última tienda de retiro.
 - Reseñas de compra verificada: la base verifica que el cliente compró el producto; una reseña por cliente y producto.
-- La tienda no emite facturas (es un proyecto académico).
 
 ## Enlace permanente
 
@@ -67,7 +67,10 @@ herramientas/generar_paginas.py  Crea los HTML desde la plantilla (si cambias el
 css/estilos.css          Estilos (primero celular)
 img/                     Logo y fotos de productos (img/productos/<código>-1.jpg)
 js/config.js             Claves públicas de Supabase y EmailJS
-js/validaciones.js       Cédula, nombres, celular, correo, contraseña y tarjeta
+js/validaciones.js       Cédula, nombres, celular, correo, contraseña, dirección y tarjeta (marca, dígitos y Luhn)
+js/factura.js            Factura en PDF (carga jsPDF solo cuando hace falta)
+js/vendor/jspdf.umd.min.js  Librería jsPDF 2.5.2
+supabase/functions/correo-compra/index.ts  Envía el correo de compra con la factura adjunta (secretos GMAIL_USUARIO y GMAIL_CLAVE_APP)
 js/api.js                Acceso a Supabase y EmailJS con errores en español
 js/core.js               Estado, utilidades y componentes de formularios
 js/vistas-tienda.js      Inicio, catálogo, producto, reseñas y carrito
@@ -89,7 +92,9 @@ bd/08_quitar_edad.sql            Quita la edad: el producto se clasifica solo po
 bd/10_renombrar_atributos.sql    Nombres de atributos más claros (prd_genero, prd_visible, mtp_ ...) para una base que ya existía
 bd/11_solo_retiro.sql            Solo retiro en tienda: quita las columnas de domicilio
 bd/12_solo_tarjeta.sql           Solo pago con tarjeta: quita las columnas de transferencia
-bd/13_sin_unisex.sql             Calzado y tecnología solo Hombre o Mujer (base nueva: 01-08, 11, 12 y 13)
+bd/13_sin_unisex.sql             Calzado y tecnología solo Hombre o Mujer
+bd/14_direccion_y_marcas.sql     Dirección del cliente (para la factura) y todas las marcas de tarjeta (base nueva: 01-08, 11 a 14)
+bd/15_limpiar_datos.sql          Borra pedidos y clientes (menos el administrador) y devuelve el stock
 bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner

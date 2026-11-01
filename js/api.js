@@ -177,10 +177,11 @@ const Api = (() => {
         p_items: items, p_clave: clave, p_entrega: entrega.tipo, p_tienda: entrega.tipo === 'Retiro' ? entrega.tienda : null,
         p_ciudad: entrega.ciudad || null, p_direccion: entrega.direccion || null, p_referencia: entrega.referencia || null, p_pago: pago
       }));
-      return mapear(r, (f) => {
-        const x = Array.isArray(f) ? f[0] : f;
-        return { id: x.ped_numero, numero: x.ped_codigo, total: x.ped_total, codigoRetiro: x.ped_codigo_entrega, horaEstimada: x.ped_hora_estimada };
-      });
+      if (r.error) return r;
+      // La función devuelve una tabla (lista) con una sola fila: se toma esa fila
+      const x = Array.isArray(r.datos) ? r.datos[0] : r.datos;
+      if (!x || !x.ped_numero) return { error: 'No se pudo confirmar el pedido. Revisa "Mis pedidos" antes de intentar de nuevo.' };
+      return { datos: { id: x.ped_numero, numero: x.ped_codigo, total: x.ped_total, codigoRetiro: x.ped_codigo_entrega, horaEstimada: x.ped_hora_estimada } };
     },
     async nuevos() { const r = await ejecutar(sb.rpc('pedidos_nuevos')); return r.error ? 0 : Number(r.datos) || 0; },
     async mios() {

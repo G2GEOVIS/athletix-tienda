@@ -204,7 +204,7 @@ function leerRuta() {
 const ARCHIVOS = { '': 'index.html', productos: 'productos.html', producto: 'producto.html', carrito: 'carrito.html', ingresar: 'login.html',
   registro: 'registro.html', 'verifica-correo': 'confirmar-correo.html', 'completar-perfil': 'completar-perfil.html', recuperar: 'recuperar.html',
   'nueva-clave': 'nueva-clave.html', retiro: 'retiro.html', pago: 'pago.html', confirmacion: 'confirmacion.html', pedidos: 'pedidos.html',
-  perfil: 'perfil.html', admin: 'admin.html', ayuda: 'ayuda.html', orden: 'orden.html', seguimiento: 'seguimiento.html',
+  perfil: 'perfil.html', admin: 'admin.html', ayuda: 'ayuda.html', orden: 'orden.html',
   'admin-productos': 'admin-productos.html', 'admin-producto': 'admin-producto.html', 'admin-pagos': 'admin-pagos.html', favoritos: 'favoritos.html' };
 
 const VISTAS = {
@@ -228,7 +228,6 @@ const VISTAS = {
   'admin-producto': vistaAdminProducto,
   'admin-pagos': vistaAdminPagos,
   orden: vistaOrden,
-  seguimiento: vistaSeguimiento,
   favoritos: vistaFavoritos,
   ayuda: vistaAyuda
 };

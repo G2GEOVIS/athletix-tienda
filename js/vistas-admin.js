@@ -27,26 +27,25 @@ async function vistaAdmin(partes, params) {
     <div class="contenedor pagina">
       ${menuAdmin('pedidos')}
       <h1 class="titulo-pagina">Panel de pedidos</h1>
-      <p class="subtitulo cabecera-pagina">Cambia el estado de cada pedido. Con cada cambio (preparando, listo o en camino, entregado o cancelado) el cliente recibe un correo automáticamente.</p>
+      <p class="subtitulo cabecera-pagina">Cambia el estado de cada pedido. Con cada cambio (preparando, listo para retirar, retirado o cancelado) el cliente recibe un correo automáticamente.</p>
       ${Api.correo.configurado() ? '' : `<p class="alerta" style="margin-bottom:1rem">${icono('alerta')}<span>El envío de correos no está configurado (falta la plantilla de EmailJS).</span></p>`}
       <nav class="filtro-estados" aria-label="Filtrar pedidos por estado">
         <a href="admin.html" ${!filtro ? 'aria-current="page"' : ''}>Todos (${todos.length})</a>
-        ${ESTADOS.concat('Cancelado').map((e) => `<a href="admin.html?estado=${e}" ${filtro === e ? 'aria-current="page"' : ''}>${({ Listo: 'Listo / En camino', Retirado: 'Retirado / Entregado' })[e] || NOMBRE_ESTADO[e]} (${cuenta(e)})</a>`).join('')}
+        ${ESTADOS.concat('Cancelado').map((e) => `<a href="admin.html?estado=${e}" ${filtro === e ? 'aria-current="page"' : ''}>${NOMBRE_ESTADO[e]} (${cuenta(e)})</a>`).join('')}
       </nav>
       ${!lista.length ? `<div class="panel panel--gris vacio">${icono('paquete')}<p>No hay pedidos${filtro ? ' en este estado' : ''}.</p></div>` : `
       <ul class="pedidos">${lista.map((p) => `
         <li class="pedido${resaltar === p.id ? ' pedido--resaltado' : ''}" data-pedido="${p.id}" tabindex="-1">
           <div class="pedido__cabecera">
             <h2 class="pedido__numero">${esc(p.numero)}</h2>
-            <span class="estado estado--${p.estado.toLowerCase()}">${nombreEstado(p.estado, p.entrega)}</span>
+            <span class="estado estado--${p.estado.toLowerCase()}">${nombreEstado(p.estado)}</span>
           </div>
-          <p class="texto-suave">${fechaHora(p.creado_en)} · ${p.entrega === 'Domicilio' ? `${icono('camion')} Envío a domicilio desde ${esc(p.tienda)}` : `${icono('tienda')} Retiro en ${esc(p.tienda)}`}</p>
+          <p class="texto-suave">${fechaHora(p.creado_en)} · ${icono('tienda')} Retiro en ${esc(p.tienda)}</p>
           <dl class="datos-lista datos-lista--compacta" style="margin-top:.75rem">
             <dt>Cliente</dt><dd>${esc(p.cliente)} · C.I. ${esc(p.cedula)}</dd>
             <dt>Contacto</dt><dd>${esc(p.correo)} · ${esc(p.telefono)}</dd>
             <dt>Productos</dt><dd>${esc(p.productos)}</dd>
-            ${p.entrega === 'Domicilio' ? `<dt>Dirección</dt><dd>${esc(p.direccion)}, ${esc(p.ciudad)}${p.referencia ? ' · ' + esc(p.referencia) : ''}</dd>` : ''}
-            <dt>Código</dt><dd><strong>${esc(p.codigoRetiro || '')}</strong> · ${p.entrega === 'Domicilio' ? 'llega' : 'listo'} aprox. ${p.horaEstimada ? fechaHora(p.horaEstimada) : ''}</dd>
+            <dt>Código</dt><dd><strong>${esc(p.codigoRetiro || '')}</strong> · listo aprox. ${p.horaEstimada ? fechaHora(p.horaEstimada) : ''}</dd>
             <dt>Pago</dt><dd>${esc(p.pagoTexto)}</dd>
             <dt>Total</dt><dd>${dinero(p.total)}</dd>
           </dl>
@@ -54,7 +53,7 @@ async function vistaAdmin(partes, params) {
           ${SIGUIENTES[p.estado].length ? `
           <div class="cambio-estado" role="group" aria-labelledby="cambiar-${p.id}">
             <p id="cambiar-${p.id}" class="cambio-estado__titulo">Pasar a:</p>
-            ${SIGUIENTES[p.estado].map((e) => `<button class="boton ${e === 'Cancelado' ? 'boton--peligro' : 'boton--principal'}" type="button" data-pedido-id="${p.id}" data-nuevo-estado="${e}">${e === 'Cancelado' ? 'Cancelar pedido' : nombreEstado(e, p.entrega)}</button>`).join('')}
+            ${SIGUIENTES[p.estado].map((e) => `<button class="boton ${e === 'Cancelado' ? 'boton--peligro' : 'boton--principal'}" type="button" data-pedido-id="${p.id}" data-nuevo-estado="${e}">${e === 'Cancelado' ? 'Cancelar pedido' : nombreEstado(e)}</button>`).join('')}
           </div>` : `<p class="texto-suave" style="margin-top:1rem">${p.estado === 'Retirado' ? 'Pedido entregado: ya no cambia de estado.' : 'Pedido cancelado: el pago se anuló y el stock volvió.'}</p>`}
           <p class="texto-suave resultado-estado" aria-live="polite"></p>
         </li>`).join('')}
@@ -85,7 +84,7 @@ async function vistaAdmin(partes, params) {
           if (r2) aviso(r2.error, 'error');
           return;
         }
-        let texto = `El pedido ${p.numero} pasó a "${nombreEstado(nuevo, p.entrega)}".`;
+        let texto = `El pedido ${p.numero} pasó a "${nombreEstado(nuevo)}".`;
         if (r2.correo) texto += r2.correo.error ? ` ${r2.correo.error}` : ` Se envió un correo a ${p.correo}.`;
         aviso(texto, r2.correo && r2.correo.error ? 'error' : 'ok');
         anunciar(texto);

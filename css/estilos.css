@@ -776,28 +776,8 @@ fieldset.panel { margin: 0; min-width: 0; }
 .tarjetas-resumen dt { color: var(--texto-suave); font-weight: 600; }
 .tarjetas-resumen dd { margin: .2rem 0 0; font-size: 1.5rem; font-weight: 800; }
 
-/* ===== Simulación del envío ===== */
 .filtro-horizontal { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; margin-bottom: 1.25rem; }
 .filtro-horizontal legend { font-weight: 700; margin-bottom: .35rem; }
-.seguimiento-grilla { display: grid; gap: 1.25rem; }
-@media (min-width: 60rem) { .seguimiento-grilla { grid-template-columns: 3fr 2fr; align-items: start; } }
-.ruta-envio__mapa { width: 100%; height: auto; background: linear-gradient(180deg, #EEF6F4, #F7F9FA); border-radius: var(--radio); margin: .5rem 0 1rem; }
-.ruta-envio__camino { stroke: var(--borde-fuerte); stroke-width: 6; stroke-dasharray: 12 10; stroke-linecap: round; }
-.ruta-envio__tienda { fill: var(--verde); }
-.ruta-envio__casa { fill: var(--naranja); }
-.ruta-envio__mapa text { font: 700 13px var(--fuente); fill: var(--blanco); stroke: none; }
-.ruta-envio__tienda, .ruta-envio__casa { stroke: none; }
-.ruta-envio__vehiculo circle { fill: var(--blanco); stroke: var(--azul); stroke-width: 3; }
-.ruta-envio__vehiculo text { font-size: 16px; }
-.ruta-envio__texto { font-weight: 600; min-height: 3rem; margin-bottom: 1rem; }
-.etapas { list-style: none; padding: 0; margin: 0; display: grid; gap: .9rem; }
-.etapas li { display: flex; gap: .75rem; color: var(--texto-suave); }
-.etapas li.hecho { color: var(--texto); }
-.etapas li p { margin: .15rem 0 0; }
-.etapas strong { margin-right: .35rem; }
-.etapas__punto { flex: none; display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; border: 2px solid var(--borde-fuerte); font-weight: 700; background: var(--blanco); }
-.etapas li.hecho .etapas__punto { background: var(--verde); border-color: var(--verde); color: var(--blanco); }
-.etapas li.actual .etapas__punto { background: var(--naranja); border-color: var(--naranja); color: var(--azul); }
 .etapas__punto svg { width: 1.1rem; height: 1.1rem; }
 
 /* ===== Impresión de la orden de pedido ===== */
@@ -837,3 +817,6 @@ fieldset.panel { margin: 0; min-width: 0; }
   .boton-carrito { padding-inline: .55rem; }
   .cuenta__boton { padding-inline: .35rem; }
 }
+
+/* Al filtrar, el catálogo sube al inicio de los productos sin quedar tapado por el encabezado fijo */
+#resultados { scroll-margin-top: 8rem; }

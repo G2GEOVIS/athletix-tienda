@@ -1,18 +1,16 @@
 /* Datos de la tienda ATHLETIX */
 'use strict';
 
-/* Entrega rápida: retiro en tienda o envío a domicilio express (la base usa los mismos tiempos) */
+/* Entrega: solo retiro en la tienda que elija el cliente (la base usa el mismo tiempo) */
 const TIEMPO_LISTO = '1 hora';
-const ENTREGA = { retiro: '1 hora', domicilio: '2 a 3 horas', costoEnvio: 3.5, ciudades: ['Quito', 'Guayaquil'] };
+const ENTREGA = { retiro: '1 hora' };
 
 /* Pago simulado por transferencia: cuenta de la tienda (ficticia) y bancos aceptados */
 const CUENTA_TIENDA = { banco: 'Banco Pichincha', tipo: 'Cuenta corriente', numero: '2200456789', titular: 'ATHLETIX Tienda Académica', ruc: '1799999999001' };
 const BANCOS = ['Banco Pichincha', 'Banco Guayaquil', 'Produbanco', 'Banco del Pacífico', 'Banco Internacional'];
 
-/* Nombre de cada estado según cómo se entrega el pedido */
-const nombreEstado = (estadoPedido, entrega) => entrega === 'Domicilio'
-  ? ({ Listo: 'En camino', Retirado: 'Entregado' }[estadoPedido] || NOMBRE_ESTADO[estadoPedido])
-  : NOMBRE_ESTADO[estadoPedido];
+/* Nombre de cada estado para mostrar al cliente */
+const nombreEstado = (estadoPedido) => NOMBRE_ESTADO[estadoPedido];
 
 /* Etapas de un pedido (los nombres coinciden con la base de datos) */
 const ESTADOS = ['Recibido', 'Preparando', 'Listo', 'Retirado'];
@@ -725,10 +723,10 @@ const AYUDA = [
   ['No me llega el correo de confirmación', 'Revisa la carpeta de spam o promociones. Si no aparece en unos minutos, en «Iniciar sesión» puedes pedir que te lo enviemos otra vez.'],
   ['¿Cómo puedo pagar?', 'Con tarjeta Visa o Mastercard o con transferencia bancaria. Es una simulación: no se mueve dinero real. Con tarjeta, usa las tarjetas de prueba de la pantalla de pago (validamos el número, la fecha y el CVV, y solo guardamos los últimos 4 dígitos). Con transferencia, eliges tu banco y escribes el número del comprobante. Cada pago queda registrado en la base de datos.'],
   ['¿Entregan factura?', 'No. Esta es una tienda académica y no emite facturas. Recibes una orden de pedido con el detalle de tu compra.'],
-  ['¿Cómo recibo mi pedido?', 'Tienes dos opciones: retiro gratis en la tienda que elijas, listo en 1 hora, o envío a domicilio express en Quito y Guayaquil por $3,50, que llega en 2 a 3 horas. Te enviamos la orden de pedido con un código de 6 letras; al retirar presenta ese código y tu cédula. En «Mis pedidos» puedes ver la simulación del envío paso a paso.'],
-  ['Privacidad: ¿qué datos guardan?', 'Solo los necesarios para tu cuenta y tus pedidos: nombre, cédula, celular, correo, tus pedidos y los últimos 4 dígitos de las tarjetas de prueba. Tu contraseña se guarda cifrada (bcrypt) y nadie puede verla. Si entras con Google, solo recibimos tu nombre y tu correo. En tu navegador (localStorage) guardamos tu carrito, tus favoritos, tus últimos filtros y tu última forma de entrega, separados por cuenta; se borran si limpias los datos del navegador. No vendemos ni compartimos tus datos. Es una tienda académica (PUCE).'],
+  ['¿Cómo recibo mi pedido?', 'Lo retiras gratis en la tienda que elijas; está listo en 1 hora. Te enviamos la orden de pedido con un código de 6 caracteres: preséntalo en la tienda junto con tu cédula. No hacemos envíos a domicilio.'],
+  ['Privacidad: ¿qué datos guardan?', 'Solo los necesarios para tu cuenta y tus pedidos: nombre, cédula, celular, correo, tus pedidos y los últimos 4 dígitos de las tarjetas de prueba. Tu contraseña se guarda cifrada (bcrypt) y nadie puede verla. Si entras con Google, solo recibimos tu nombre y tu correo. En tu navegador (localStorage) guardamos tu carrito, tus favoritos, tus últimos filtros y la última tienda de retiro que elegiste, separados por cuenta; se borran si limpias los datos del navegador. No vendemos ni compartimos tus datos. Es una tienda académica (PUCE).'],
   ['Condiciones de uso', 'ATHLETIX es un proyecto académico: las compras y los pagos son simulados, no se cobra dinero real y no se emiten facturas. Usa solo las tarjetas de prueba que aparecen en la pantalla de pago.'],
-  ['¿Me avisan cuando cambia mi pedido?', 'Sí. Te llega un correo cuando recibimos tu compra y cada vez que tu pedido cambia: en preparación, listo para retirar (o en camino), entregado o cancelado. También puedes verlo en «Mis pedidos».'],
+  ['¿Me avisan cuando cambia mi pedido?', 'Sí. Te llega un correo cuando recibimos tu compra y cada vez que tu pedido cambia: en preparación, listo para retirar, retirado o cancelado. También puedes verlo en «Mis pedidos».'],
   ['¿Cómo dejo una reseña?', 'Inicia sesión y entra a «Mis pedidos»: junto a cada producto que compraste está el botón «Escribir reseña». También puedes hacerlo desde la página del producto, en «Opiniones de clientes». La tienda verifica en tu cuenta que compraste ese producto: solo pueden opinar quienes lo compraron, y cada cliente deja una reseña por producto (puede editarla después).'],
   ['¿Puedo cambiar mi pedido después de pagar?', 'No. Antes de pagar puedes cambiar la talla, la cantidad o quitar productos del carrito. Una vez pagado, el pedido no se puede modificar.']
 ];

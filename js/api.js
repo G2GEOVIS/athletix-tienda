@@ -99,7 +99,7 @@ const Api = (() => {
   const codigoPedido = (numero, fecha) => `AX-${new Date(fecha).getFullYear()}-${String(numero).padStart(5, '0')}`;
   const aCliente = (c) => ({ id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_celular, correo: c.cli_correo, creado_en: c.cli_fecha_registro });
   const aTarjeta = (t) => ({ id: t.mtp_codigo, marca: t.mtp_marca, ultimos4: t.mtp_ultimos4, titular: t.mtp_titular, mes_vence: t.mtp_mes_vence, anio_vence: t.mtp_anio_vence });
-  const CAMPOS_PEDIDO = 'ped_numero, ped_estado, ped_subtotal, ped_iva, ped_costo_envio, ped_total, ped_fecha, ped_tipo_entrega, ped_ciudad, ped_direccion, ped_referencia, ped_codigo_entrega, ped_hora_estimada, '
+  const CAMPOS_PEDIDO = 'ped_numero, ped_estado, ped_subtotal, ped_iva, ped_total, ped_fecha, ped_codigo_retiro, ped_hora_estimada, '
     + 'tienda(tie_nombre, tie_direccion, tie_horario, tie_ciudad), pago(pag_metodo, pag_marca, pag_ultimos4, pag_banco, pag_comprobante, pag_monto, pag_fecha, pag_estado), '
     + 'detalle_pedido(prd_codigo, dpe_talla, dpe_cantidad, dpe_precio)';
   const textoDePago = (g) => (!g ? 'Sin registro de pago' : g.pag_metodo === 'Tarjeta' ? `Tarjeta ${g.pag_marca} •••• ${g.pag_ultimos4}` : `Transferencia desde ${g.pag_banco} · comprobante ${g.pag_comprobante}`);
@@ -108,9 +108,8 @@ const Api = (() => {
     const c = p.cliente;
     return {
       id: p.ped_numero, numero: codigoPedido(p.ped_numero, p.ped_fecha), estado: p.ped_estado,
-      subtotal: p.ped_subtotal, iva: p.ped_iva, costoEnvio: Number(p.ped_costo_envio || 0), total: p.ped_total, creado_en: p.ped_fecha,
-      entrega: p.ped_tipo_entrega || 'Retiro', ciudad: p.ped_ciudad, direccion: p.ped_direccion, referencia: p.ped_referencia,
-      codigoRetiro: p.ped_codigo_entrega, horaEstimada: p.ped_hora_estimada,
+      subtotal: p.ped_subtotal, iva: p.ped_iva, total: p.ped_total, creado_en: p.ped_fecha,
+      codigoRetiro: p.ped_codigo_retiro, horaEstimada: p.ped_hora_estimada,
       tiendas: p.tienda ? { nombre: p.tienda.tie_nombre, direccion: p.tienda.tie_direccion, horario: p.tienda.tie_horario, ciudad: p.tienda.tie_ciudad } : null,
       pago: g ? { metodo: g.pag_metodo, estado: g.pag_estado, fecha: g.pag_fecha, monto: g.pag_monto } : null,
       pagoTexto: textoDePago(g),
@@ -172,23 +171,20 @@ const Api = (() => {
   /* ---------- Pedidos ---------- */
   const pedidos = {
     // "clave" identifica el intento de pago: si se reenvía (doble clic, recarga, red lenta) la base devuelve el mismo pedido
-    async crear({ items, clave, entrega, pago }) {
-      const r = await ejecutar(sb.rpc('crear_pedido', {
-        p_items: items, p_clave: clave, p_entrega: entrega.tipo, p_tienda: entrega.tipo === 'Retiro' ? entrega.tienda : null,
-        p_ciudad: entrega.ciudad || null, p_direccion: entrega.direccion || null, p_referencia: entrega.referencia || null, p_pago: pago
-      }));
+    async crear({ items, clave, tienda, pago }) {
+      const r = await ejecutar(sb.rpc('crear_pedido', { p_items: items, p_clave: clave, p_tienda: tienda, p_pago: pago }));
       if (r.error) return r;
       // La función devuelve una tabla (lista) con una sola fila: se toma esa fila
       const x = Array.isArray(r.datos) ? r.datos[0] : r.datos;
       if (!x || !x.ped_numero) return { error: 'No se pudo confirmar el pedido. Revisa "Mis pedidos" antes de intentar de nuevo.' };
-      return { datos: { id: x.ped_numero, numero: x.ped_codigo, total: x.ped_total, codigoRetiro: x.ped_codigo_entrega, horaEstimada: x.ped_hora_estimada } };
+      return { datos: { id: x.ped_numero, numero: x.ped_codigo, total: x.ped_total, codigoRetiro: x.ped_codigo_retiro, horaEstimada: x.ped_hora_estimada } };
     },
     async nuevos() { const r = await ejecutar(sb.rpc('pedidos_nuevos')); return r.error ? 0 : Number(r.datos) || 0; },
     async mios() {
       const r = await ejecutar(sb.from('pedido').select(CAMPOS_PEDIDO).order('ped_fecha', { ascending: false }));
       return mapear(r, aPedido);
     },
-    /* Un pedido con todos sus datos (orden de pedido y seguimiento). El cliente solo ve los suyos; el administrador, todos */
+    /* Un pedido con todos sus datos (confirmación y orden de pedido). El cliente solo ve los suyos; el administrador, todos */
     async uno(numero) {
       const r = await ejecutar(sb.from('pedido').select(CAMPOS_PEDIDO + ', cliente(cli_usuario, cli_cedula, cli_nombres, cli_apellidos, cli_celular, cli_correo)').eq('ped_numero', numero).maybeSingle());
       return mapear(r, aPedido);
@@ -205,8 +201,7 @@ const Api = (() => {
       return mapear(await ejecutar(sb.rpc('pedidos_admin')), (p) => ({
         id: p.ped_numero, numero: p.ped_codigo, estado: p.ped_estado, total: p.ped_total, creado_en: p.ped_fecha,
         cliente: p.cliente, correo: p.cli_correo, telefono: p.cli_celular, cedula: p.cli_cedula, tienda: p.tie_nombre, horario: p.tie_horario, productos: p.productos,
-        entrega: p.ped_tipo_entrega || 'Retiro', ciudad: p.ped_ciudad, direccion: p.ped_direccion, referencia: p.ped_referencia,
-        codigoRetiro: p.ped_codigo_entrega, horaEstimada: p.ped_hora_estimada, pagoTexto: p.pago || ''
+        codigoRetiro: p.ped_codigo_retiro, horaEstimada: p.ped_hora_estimada, pagoTexto: p.pago || ''
       }));
     },
     cambiarEstado(numero, estado) { return ejecutar(sb.rpc('cambiar_estado_pedido', { p_numero: numero, p_estado: estado })); }
@@ -300,40 +295,29 @@ const Api = (() => {
     /* Al cliente, apenas paga: confirma que su pedido se recibió */
     compraConfirmada(p) {
       const base = location.origin + location.pathname.replace(/[^/]*$/, '');
-      const domicilio = p.entrega === 'Domicilio';
       return enviar(CONFIG.emailjs.plantillaCliente, {
         to_email: p.correo, nombre: p.nombre, numero: p.numero, tienda: p.tienda, horario: p.horario, total: Number(p.total).toFixed(2),
-        asunto: `Recibimos tu pedido ${p.numero} · código ${p.codigo}`,
+        asunto: `Recibimos tu pedido ${p.numero} · código de retiro ${p.codigo}`,
         mensaje: `Gracias por tu compra. Tu pago fue aprobado (${p.pagoTexto}, pago simulado). `
-          + (domicilio ? `Tu pedido sale de la tienda y llega a tu dirección en ${ENTREGA.domicilio}. ` : `Tu pedido estará listo para retirar en ${ENTREGA.retiro}. `)
-          + `Tu código de ${domicilio ? 'entrega' : 'retiro'} es ${p.codigo}: preséntalo con tu cédula. `
-          + `Mira tu orden de pedido aquí: ${base}orden.html?pedido=${parseInt(String(p.numero).split('-').pop(), 10)}`
+          + `Tu pedido estará listo para retirar en ${ENTREGA.retiro}. Tu código de retiro es ${p.codigo}: preséntalo con tu cédula en la tienda. `
+          + `Mira tu orden de pedido aquí: ${base}orden.html?pedido=${p.id}`
       });
     },
     /* Al cliente, cada vez que el administrador cambia el estado de su pedido */
     pedidoActualizado(p, estadoNuevo) {
-      const domicilio = p.entrega === 'Domicilio';
       const base = location.origin + location.pathname.replace(/[^/]*$/, '');
-      const id = parseInt(String(p.numero).split('-').pop(), 10);
       const codigo = p.codigoRetiro ? ` y tu código ${p.codigoRetiro}` : '';
       const textos = {
-        Preparando: [`Estamos preparando tu pedido ${p.numero}`,
-          `Ya empezamos a preparar tu pedido ${p.numero}. ` + (domicilio ? `Sale hacia tu dirección en pocos minutos.` : `Estará listo para retirar en menos de ${ENTREGA.retiro}.`)],
-        Listo: domicilio
-          ? [`Tu pedido ${p.numero} va en camino`, `Tu pedido ${p.numero} ya salió de la tienda con nuestro repartidor. Ten a mano tu cédula${codigo}.`]
-          : [`Tu pedido ${p.numero} está listo para retirar`, `Tu pedido ${p.numero} ya está listo. Retíralo en ${p.tienda} con tu cédula${codigo}.`],
-        Retirado: domicilio
-          ? [`Tu pedido ${p.numero} fue entregado`, `Entregamos tu pedido ${p.numero}. ¡Gracias por comprar en ATHLETIX! Puedes dejar tu reseña desde Mis pedidos.`]
-          : [`Retiraste tu pedido ${p.numero}`, `Registramos el retiro de tu pedido ${p.numero}. ¡Gracias por comprar en ATHLETIX! Puedes dejar tu reseña desde Mis pedidos.`],
+        Preparando: [`Estamos preparando tu pedido ${p.numero}`, `Ya empezamos a preparar tu pedido ${p.numero}. Estará listo para retirar en menos de ${ENTREGA.retiro}.`],
+        Listo: [`Tu pedido ${p.numero} está listo para retirar`, `Tu pedido ${p.numero} ya está listo. Retíralo en ${p.tienda} con tu cédula${codigo}.`],
+        Retirado: [`Retiraste tu pedido ${p.numero}`, `Registramos el retiro de tu pedido ${p.numero}. ¡Gracias por comprar en ATHLETIX! Puedes dejar tu reseña desde Mis pedidos.`],
         Cancelado: [`Tu pedido ${p.numero} fue cancelado`, `Tu pedido ${p.numero} fue cancelado y el pago simulado quedó anulado. Si tienes dudas, escríbenos desde la sección Ayuda.`]
       };
       const [asunto, mensaje] = textos[estadoNuevo] || [];
       if (!asunto) return Promise.resolve({});
       return enviar(CONFIG.emailjs.plantillaCliente, {
-        to_email: p.correo, nombre: p.cliente, numero: p.numero, total: Number(p.total).toFixed(2),
-        tienda: domicilio ? `Envío a domicilio: ${p.direccion}, ${p.ciudad}` : p.tienda,
-        horario: domicilio ? `Llega en ${ENTREGA.domicilio}` : p.horario,
-        asunto, mensaje: mensaje + ` Sigue tu pedido aquí: ${base}seguimiento.html?pedido=${id}`
+        to_email: p.correo, nombre: p.cliente, numero: p.numero, total: Number(p.total).toFixed(2), tienda: p.tienda, horario: p.horario,
+        asunto, mensaje: mensaje + ` Mira tu orden de pedido aquí: ${base}orden.html?pedido=${p.id}`
       }).then((r) => (r.error ? { error: r.error + ' El estado sí se guardó.' } : r));
     },
     /* Al administrador, cada vez que un cliente hace un pedido */

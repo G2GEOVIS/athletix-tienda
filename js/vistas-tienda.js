@@ -27,7 +27,7 @@ function vistaInicio() {
 
     <section class="contenedor beneficios" aria-label="Beneficios de comprar en ATHLETIX">
       <ul class="beneficios__lista">
-        <li class="beneficio"><span class="beneficio__icono">${icono('camion')}</span><p><strong>Retiro gratis en tienda</strong><span>Quito y Guayaquil</span></p></li>
+        <li class="beneficio"><span class="beneficio__icono">${icono('tienda')}</span><p><strong>Retiro gratis en tienda</strong><span>Quito y Guayaquil</span></p></li>
         <li class="beneficio"><span class="beneficio__icono">${icono('correo')}</span><p><strong>Te avisamos por correo</strong><span>Cuando tu pedido esté listo</span></p></li>
         <li class="beneficio"><span class="beneficio__icono">${icono('escudo')}</span><p><strong>Pago seguro</strong><span>Visa y Mastercard</span></p></li>
         <li class="beneficio"><span class="beneficio__icono">${icono('estrella')}</span><p><strong>Opiniones reales</strong><span>Solo de clientes que compraron</span></p></li>
@@ -214,6 +214,9 @@ function vistaProductos(partes, params) {
         $('#titulo-catalogo', main).innerHTML = tituloCatalogo(f2);
         $('#conteo', main).textContent = plural(f2.lista.length, 'producto', 'productos');
         document.title = `${f2.cat !== 'todas' ? CATEGORIAS[f2.cat] : 'Productos'} | ATHLETIX`;
+        // Lleva la vista al inicio de los productos para ver el resultado del filtro
+        const reducir = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+        $('#resultados', main).scrollIntoView({ behavior: reducir ? 'auto' : 'smooth', block: 'start' });
       };
       form.addEventListener('change', aplicar);
       $('#orden', main).addEventListener('change', aplicar);
@@ -309,7 +312,7 @@ function vistaProducto(partes) {
           </form>
 
           <ul class="lista-iconos">
-            <li>${icono('camion')}Retiro en tienda en ${ENTREGA.retiro} o envío express en ${ENTREGA.domicilio}</li>
+            <li>${icono('tienda')}Retiro gratis en tienda, listo en ${ENTREGA.retiro}</li>
             <li>${icono('correo')}Te avisamos por correo cuando esté listo</li>
             <li>${icono('escudo')}Pago seguro con Visa o Mastercard</li>
           </ul>
@@ -631,7 +634,7 @@ function pasos(actual) {
   }).join('')}</ol>`;
 }
 
-function resumenPedido(extra = '', envio = null) {
+function resumenPedido(extra = '') {
   return `
     <aside class="panel panel--gris resumen" aria-labelledby="titulo-resumen">
       <h2 id="titulo-resumen">Resumen del pedido</h2>
@@ -639,8 +642,8 @@ function resumenPedido(extra = '', envio = null) {
         <dt>Productos</dt><dd>${unidadesCarrito()}</dd>
         <dt>Subtotal</dt><dd>${dinero(subtotalCarrito())}</dd>
         <dt>IVA (15 %)</dt><dd>${dinero(ivaCarrito())}</dd>
-        ${envio ? `<dt>Envío a domicilio</dt><dd>${dinero(envio)}</dd>` : `<dt>${envio === 0 ? 'Retiro en tienda' : 'Entrega'}</dt><dd>${envio === 0 ? 'Gratis' : 'Desde $0,00'}</dd>`}
-        <dt class="resumen__total">Total</dt><dd class="resumen__total">${dinero(totalCarrito() + (envio || 0))}</dd>
+        <dt>Retiro en tienda</dt><dd>Gratis</dd>
+        <dt class="resumen__total">Total</dt><dd class="resumen__total">${dinero(totalCarrito())}</dd>
       </dl>
       ${extra}
     </aside>`;

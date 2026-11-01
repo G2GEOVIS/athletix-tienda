@@ -14,9 +14,9 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - No se permite registrar dos veces la misma cédula ni el mismo correo.
 - Ingreso con cuenta de Google (OAuth de Supabase). El botón aparece solo cuando el proveedor Google está activado en Supabase; al primer ingreso el cliente completa su cédula y celular.
 - Carrito: agregar, cambiar cantidad y quitar productos. Se puede comprar todo el stock de una talla (botón «Llevar todo»).
-- Entrega rápida: retiro en tienda en 1 hora (código de 6 caracteres) o envío a domicilio en 2 a 3 horas en Quito y Guayaquil ($3,50).
+- Solo retiro en tienda: el cliente elige la tienda y su pedido está listo en 1 hora (código de retiro de 6 caracteres). No hay envíos a domicilio.
 - Pago simulado, sin dinero real: tarjeta de prueba validada (Luhn, fecha y CVV) o transferencia con número de comprobante. Cada pago queda guardado en la tabla PAGO.
-- Orden de pedido imprimible con lo que el cliente debe retirar, y simulación del recorrido del pedido.
+- Orden de pedido imprimible con lo que el cliente debe retirar y el código para identificar su pedido.
 - Correo al cliente cuando compra y cada vez que cambia el estado de su pedido (en preparación, listo o en camino, entregado o cancelado) (EmailJS), a cualquier correo (Gmail, Outlook, Hotmail, etc.).
 - Mis pedidos con su estado, orden, seguimiento y reseña de cada producto comprado.
 - Administrador: pedidos (cambiar estado; al cancelar se devuelve el stock y se anula el pago), productos (crear, editar, ocultar y borrar, con subida de fotos) y pagos recibidos.
@@ -45,11 +45,10 @@ confirmar-correo.html    Aviso para confirmar el correo
 completar-perfil.html    Datos que faltan después de confirmar
 recuperar.html           Recuperar contraseña
 nueva-clave.html         Crear nueva contraseña
-retiro.html              Paso 2: entrega (retiro en tienda o domicilio)
+retiro.html              Paso 2: tienda de retiro
 pago.html                Paso 3: pago simulado con tarjeta o transferencia
 confirmacion.html        Paso 4: compra realizada
 orden.html               Orden de pedido imprimible (?pedido=N)
-seguimiento.html         Simulación de la entrega (?pedido=N)
 pedidos.html             Mis pedidos
 perfil.html              Mi perfil: mis datos
 metodos-pago.html        Mi perfil: tarjetas guardadas
@@ -83,11 +82,12 @@ bd/01_tablas.sql          Mis tablas con la forma de modelar de la clase (CATEGO
 bd/02_seguridad_y_funciones.sql  Seguridad por filas, compra en una transacción, reglas de estados y reseñas
 bd/03_datos.sql           Categorías, tiendas, productos y existencias
 bd/04_productos_nuevos.sql       Catálogo ampliado (52 productos más)
-bd/05_pagos_entrega_admin.sql    Tabla PAGO, entrega a domicilio, PRODUCTO_IMAGEN y permisos del administrador
+bd/05_pagos_entrega_admin.sql    Tabla PAGO, PRODUCTO_IMAGEN y permisos del administrador
 bd/06_datos_productos.sql        Características, ficha técnica y fotos de cada producto
 bd/07_fotos_storage.sql          Carpeta pública de fotos (solo el administrador sube)
 bd/08_quitar_edad.sql            Quita la edad: el producto se clasifica solo por género
-bd/10_renombrar_atributos.sql    Nombres de atributos más claros (prd_genero, prd_visible, ped_tipo_entrega, mtp_ ...)
+bd/10_renombrar_atributos.sql    Nombres de atributos más claros (prd_genero, prd_visible, mtp_ ...) para una base que ya existía
+bd/11_solo_retiro.sql            Solo retiro en tienda: quita las columnas de domicilio (base nueva: 01-08 y luego 11)
 bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner

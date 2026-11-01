@@ -8,8 +8,8 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 
 ## Funciones
 
-- Catálogo de 68 productos (calzado, tecnología deportiva y entrenamiento) con filtros por categoría, género y precio, orden y buscador. Todo viene de la base de datos.
-- El género es un atributo del producto: Hombre, Mujer o Unisex. Calzado y tecnología tienen al menos 10 productos de hombre y 10 de mujer.
+- Catálogo de 68 productos (calzado, tecnología deportiva y entrenamiento) con filtros por categoría, género y precio que se quedan visibles al bajar, orden y buscador. Todo viene de la base de datos.
+- El género es un atributo del producto: calzado y tecnología son solo de Hombre o de Mujer (al menos 10 de cada uno); entrenamiento es para todos (Unisex). Una regla en la base lo asegura.
 - Cuentas reales con Supabase: registro con cédula ecuatoriana validada (módulo 10), confirmación por correo, recuperar contraseña y botón para mostrar la contraseña. Las contraseñas se guardan cifradas con bcrypt (Supabase Auth); la tienda nunca las ve.
 - No se permite registrar dos veces la misma cédula ni el mismo correo.
 - Ingreso con cuenta de Google (OAuth de Supabase). El botón aparece solo cuando el proveedor Google está activado en Supabase; al primer ingreso el cliente completa su cédula y celular.
@@ -88,7 +88,8 @@ bd/07_fotos_storage.sql          Carpeta pública de fotos (solo el administrado
 bd/08_quitar_edad.sql            Quita la edad: el producto se clasifica solo por género
 bd/10_renombrar_atributos.sql    Nombres de atributos más claros (prd_genero, prd_visible, mtp_ ...) para una base que ya existía
 bd/11_solo_retiro.sql            Solo retiro en tienda: quita las columnas de domicilio
-bd/12_solo_tarjeta.sql           Solo pago con tarjeta: quita las columnas de transferencia (base nueva: 01-08, 11 y 12)
+bd/12_solo_tarjeta.sql           Solo pago con tarjeta: quita las columnas de transferencia
+bd/13_sin_unisex.sql             Calzado y tecnología solo Hombre o Mujer (base nueva: 01-08, 11, 12 y 13)
 bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner

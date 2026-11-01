@@ -33,6 +33,7 @@ const Api = (() => {
     if (m.includes('same password') || m.includes('should be different')) return 'La nueva contraseña debe ser diferente a la actual.';
     if (m.includes('jwt') || m.includes('not authenticated') || m.includes('inicia sesión') || m.includes('iniciar sesión')) return 'Tu sesión terminó. Vuelve a iniciar sesión.';
     if (m.includes('ak_metodo_pago_cliente')) return 'Ya tienes guardada esta tarjeta.';
+    if (m.includes('ckc_prd_genero_categoria')) return 'Calzado y tecnología deben ser de Hombre o de Mujer; entrenamiento es Unisex.';
     if (m.includes('fk_producto_detallepedido') || (m.includes('foreign key') && m.includes('detalle_pedido'))) return 'Este producto ya tiene ventas registradas: no se puede borrar. Ocúltalo para que no se muestre en la tienda.';
     if (m.includes('pk_producto') && m.includes('duplicate')) return 'Ya existe un producto con ese código.';
     if (m.includes('row-level security') && m.includes('storage')) return 'Solo el administrador puede subir fotos.';

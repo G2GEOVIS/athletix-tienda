@@ -78,14 +78,14 @@ const ORDENES = {
 
 function filtrar(params) {
   const cat = CATEGORIAS[params.get('cat')] ? params.get('cat') : 'todas';
-  const pub = ['Hombre', 'Mujer', 'Unisex'].includes(params.get('pub')) ? params.get('pub') : 'todos';
+  const pub = ['Hombre', 'Mujer'].includes(params.get('pub')) ? params.get('pub') : 'todos';
   const precio = RANGOS[params.get('precio')] ? params.get('precio') : 'todos';
   const orden = ORDENES[params.get('orden')] ? params.get('orden') : 'relevancia';
   const q = (params.get('q') || '').slice(0, 80);
   let lista = buscar(PRODUCTOS.filter((p) => p.activo !== false), q);
   if (cat !== 'todas') lista = lista.filter((p) => p.categoria === cat);
-  // El género es un atributo del producto: Hombre, Mujer o Unisex.
-  // Entrenamiento es todo unisex, así que ahí el género no filtra.
+  // El género es un atributo del producto: calzado y tecnología son de Hombre o de Mujer.
+  // Entrenamiento es para todos (Unisex), así que ahí el género no filtra.
   const usaGenero = cat !== 'entrenamiento';
   if (usaGenero && pub !== 'todos') lista = lista.filter((p) => (p.publico || 'Unisex') === pub);
   lista = lista.filter(RANGOS[precio][1]);
@@ -171,7 +171,7 @@ function vistaProductos(partes, params) {
             </fieldset>
             <fieldset class="grupo-filtro" id="grupo-publico" ${f.cat === 'entrenamiento' ? 'hidden' : ''}>
               <legend>Género</legend>
-              ${radio('pub', 'todos', 'Todos', f.pub)}${radio('pub', 'Hombre', 'Hombre', f.pub)}${radio('pub', 'Mujer', 'Mujer', f.pub)}${radio('pub', 'Unisex', 'Unisex', f.pub)}
+              ${radio('pub', 'todos', 'Todos', f.pub)}${radio('pub', 'Hombre', 'Hombre', f.pub)}${radio('pub', 'Mujer', 'Mujer', f.pub)}
             </fieldset>
             <fieldset class="grupo-filtro">
               <legend>Precio</legend>
@@ -214,6 +214,8 @@ function vistaProductos(partes, params) {
         $('#titulo-catalogo', main).innerHTML = tituloCatalogo(f2);
         $('#conteo', main).textContent = plural(f2.lista.length, 'producto', 'productos');
         document.title = `${f2.cat !== 'todas' ? CATEGORIAS[f2.cat] : 'Productos'} | ATHLETIX`;
+        // En celular el panel de filtros se cierra para dejar ver los productos (el botón «Filtros» sigue arriba)
+        if (abrir.offsetParent && abrir.getAttribute('aria-expanded') === 'true') { abrir.setAttribute('aria-expanded', 'false'); form.classList.remove('abierto'); }
         // Lleva la vista al inicio de los productos para ver el resultado del filtro
         const reducir = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
         $('#resultados', main).scrollIntoView({ behavior: reducir ? 'auto' : 'smooth', block: 'start' });

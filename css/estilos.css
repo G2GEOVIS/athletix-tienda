@@ -259,14 +259,22 @@ svg { width: 1.25rem; height: 1.25rem; flex-shrink: 0; fill: none; stroke: curre
 /* ---------- Catálogo ---------- */
 .catalogo { display: grid; gap: 1.5rem; }
 @media (min-width: 62rem) { .catalogo { grid-template-columns: 15rem 1fr; gap: 2.5rem; align-items: start; } }
-.filtros { border: 1px solid var(--borde); border-radius: var(--radio); padding: 1rem 1.25rem; background: var(--blanco); }
+/* Los filtros acompañan al usuario mientras baja por los productos (debajo del encabezado fijo) */
+.filtros {
+  border: 1px solid var(--borde); border-radius: var(--radio); padding: .75rem 1.25rem; background: var(--blanco);
+  position: sticky; top: calc(var(--alto-encabezado, 8rem) + .5rem); z-index: 20; box-shadow: 0 6px 16px rgba(11, 31, 58, .08);
+}
+.filtros__cuerpo.abierto { max-height: calc(100vh - var(--alto-encabezado, 8rem) - 6rem); overflow-y: auto; overscroll-behavior: contain; }
 .filtros__abrir { display: flex; width: 100%; justify-content: space-between; align-items: center; background: none; border: 0; font-weight: 700; font-size: 1.05rem; min-height: 2.75rem; cursor: pointer; padding: 0; }
 .filtros__abrir svg { transition: transform .15s; }
 .filtros__abrir[aria-expanded="true"] svg { transform: rotate(180deg); }
 .filtros__cuerpo { display: none; padding-top: .5rem; }
 .filtros__cuerpo.abierto { display: block; }
 @media (min-width: 62rem) {
-  .filtros { position: sticky; top: 6rem; border: 0; padding: 0; }
+  .filtros {
+    top: calc(var(--alto-encabezado, 5rem) + 1rem); border: 0; padding: 0 .25rem 0 0; box-shadow: none;
+    max-height: calc(100vh - var(--alto-encabezado, 5rem) - 2rem); overflow-y: auto; overscroll-behavior: contain;
+  }
   .filtros__abrir { display: none; }
   .filtros__cuerpo { display: block; padding: 0; }
 }

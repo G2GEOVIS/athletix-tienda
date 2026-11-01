@@ -298,6 +298,15 @@ window.addEventListener('error', (e) => { console.error(e.error || e.message); }
 window.addEventListener('unhandledrejection', (e) => { console.error(e.reason); e.preventDefault(); aviso('Ocurrió un problema de conexión. Inténtalo de nuevo.', 'error'); });
 window.addEventListener('offline', () => aviso('Perdiste la conexión a internet.', 'error'));
 window.addEventListener('online', () => { aviso('Volviste a tener conexión.'); if (!estado.catalogoConectado) cargarCatalogo(); });
+// Alto real del encabezado fijo: los filtros del catálogo se quedan justo debajo al bajar por los productos
+function medirEncabezado() {
+  const e = $('.encabezado');
+  if (e) document.documentElement.style.setProperty('--alto-encabezado', e.offsetHeight + 'px');
+}
+window.addEventListener('resize', medirEncabezado);
+document.addEventListener('DOMContentLoaded', medirEncabezado);
+medirEncabezado();
+
 window.addEventListener('storage', (e) => {
   if (e.key === claveCuenta(CLAVE_CARRITO)) { estado.carrito = leerCarrito(e.key); actualizarContador(); }
   if (e.key === claveCuenta(CLAVE_FAVORITOS)) { estado.favoritos = leerFavoritos(e.key); actualizarContador(); }

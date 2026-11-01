@@ -416,7 +416,7 @@ function vistaProducto(partes) {
           grupoTallas.classList.remove('campo-error');
           pintarCantidad();
         });
-        $('#guia-tallas', main).addEventListener('click', abrirGuiaTallas);
+        $('#guia-tallas', main).addEventListener('click', () => abrirGuiaTallas(p));
       }
 
       $('#form-compra', main).addEventListener('submit', (e) => {
@@ -444,12 +444,18 @@ function vistaProducto(partes) {
   };
 }
 
-function abrirGuiaTallas() {
+/* Guía de tallas: centímetros del pie para cada talla del producto (o de todo el calzado si no se indica) */
+function htmlGuiaTallas(p) {
+  const filas = p && p.tallas && p.tallas.length ? GUIA_TALLAS.filter(([t]) => p.tallas.includes(t)) : GUIA_TALLAS;
+  const nota = p && p.publico === 'Mujer' ? 'Calzado de mujer: tallas 36 a 40 con medias tallas.' : p && p.publico === 'Hombre' ? 'Calzado de hombre: tallas 39 a 45.' : 'Mujer: 36 a 40 con medias tallas · Hombre: 39 a 45.';
+  return `<p class="texto-suave" style="margin-bottom:1rem">Mide tu pie del talón al dedo más largo y elige la talla según los centímetros.</p>
+    <dl class="guia-tallas">${filas.map(([t, cm]) => `<div><dt>Talla ${t}</dt><dd>${cm}</dd></div>`).join('')}</dl>
+    <p class="texto-suave" style="margin-top:1rem">${nota} Si estás entre dos tallas, elige la mayor.</p>`;
+}
+function abrirGuiaTallas(p) {
   abrirDialogo(`
-    <h2 class="dialogo__titulo" id="dialogo-titulo">Guía de tallas</h2>
-    <p class="texto-suave" style="margin-bottom:1rem">Mide tu pie del talón al dedo más largo y elige la talla según los centímetros.</p>
-    <dl class="guia-tallas">${GUIA_TALLAS.map(([t, cm]) => `<div><dt>Talla ${t}</dt><dd>${cm}</dd></div>`).join('')}</dl>
-    <p class="texto-suave" style="margin-top:1rem">Mujer: 36 a 40 con medias tallas · Hombre: 39 a 45 · Montaña: 37 a 45. Si estás entre dos tallas, elige la mayor.</p>
+    <h2 class="dialogo__titulo" id="dialogo-titulo">Guía de tallas${p && p.nombre ? ` · ${esc(p.nombre)}` : ''}</h2>
+    ${htmlGuiaTallas(p)}
     <button class="boton boton--principal boton--bloque" type="button" data-cerrar-dialogo style="margin-top:1.25rem">Entendido</button>`, { ancho: true });
 }
 
@@ -869,20 +875,35 @@ function agregarFavoritosAlCarrito(lista) {
       </div>`, { alAbrir: (d) => $('a.boton--principal', d).focus() });
   };
   if (!conTalla.length) { terminar([]); return; }
+  // Cada calzado con sus tallas como en la página del producto, y su guía de tallas para elegir bien
   abrirDialogo(`
     <h2 class="dialogo__titulo" id="dialogo-titulo">Elige las tallas</h2>
-    <p>Estos favoritos tienen tallas. Elige una para cada uno (o «No agregar»).</p>
+    <p>Elige la talla de cada calzado. Si no quieres agregar alguno, déjalo en «No agregar».</p>
     <form id="form-tallas-fav" class="formulario" style="margin-top:1rem">
-      ${conTalla.map((p, i) => `<div class="campo fila-fav"><img src="${img(p)}" alt="" width="56" height="56"><label for="talla-fav-${i}">${esc(p.nombre)}</label>
-        <select id="talla-fav-${i}" data-id="${p.id}"><option value="">No agregar</option>${p.tallas.filter((t) => stockDe(p, t) > 0).map((t) => `<option value="${t}">Talla ${t}</option>`).join('')}</select></div>`).join('')}
+      ${conTalla.map((p, i) => `
+      <fieldset class="tallas fav-talla" aria-describedby="fav-elegida-${i}">
+        <div class="fav-talla__producto"><img src="${img(p)}" alt="" width="64" height="64"><div><legend>${esc(p.nombre)}</legend><span class="texto-suave d-bloque">${esc(p.publico || '')} · ${dinero(p.precio)}</span></div></div>
+        <div class="tallas__lista">
+          <label class="talla talla--no"><input type="radio" name="fav-${i}" value="" data-id="${p.id}" checked><span>No agregar</span></label>
+          ${p.tallas.map((t) => { const st = stockDe(p, t); return `<label class="talla ${st <= 0 ? 'talla--agotada' : ''}"><input type="radio" name="fav-${i}" value="${t}" data-id="${p.id}" ${st <= 0 ? 'disabled' : ''}><span>${t}${st <= 0 ? '<span class="solo-lector"> (agotada)</span>' : ''}</span></label>`; }).join('')}
+        </div>
+        <p class="texto-suave" id="fav-elegida-${i}" aria-live="polite" style="margin-top:.4rem">Elegida: ninguna</p>
+        <details class="fav-guia"><summary>${icono('regla')}Guía de tallas</summary>${htmlGuiaTallas(p)}</details>
+      </fieldset>`).join('')}
       <div class="dialogo__botones">
         <button class="boton boton--secundario" type="button" data-cerrar-dialogo>Cancelar</button>
         <button class="boton boton--principal" type="submit">${icono('carrito')}Agregar al carrito</button>
       </div>
-    </form>`, { alAbrir: (d) => $('select', d).focus() });
-  $('#form-tallas-fav').addEventListener('submit', (e) => {
+    </form>`, { ancho: true, alAbrir: (d) => { const primera = $('input:not([value=""]):not(:disabled)', d); if (primera) primera.focus(); } });
+  const form = $('#form-tallas-fav');
+  form.addEventListener('change', (e) => {
+    const i = e.target.name.replace('fav-', '');
+    const salida = $(`#fav-elegida-${i}`, form);
+    if (salida) salida.textContent = e.target.value ? `Elegida: ${e.target.value}` : 'Elegida: ninguna';
+  });
+  form.addEventListener('submit', (e) => {
     e.preventDefault();
-    const elegidas = $$('#form-tallas-fav select').filter((sel) => sel.value).map((sel) => [sel.dataset.id, sel.value]);
+    const elegidas = $$('input[type="radio"]:checked', form).filter((r) => r.value).map((r) => [r.dataset.id, r.value]);
     terminar(elegidas);
   });
 }

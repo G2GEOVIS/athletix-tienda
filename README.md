@@ -109,6 +109,7 @@ bd/17_celular_unico.sql          Un celular por cuenta (regla única y función 
 bd/18_pago_en_tienda.sql         Pago en la tienda (PAGO.pag_forma, estado Pendiente) y tiempo de retiro de 1 a 3 horas
 bd/19_movimientos_y_factura.sql  MOVIMIENTO_STOCK (trigger que registra cada cambio de stock) y número de factura propio (seq_factura)
 bd/20_clientes_extranjeros.sql   Clientes de otros países: cli_pais, cli_tipo_documento (Cédula o Pasaporte) y celular internacional
+bd/21_tallas_mujer.sql           Todo el calzado de mujer con tallas 36, 36.5, 37, 37.5, 38, 38.5, 39 y 40
 bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner

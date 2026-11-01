@@ -296,7 +296,7 @@ const PRODUCTOS = [
   {
     id: 'zm01', nombre: 'ASICS Gel-Kayano 31 Mujer', categoria: 'calzado', publico: 'Mujer', precio: 149.99,
     etiqueta: '',
-    tallas: ['35', '36', '37', '38', '39', '40', '41'],
+    tallas: ['36', '36.5', '37', '37.5', '38', '38.5', '39', '40'],
     vistas: ['vista principal', 'detalle de la puntera', 'detalle del talón'],
     descripcion: 'Zapatilla de estabilidad para mujer con amortiguación FF Blast+ de larga duración. Da soporte y control en entrenamientos y carreras largas.',
     caracteristicas: ['Amortiguación FF Blast+ de larga duración', 'Soporte y estabilidad para mayor control', 'Ideal para entrenamientos y carreras largas'],
@@ -306,7 +306,7 @@ const PRODUCTOS = [
   {
     id: 'zm02', nombre: 'Nike Pegasus 41 Mujer', categoria: 'calzado', publico: 'Mujer', precio: 129.99,
     etiqueta: '',
-    tallas: ['35', '36', '37', '38', '39', '40', '41'],
+    tallas: ['36', '36.5', '37', '37.5', '38', '38.5', '39', '40'],
     vistas: ['vista principal', 'detalle de la puntera', 'detalle del talón'],
     descripcion: 'Zapatilla de running para mujer, cómoda en todo terreno. La espuma ReactX da mayor retorno de energía y la malla ultraligera deja respirar el pie.',
     caracteristicas: ['Amortiguación ReactX con retorno de energía', 'Malla transpirable ultraligera', 'Perfecta para entrenamientos diarios y carreras'],
@@ -316,7 +316,7 @@ const PRODUCTOS = [
   {
     id: 'zm03', nombre: 'Mizuno Wave Rider 28 Mujer', categoria: 'calzado', publico: 'Mujer', precio: 119.99,
     etiqueta: '',
-    tallas: ['35', '36', '37', '38', '39', '40', '41'],
+    tallas: ['36', '36.5', '37', '37.5', '38', '38.5', '39', '40'],
     vistas: ['vista principal', 'detalle de la puntera', 'detalle del talón'],
     descripcion: 'Zapatilla cómoda para mujer con placa Wave para una pisada estable. Su amortiguación suave y reactiva acompaña distancias medias y largas.',
     caracteristicas: ['Tecnología Mizuno Wave para mayor estabilidad', 'Amortiguación suave y reactiva', 'Ideal para distancias medias y largas'],
@@ -326,7 +326,7 @@ const PRODUCTOS = [
   {
     id: 'zm04', nombre: 'New Balance Fresh Foam X 1080 v14', categoria: 'calzado', publico: 'Mujer', precio: 134.99,
     etiqueta: '',
-    tallas: ['35', '36', '37', '38', '39', '40', '41'],
+    tallas: ['36', '36.5', '37', '37.5', '38', '38.5', '39', '40'],
     vistas: ['vista principal', 'detalle de la puntera', 'detalle del talón'],
     descripcion: 'Zapatilla de máxima comodidad para mujer. La espuma Fresh Foam X es ultra suave y la malla de ingeniería se adapta al pie en carreras largas y uso diario.',
     caracteristicas: ['Fresh Foam X ultra suave', 'Malla de ingeniería transpirable', 'Ideal para carreras largas y uso diario'],
@@ -336,7 +336,7 @@ const PRODUCTOS = [
   {
     id: 'zm05', nombre: 'Adidas Adizero SL 2', categoria: 'calzado', publico: 'Mujer', precio: 119.99,
     etiqueta: '',
-    tallas: ['35', '36', '37', '38', '39', '40', '41'],
+    tallas: ['36', '36.5', '37', '37.5', '38', '38.5', '39', '40'],
     vistas: ['vista principal', 'detalle de la puntera', 'detalle del talón'],
     descripcion: 'Zapatilla ligera para mujer pensada para ganar velocidad. Su espuma Lightstrike da una gran respuesta y la suela Lightstrike es ultraligera.',
     caracteristicas: ['Ligereza y gran respuesta', 'Suela Lightstrike ultraligera', 'Ideal para mejorar tu ritmo y velocidad'],
@@ -346,7 +346,7 @@ const PRODUCTOS = [
   {
     id: 'zm06', nombre: 'Saucony Ride 17 Mujer', categoria: 'calzado', publico: 'Mujer', precio: 119.99,
     etiqueta: '',
-    tallas: ['35', '36', '37', '38', '39', '40', '41'],
+    tallas: ['36', '36.5', '37', '37.5', '38', '38.5', '39', '40'],
     vistas: ['vista principal', 'detalle de la puntera', 'detalle del talón'],
     descripcion: 'Zapatilla versátil para mujer que sirve para todo tipo de entrenamiento. La espuma PWRRUN+ es cómoda y la malla transpirable es ligera.',
     caracteristicas: ['Amortiguación PWRRUN+ para mayor confort', 'Malla transpirable y ligera', 'Ideal para todo tipo de entrenamientos'],
@@ -356,7 +356,7 @@ const PRODUCTOS = [
   {
     id: 'zm07', nombre: 'Hoka Clifton 9 Mujer', categoria: 'calzado', publico: 'Mujer', precio: 129.99,
     etiqueta: '',
-    tallas: ['35', '36', '37', '38', '39', '40', '41'],
+    tallas: ['36', '36.5', '37', '37.5', '38', '38.5', '39', '40'],
     vistas: ['vista principal', 'detalle de la puntera', 'detalle del talón'],
     descripcion: 'Zapatilla muy suave y liviana para mujer, ideal para largas distancias y recuperación. Su suela de EVA es flexible y amortigua cada paso.',
     caracteristicas: ['Amortiguación máxima con suela EVA', 'Gran ligereza y flexibilidad', 'Ideal para largas distancias y recuperación'],
@@ -366,7 +366,7 @@ const PRODUCTOS = [
   {
     id: 'zm08', nombre: 'Brooks Ghost 16 Mujer', categoria: 'calzado', publico: 'Mujer', precio: 119.99,
     etiqueta: '',
-    tallas: ['35', '36', '37', '38', '39', '40', '41'],
+    tallas: ['36', '36.5', '37', '37.5', '38', '38.5', '39', '40'],
     vistas: ['vista principal', 'detalle de la puntera', 'detalle del talón'],
     descripcion: 'Zapatilla equilibrada para mujer con transiciones suaves y estables. La espuma DNA LOFT es excelente para entrenamientos diarios y carreras.',
     caracteristicas: ['Amortiguación DNA LOFT', 'Transiciones suaves y estables', 'Excelente para entrenamientos diarios y carreras'],
@@ -376,7 +376,7 @@ const PRODUCTOS = [
   {
     id: 'zm09', nombre: 'ASICS GT-2000 13 Mujer', categoria: 'calzado', publico: 'Mujer', precio: 129.99,
     etiqueta: '',
-    tallas: ['35', '36', '37', '38', '39', '40', '41'],
+    tallas: ['36', '36.5', '37', '37.5', '38', '38.5', '39', '40'],
     vistas: ['vista principal', 'detalle de la puntera', 'detalle del talón'],
     descripcion: 'Zapatilla de soporte para corredoras con pronación. El sistema Dynamic DUOMAX guía la pisada y la amortiguación FF Blast+ protege las articulaciones.',
     caracteristicas: ['Soporte Dynamic DUOMAX para mayor estabilidad', 'Amortiguación FF Blast+', 'Ideal para corredoras con pronación'],
@@ -386,7 +386,7 @@ const PRODUCTOS = [
   {
     id: 'zm10', nombre: 'Under Armour Infinite Elite Mujer', categoria: 'calzado', publico: 'Mujer', precio: 124.99,
     etiqueta: '',
-    tallas: ['35', '36', '37', '38', '39', '40', '41'],
+    tallas: ['36', '36.5', '37', '37.5', '38', '38.5', '39', '40'],
     vistas: ['vista principal', 'detalle de la puntera', 'detalle del talón'],
     descripcion: 'Zapatilla cómoda para mujer con espuma HOVR que devuelve energía. Ligera y transpirable, sirve para entrenamientos y competencias.',
     caracteristicas: ['Amortiguación HOVR de retorno de energía', 'Malla ligera y transpirable', 'Ideal para entrenamientos y competencias'],

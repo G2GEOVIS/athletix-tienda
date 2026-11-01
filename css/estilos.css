@@ -882,9 +882,6 @@ fieldset.panel { margin: 0; min-width: 0; }
 .opciones-correo { display: grid; gap: .6rem; margin-top: 1rem; }
 .formas-pago { border: 0; padding: 0; margin: 0 0 .5rem; display: grid; gap: .6rem; }
 .formas-pago .opcion--caja { align-items: flex-start; }
-.fila-fav { grid-template-columns: 3.5rem 1fr; align-items: center; column-gap: .75rem; }
-.fila-fav img { grid-row: span 2; width: 3.5rem; height: 3.5rem; object-fit: cover; border-radius: .5rem; background: var(--gris); }
-.fila-fav label { font-weight: 700; }
 /* Perfil: nombre completo del cliente */
 .cliente-tarjeta { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--gris); }
 .cliente-tarjeta__avatar { flex-shrink: 0; display: grid; place-items: center; width: 3.5rem; height: 3.5rem; border-radius: 50%; background: var(--azul); color: #fff; font-weight: 800; font-size: 1.25rem; }
@@ -893,8 +890,7 @@ fieldset.panel { margin: 0; min-width: 0; }
 .cliente-tarjeta .texto-suave { margin: .15rem 0 0; overflow-wrap: anywhere; }
 .insignia-rol { display: inline-block; vertical-align: middle; margin-left: .35rem; padding: .1rem .55rem; border-radius: 999px; background: var(--verde); color: #fff; font-size: .75rem; font-weight: 700; }
 .cuenta__quien { display: grid; gap: .1rem; padding: .6rem .9rem .7rem; border-bottom: 1px solid var(--borde); margin-bottom: .25rem; }
-.cuenta__quien strong { overflow-wrap: anywhere; }
-.cuenta__quien span { font-size: .85rem; color: var(--texto-suave); overflow-wrap: anywhere; }
+.cuenta__quien span { font-size: .85rem; color: var(--texto-suave); }
 .admin-productos { list-style: none; display: grid; gap: .5rem; margin: 0; padding: 0; }
 .admin-productos li { display: flex; align-items: center; gap: .75rem; }
 .admin-productos img, .admin-productos__sin { flex-shrink: 0; width: 4rem; height: 4rem; object-fit: cover; border-radius: .5rem; background: var(--gris); border: 1px solid var(--borde); }
@@ -924,3 +920,18 @@ fieldset.panel { margin: 0; min-width: 0; }
 .campo-telefono__codigo { display: grid; place-items: center; padding: 0 .8rem; border: 1.5px solid var(--borde-fuerte); border-right: 0; border-radius: var(--radio-sm) 0 0 var(--radio-sm); background: var(--gris); font-weight: 700; font-size: 1.05rem; }
 .campo-telefono__codigo:not([hidden]) + input { border-top-left-radius: 0; border-bottom-left-radius: 0; }
 .formulario__fila--doble > .campo > .campo-telefono { grid-row: 3; align-self: start; }
+.fav-talla { padding: 1rem 0; border-bottom: 1px solid var(--borde); }
+.fav-talla:first-of-type { padding-top: 0; }
+.fav-talla__producto { display: flex; align-items: center; gap: .75rem; margin-bottom: .75rem; }
+.fav-talla__producto img { width: 4rem; height: 4rem; object-fit: cover; border-radius: .5rem; background: var(--gris); flex-shrink: 0; }
+.fav-talla legend { float: none; font-weight: 700; padding: 0; }
+.talla--no span { min-width: auto; font-weight: 600; color: var(--texto-suave); }
+.fav-guia { margin-top: .5rem; }
+.fav-guia summary { display: inline-flex; align-items: center; gap: .4rem; cursor: pointer; font-weight: 600; color: var(--verde); min-height: 2.75rem; }
+.fav-guia summary svg { width: 1.2rem; height: 1.2rem; }
+.fav-guia[open] summary { margin-bottom: .5rem; }
+/* Encabezado: el nombre se lee completo; el correo del menú se corta solo en el @ o en los puntos */
+.cuenta__boton { max-width: 16rem; }
+.cuenta__menu { min-width: 15rem; width: max-content; max-width: min(22rem, calc(100vw - 2rem)); }
+.cuenta__quien strong, .cuenta__quien span { overflow-wrap: normal; word-break: normal; }
+.cuenta__quien span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; display: block; }

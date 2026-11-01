@@ -71,6 +71,7 @@ js/validaciones.js       Cédula, nombres, celular, correo, contraseña, direcci
 js/factura.js            Factura en PDF (carga jsPDF solo cuando hace falta)
 js/vendor/jspdf.umd.min.js  Librería jsPDF 2.5.2
 supabase/functions/correo-compra/index.ts  Envía el correo de compra con la factura adjunta (secretos GMAIL_USUARIO y GMAIL_CLAVE_APP)
+correos/plantilla-cliente-emailjs.html  Copia de la plantilla de EmailJS para los correos de estado
 js/api.js                Acceso a Supabase y EmailJS con errores en español
 js/core.js               Estado, utilidades y componentes de formularios
 js/vistas-tienda.js      Inicio, catálogo, producto, reseñas y carrito

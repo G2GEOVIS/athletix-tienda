@@ -361,39 +361,89 @@ const Api = (() => {
       return { error: 'No se pudo enviar el correo' + (e && e.text ? ` (${e.text})` : '') + '.' };
     }
   };
-  /* Partes comunes de los correos al cliente */
+  /* ---------- Partes comunes de los correos al cliente ---------- */
   const BASE = () => location.origin + location.pathname.replace(/[^/]*$/, '');
   const enlaceOrden = (id) => `${BASE()}orden.html?pedido=${id}`;
   const h = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const plata = (n) => '$' + Number(n || 0).toFixed(2);
-  const CELDA = 'padding:10px 8px;border-bottom:1px solid #dde3ea;';
-  // En la tienda se verifica la cédula con el número de pedido (o el código de retiro)
-  const cajaRetiro = (numero, codigo, tienda, horario, nota) => `<div style="margin:20px 0;padding:14px 16px;background:#E6F4F2;border-left:4px solid #0F766E;border-radius:6px;line-height:1.6">
-      <b>Retiro en local físico:</b> ${h(tienda)}<br>${horario ? `<b>Horario:</b> ${h(horario)}<br>` : ''}<b>Número de pedido:</b> ${h(numero)}<br>${codigo ? `<b>Código de retiro:</b> <span style="font-size:18px;font-weight:bold;letter-spacing:2px">${h(codigo)}</span><br>` : ''}Presenta tu <b>cédula</b> y tu <b>número de pedido</b> (o el código de retiro) en la tienda.${nota ? ' ' + nota : ''}
+  const absoluta = (src) => { try { return new URL(src, BASE()).href; } catch (e) { return ''; } };
+  const horaCorta = (iso) => (iso ? new Date(iso).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' }) : '');
+  const CORREO_TIENDA = 'geovannymorocho621@gmail.com';
+  const VERDE = '#0F766E', NARANJA = '#F97316', GRIS = '#DDE3EA', SUAVE = '#45556B';
+
+  // Barra de avance del pedido (como en las tiendas en línea): 1 recibido, 2 preparando, 3 listo, 4 retirado, 5 todo completo
+  const progreso = (paso) => {
+    const pasos = ['Recibido', 'Preparando', 'Listo para retirar', 'Retirado'];
+    return `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:4px 0 20px;table-layout:fixed"><tr>${pasos.map((t, i) => {
+      const n = i + 1; const color = n < paso ? VERDE : n === paso ? NARANJA : GRIS;
+      return `<td style="padding:0 3px;text-align:center;vertical-align:top"><div style="height:6px;border-radius:3px;background:${color}"></div><div style="margin-top:6px;font-size:11px;line-height:1.3;color:${n <= paso ? '#1E293B' : SUAVE};font-weight:${n === paso ? 'bold' : 'normal'}">${n < paso ? '✓ ' : ''}${t}</div></td>`;
+    }).join('')}</tr></table>`;
+  };
+
+  // Detalle con foto de cada producto y totales
+  const tablaDetalle = (items, t) => {
+    const celda = `padding:10px 6px;border-bottom:1px solid ${GRIS};vertical-align:middle;`;
+    const filas = items.map((it) => `<tr>
+      <td style="${celda}width:60px">${it.foto ? `<img src="${it.foto}" alt="" width="56" height="56" style="display:block;width:56px;height:56px;object-fit:cover;border-radius:6px;background:#F3F5F7">` : ''}</td>
+      <td style="${celda}font-size:14px"><b>${h(it.nombre)}</b><br><span style="color:${SUAVE};font-size:13px">${it.talla ? `Talla ${h(it.talla)} · ` : ''}${it.cantidad} × ${plata(it.precio)}</span></td>
+      <td style="${celda}text-align:right;font-size:14px;white-space:nowrap">${plata(it.precio * it.cantidad)}</td></tr>`).join('');
+    return `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;color:#1E293B">${filas}
+      <tr><td></td><td style="padding:8px 6px 2px;text-align:right;font-size:14px">Subtotal</td><td style="padding:8px 6px 2px;text-align:right;font-size:14px">${plata(t.subtotal)}</td></tr>
+      <tr><td></td><td style="padding:2px 6px;text-align:right;font-size:14px">IVA 15 %</td><td style="padding:2px 6px;text-align:right;font-size:14px">${plata(t.iva)}</td></tr>
+      <tr><td></td><td style="padding:2px 6px;text-align:right;font-size:14px">Retiro en tienda</td><td style="padding:2px 6px;text-align:right;font-size:14px;color:${VERDE}">Gratis</td></tr>
+      <tr><td></td><td style="padding:8px 6px;text-align:right;font-size:17px;font-weight:bold">Total pagado</td><td style="padding:8px 6px;text-align:right;font-size:17px;font-weight:bold">${plata(t.total)}</td></tr></table>`;
+  };
+
+  // Datos del retiro: tienda con dirección y mapa, horario, número de pedido y código
+  const cajaRetiro = ({ numero, codigo, tienda, nota = '' }) => {
+    const mapa = tienda.direccion ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${tienda.nombre} ${tienda.direccion} ${tienda.ciudad || ''}`)}` : '';
+    return `<div style="margin:20px 0;padding:16px;background:#E6F4F2;border-left:4px solid ${VERDE};border-radius:6px;line-height:1.6;font-size:14px">
+      <div style="font-size:15px;font-weight:bold;margin-bottom:6px">📍 Retiro en local físico</div>
+      <b>${h(tienda.nombre)}</b>${tienda.direccion ? `<br>${h(tienda.direccion)}${tienda.ciudad ? `, ${h(tienda.ciudad)}` : ''}` : ''}${mapa ? ` · <a href="${mapa}" style="color:${VERDE};font-weight:bold">Ver en el mapa</a>` : ''}
+      ${tienda.horario ? `<br><b>Horario:</b> ${h(tienda.horario)}` : ''}
+      <br><b>Número de pedido:</b> ${h(numero)}
+      ${codigo ? `<br><b>Código de retiro:</b> <span style="font-size:20px;font-weight:bold;letter-spacing:3px;color:#0B1F3A">${h(codigo)}</span>` : ''}
+      ${nota ? `<br>${nota}` : ''}
     </div>`;
-  const plantillaCorreo = ({ nombre, parrafo, detalle = '', caja = '', extra = '', boton, icono = '' }) => `<div style="background:#F3F5F7;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;color:#1E293B">
-<div style="max-width:620px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #dde3ea">
+  };
+  const queLlevar = () => `<div style="margin:0 0 18px;font-size:14px;line-height:1.7"><b>Para retirar trae:</b><br>
+    ✔ Tu <b>cédula</b> (el pedido está a tu nombre)<br>✔ Tu <b>número de pedido</b> o el <b>código de retiro</b> (puedes mostrar este correo)<br>✔ Revisa tus productos en el mostrador antes de irte</div>`;
+  const ayuda = () => `<p style="margin:18px 0 0;font-size:13px;color:${SUAVE};line-height:1.5">¿Tienes dudas? Responde a este correo, escríbenos a <a href="mailto:${CORREO_TIENDA}" style="color:${VERDE}">${CORREO_TIENDA}</a> o visita nuestra <a href="${BASE()}ayuda.html" style="color:${VERDE}">sección de Ayuda</a>.</p>`;
+  const botonHtml = ([texto, url], principal = true) => `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 8px 8px 0;display:inline-table"><tr><td style="background:${principal ? VERDE : '#ffffff'};border:2px solid ${VERDE};border-radius:6px"><a href="${url}" style="display:inline-block;color:${principal ? '#ffffff' : VERDE};text-decoration:none;padding:10px 20px;font-weight:bold;font-size:15px">${h(texto)}</a></td></tr></table>`;
+
+  const plantillaCorreo = ({ nombre, titulo, parrafo, paso = 0, cuerpo = '', boton, boton2, pie = '' }) => `<div style="background:#F3F5F7;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;color:#1E293B">
+<div style="max-width:620px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid ${GRIS}">
   <div style="background:#0B1F3A;padding:20px 24px;color:#ffffff"><div style="font-size:24px;font-weight:bold;font-style:italic">ATHLETIX</div><div style="font-size:13px;opacity:.85">Tienda deportiva en línea</div></div>
   <div style="padding:24px">
-    ${icono ? `<div style="font-size:34px;line-height:1;margin:0 0 12px">${icono}</div>` : ''}<p style="margin:0 0 12px;font-size:16px">Hola ${h(nombre)},</p>
-    <p style="margin:0 0 16px;line-height:1.5">${parrafo}</p>
-    ${detalle}${caja}
-    ${extra ? `<div style="margin:0 0 18px;line-height:1.5">${extra}</div>` : ''}
-    ${boton ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0"><tr><td style="background:#0F766E;border-radius:6px"><a href="${boton[1]}" style="display:inline-block;color:#ffffff;text-decoration:none;padding:12px 22px;font-weight:bold;font-size:15px">${h(boton[0])}</a></td></tr></table>
-    <p style="margin:12px 0 0;font-size:12px;color:#45556B">Si el botón no abre, copia este enlace en tu navegador: <a href="${boton[1]}" style="color:#0F766E">${boton[1]}</a></p>` : ''}
+    ${titulo ? `<h1 style="margin:0 0 14px;font-size:22px;line-height:1.3;color:#0B1F3A">${titulo}</h1>` : ''}
+    ${paso ? progreso(paso) : ''}
+    <p style="margin:0 0 12px;font-size:16px">Hola ${h(nombre)},</p>
+    <p style="margin:0 0 16px;line-height:1.55">${parrafo}</p>
+    ${cuerpo}
+    ${boton ? `<div style="margin:6px 0 0">${botonHtml(boton)}${boton2 ? botonHtml(boton2, false) : ''}</div>
+    <p style="margin:10px 0 0;font-size:12px;color:${SUAVE}">Si el botón no abre, copia este enlace en tu navegador: <a href="${boton[1]}" style="color:${VERDE}">${boton[1]}</a></p>` : ''}
+    ${ayuda()}
   </div>
-  <div style="padding:14px 24px;background:#F3F5F7;font-size:12px;color:#45556B">Te escribimos porque hiciste un pedido en ATHLETIX. Pago simulado, sin cobro real.</div>
+  <div style="padding:14px 24px;background:#F3F5F7;font-size:12px;color:${SUAVE};line-height:1.5">${pie || 'Te escribimos porque hiciste un pedido en ATHLETIX.'} Pago simulado, sin cobro real.</div>
 </div></div>`;
-  // Productos de un pedido (para los botones de reseña); el administrador puede leer el detalle de cualquier pedido
-  async function productosDelPedido(numero) {
-    if (!sb) return [];
-    const r = await ejecutar(sb.from('detalle_pedido').select('prd_codigo').eq('ped_numero', numero));
-    if (r.error || !r.datos) return [];
-    const vistos = new Set();
-    return r.datos.filter((d) => !vistos.has(d.prd_codigo) && vistos.add(d.prd_codigo)).map((d) => {
-      const pr = typeof productoPorDbId === 'function' ? productoPorDbId(d.prd_codigo) : null;
-      return { id: pr ? pr.id : d.prd_codigo, nombre: pr ? pr.nombre : d.prd_codigo };
-    });
+
+  // Datos del pedido para los correos: totales, hora estimada, tienda y productos (el administrador puede leer cualquier pedido)
+  async function datosPedidoCorreo(numero) {
+    const vacio = { items: [], tienda: {}, subtotal: 0, iva: 0, total: 0, horaEstimada: '' };
+    if (!sb) return vacio;
+    const [rp, rd] = await Promise.all([
+      ejecutar(sb.from('pedido').select('ped_subtotal, ped_iva, ped_total, ped_hora_estimada, tienda(tie_nombre, tie_direccion, tie_ciudad, tie_horario)').eq('ped_numero', numero).maybeSingle()),
+      ejecutar(sb.from('detalle_pedido').select('prd_codigo, dpe_talla, dpe_cantidad, dpe_precio').eq('ped_numero', numero))
+    ]);
+    const p = rp.datos || {}; const t = p.tienda || {};
+    return {
+      subtotal: p.ped_subtotal, iva: p.ped_iva, total: p.ped_total, horaEstimada: p.ped_hora_estimada,
+      tienda: { nombre: t.tie_nombre || '', direccion: t.tie_direccion || '', ciudad: t.tie_ciudad || '', horario: t.tie_horario || '' },
+      items: (rd.datos || []).map((d) => {
+        const pr = typeof productoPorDbId === 'function' ? productoPorDbId(d.prd_codigo) : null;
+        return { id: pr ? pr.id : d.prd_codigo, nombre: pr ? pr.nombre : d.prd_codigo, foto: pr ? absoluta(img(pr)) : '', talla: d.dpe_talla === 'U' ? '' : d.dpe_talla, cantidad: d.dpe_cantidad, precio: Number(d.dpe_precio) };
+      })
+    };
   }
   // Envía por el Gmail de la tienda (función de Supabase). Devuelve null si no se pudo, para usar EmailJS.
   async function porGmail(cuerpo) {
@@ -406,28 +456,30 @@ const Api = (() => {
       return !error && data && data.ok ? { datos: true } : null;
     } catch (e) { return null; }
   }
+  // Tabla sencilla para el correo de respaldo de EmailJS
+  const detalleRespaldo = (items, t) => tablaDetalle(items.map((x) => ({ ...x, foto: '' })), t);
+
   const correo = {
     configurado() { return !!(window.emailjs && CONFIG.emailjs.servicio && CONFIG.emailjs.plantillaCliente && CONFIG.emailjs.clavePublica); },
-    /* Al cliente, apenas paga: detalle de lo que pidió y la factura en PDF adjunta.
+    /* Al cliente, apenas paga: detalle de lo que pidió, datos del retiro y la factura en PDF adjunta.
        Sale desde el Gmail de la tienda con la función "correo-compra" de Supabase (EmailJS gratis no adjunta archivos);
        si la función falla, se envía igual por EmailJS con el detalle, pero sin el PDF. */
     async compraConfirmada(p) {
       const enlace = enlaceOrden(p.id);
-      const filas = (p.items || []).map((it) => `<tr><td style="${CELDA}">${h(it.nombre)}${it.talla ? `<br><span style="color:#45556B;font-size:13px">Talla ${h(it.talla)}</span>` : ''}</td><td style="${CELDA}text-align:center">${it.cantidad}</td><td style="${CELDA}text-align:right">${plata(it.precio)}</td><td style="${CELDA}text-align:right">${plata(it.precio * it.cantidad)}</td></tr>`).join('');
-      const detalle = `<table role="presentation" style="width:100%;border-collapse:collapse;font-size:14px;color:#1E293B">
-        <tr style="background:#F3F5F7"><th style="padding:10px 8px;text-align:left">Producto</th><th style="padding:10px 8px">Cant.</th><th style="padding:10px 8px;text-align:right">Precio</th><th style="padding:10px 8px;text-align:right">Subtotal</th></tr>${filas}
-        <tr><td colspan="3" style="padding:6px 8px;text-align:right">Subtotal</td><td style="padding:6px 8px;text-align:right">${plata(p.subtotal)}</td></tr>
-        <tr><td colspan="3" style="padding:6px 8px;text-align:right">IVA 15 %</td><td style="padding:6px 8px;text-align:right">${plata(p.iva)}</td></tr>
-        <tr><td colspan="3" style="padding:6px 8px;text-align:right">Retiro en tienda</td><td style="padding:6px 8px;text-align:right">Gratis</td></tr>
-        <tr><td colspan="3" style="padding:10px 8px;text-align:right;font-weight:bold;font-size:17px">Total pagado</td><td style="padding:10px 8px;text-align:right;font-weight:bold;font-size:17px">${plata(p.total)}</td></tr></table>`;
+      const d = await datosPedidoCorreo(p.id);
+      const items = (p.items || []).map((it) => { const pr = typeof productoPorDbId === 'function' ? productoPorDbId(it.codigo) : null; return { ...it, foto: pr ? absoluta(img(pr)) : '' }; });
+      const totales = { subtotal: p.subtotal, iva: p.iva, total: p.total };
+      const tienda = d.tienda.nombre ? d.tienda : { nombre: p.tienda, horario: p.horario };
+      const listo = d.horaEstimada ? ` (aprox. a las ${horaCorta(d.horaEstimada)})` : '';
       const asunto = `Pedido ${p.numero} confirmado · código de retiro ${p.codigo}`;
       const html = plantillaCorreo({
-        nombre: p.nombre,
-        parrafo: `¡Gracias por tu compra! Tu pago con ${h(p.pagoTexto)} fue aprobado. Este es el resumen de tu pedido <b>${h(p.numero)}</b>:`,
-        detalle,
-        caja: cajaRetiro(p.numero, p.codigo, p.tienda, p.horario, `Tu pedido estará listo en menos de ${h(ENTREGA.retiro)}.`),
-        extra: `Adjuntamos tu factura en PDF (N.º ${h(p.numeroFactura)}).`,
-        boton: ['Ver mi orden de pedido', enlace]
+        nombre: p.nombre, titulo: '¡Gracias por tu compra! 🎉', paso: 1,
+        parrafo: `Recibimos tu pedido <b>${h(p.numero)}</b> y tu pago con ${h(p.pagoTexto)} fue aprobado. Este es el detalle:`,
+        cuerpo: `${tablaDetalle(items, totales)}
+          ${cajaRetiro({ numero: p.numero, codigo: p.codigo, tienda, nota: `Estará listo en menos de ${h(ENTREGA.retiro)}${listo}. Te avisaremos por correo.` })}
+          <div style="margin:0 0 18px;font-size:14px;line-height:1.7"><b>¿Qué sigue?</b><br>1. Preparamos tus productos.<br>2. Te escribimos cuando esté <b>listo para retirar</b>.<br>3. Vas a la tienda con tu cédula y tu número de pedido.</div>
+          <p style="margin:0 0 16px;font-size:14px">📄 Adjuntamos tu <b>factura en PDF</b> (N.º ${h(p.numeroFactura)}).</p>`,
+        boton: ['Ver mi orden de pedido', enlace], boton2: ['Mis pedidos', `${BASE()}pedidos.html`]
       });
       const r = await porGmail({ tipo: 'compra', pedido: p.id, asunto, html, pdf: p.factura || '', archivo: `Factura-${p.numeroFactura}.pdf` });
       if (r) return r;
@@ -435,42 +487,69 @@ const Api = (() => {
         to_email: p.correo, nombre: p.nombre, numero: p.numero, tienda: p.tienda, horario: p.horario, total: Number(p.total).toFixed(2),
         asunto, enlace,
         mensaje: `Gracias por tu compra. Tu pago con ${p.pagoTexto} fue aprobado. Retira tu pedido en ${p.tienda} con tu cédula y tu número de pedido ${p.numero} (código de retiro ${p.codigo}). Descarga tu factura en PDF desde tu orden de pedido.`,
-        detalle_html: detalle
+        detalle_html: detalleRespaldo(items, totales)
       });
     },
     /* Al cliente, cada vez que el administrador cambia el estado de su pedido (desde el Gmail de la tienda).
-       Son avisos cortos y distintos; solo el de "listo para retirar" repite los datos del retiro.
+       Cada estado tiene su propio mensaje; el detalle del pedido solo va en la compra y en "listo para retirar".
        El de "retirado" trae un botón por producto que abre directo el formulario de reseña. */
     async pedidoActualizado(p, estadoNuevo) {
       const enlace = enlaceOrden(p.id);
       const nombre = String(p.cliente || '').split(' ')[0];
-      let asunto, html, texto;
+      const d = await datosPedidoCorreo(p.id);
+      const tienda = d.tienda.nombre ? d.tienda : { nombre: p.tienda, horario: p.horario };
+      let asunto, html, texto, detalle = '';
       if (estadoNuevo === 'Preparando') {
+        const hora = horaCorta(d.horaEstimada || p.horaEstimada);
         asunto = `Estamos preparando tu pedido ${p.numero}`;
-        texto = `Ya empezamos a preparar tu pedido ${p.numero}. Te avisaremos por este medio apenas esté listo para retirar.`;
-        html = plantillaCorreo({ nombre, parrafo: `Ya empezamos a preparar tu pedido <b>${h(p.numero)}</b>. Te avisaremos por este medio apenas esté listo para retirar.`, boton: ['Ver mi pedido', enlace], icono: '📦' });
+        texto = `Ya empezamos a preparar tu pedido ${p.numero}${hora ? `; estará listo aprox. a las ${hora}` : ''}. Te avisaremos cuando puedas retirarlo.`;
+        html = plantillaCorreo({
+          nombre, titulo: 'Estamos preparando tu pedido 📦', paso: 2,
+          parrafo: `Nuestro equipo ya está alistando tu pedido <b>${h(p.numero)}</b> en <b>${h(tienda.nombre)}</b>.`,
+          cuerpo: `<div style="margin:0 0 18px;padding:14px 16px;background:#FFF7ED;border-left:4px solid ${NARANJA};border-radius:6px;font-size:14px;line-height:1.6">⏱️ ${hora ? `Estará listo aproximadamente a las <b>${hora}</b>.` : `Estará listo en menos de ${h(ENTREGA.retiro)}.`}<br>No necesitas hacer nada: te enviaremos otro correo cuando puedas retirarlo.</div>`,
+          boton: ['Ver mi pedido', enlace]
+        });
       } else if (estadoNuevo === 'Listo') {
-        asunto = `Tu pedido ${p.numero} está listo para retirar`;
-        texto = `Tu pedido ${p.numero} ya está listo. Retíralo en ${p.tienda} presentando tu cédula y tu número de pedido.`;
-        html = plantillaCorreo({ nombre, parrafo: `¡Buenas noticias! Tu pedido <b>${h(p.numero)}</b> ya está listo. Te esperamos en la tienda.`, caja: cajaRetiro(p.numero, p.codigoRetiro, p.tienda, p.horario, ''), boton: ['Ver mi orden de pedido', enlace], icono: '✅' });
+        asunto = `✅ Tu pedido ${p.numero} está listo para retirar`;
+        texto = `Tu pedido ${p.numero} ya está listo. Retíralo en ${tienda.nombre} presentando tu cédula y tu número de pedido.`;
+        detalle = d.items.length ? tablaDetalle(d.items, d) : '';
+        html = plantillaCorreo({
+          nombre, titulo: '¡Tu pedido está listo para retirar! ✅', paso: 3,
+          parrafo: `Tu pedido <b>${h(p.numero)}</b> ya te espera en la tienda. Esto es lo que vas a retirar:`,
+          cuerpo: `${detalle}${cajaRetiro({ numero: p.numero, codigo: p.codigoRetiro, tienda })}${queLlevar()}`,
+          boton: ['Ver mi orden de pedido', enlace]
+        });
       } else if (estadoNuevo === 'Retirado') {
-        asunto = `Gracias por retirar tu pedido ${p.numero}`;
+        asunto = `Gracias por retirar tu pedido ${p.numero} · cuéntanos qué te pareció`;
         texto = `Registramos el retiro de tu pedido ${p.numero}. ¡Gracias por comprar en ATHLETIX! Cuéntanos qué te pareció.`;
-        const productos = await productosDelPedido(p.id);
-        const botones = productos.length
-          ? `<p style="margin:0 0 10px;font-weight:bold">¿Qué te pareció? Califica tu compra:</p>${productos.map((x) => `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 10px;width:100%;border:1px solid #dde3ea;border-radius:8px"><tr><td style="padding:10px 12px;font-size:14px">${h(x.nombre)}</td><td style="padding:10px 12px;text-align:right"><a href="${BASE()}producto.html?id=${encodeURIComponent(x.id)}&resenar=1" style="display:inline-block;background:#F97316;color:#ffffff;text-decoration:none;padding:9px 14px;border-radius:6px;font-weight:bold;font-size:14px">★ Dejar reseña</a></td></tr></table>`).join('')}`
-          : '';
-        html = plantillaCorreo({ nombre, parrafo: `Registramos el retiro de tu pedido <b>${h(p.numero)}</b>. ¡Gracias por comprar en ATHLETIX! Tu opinión ayuda a otros clientes a elegir.`, extra: botones, boton: productos.length ? null : ['Dejar mi reseña', `${BASE()}pedidos.html`], icono: '🙌' });
+        const vistos = new Set(); const productos = d.items.filter((x) => !vistos.has(x.id) && vistos.add(x.id));
+        const resenas = productos.length ? `<p style="margin:0 0 10px;font-weight:bold">⭐ ¿Qué te pareció? Califica tu compra:</p>${productos.map((x) => `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 10px;width:100%;border:1px solid ${GRIS};border-radius:8px"><tr>
+            <td style="padding:8px;width:56px">${x.foto ? `<img src="${x.foto}" alt="" width="48" height="48" style="display:block;width:48px;height:48px;object-fit:cover;border-radius:6px">` : ''}</td>
+            <td style="padding:8px;font-size:14px"><b>${h(x.nombre)}</b></td>
+            <td style="padding:8px 12px;text-align:right"><a href="${BASE()}producto.html?id=${encodeURIComponent(x.id)}&resenar=1" style="display:inline-block;background:${NARANJA};color:#ffffff;text-decoration:none;padding:9px 14px;border-radius:6px;font-weight:bold;font-size:14px;white-space:nowrap">★ Dejar reseña</a></td></tr></table>`).join('')}
+            <p style="margin:4px 0 18px;font-size:13px;color:${SUAVE}">Tu reseña aparece con la marca «Compra verificada» y ayuda a otros clientes a elegir.</p>` : '';
+        html = plantillaCorreo({
+          nombre, titulo: '¡Gracias por retirar tu pedido! 🙌', paso: 5,
+          parrafo: `Registramos el retiro de tu pedido <b>${h(p.numero)}</b> en <b>${h(tienda.nombre)}</b>. ¡Esperamos que disfrutes tus productos!`,
+          cuerpo: `${resenas}<p style="margin:0 0 16px;font-size:14px">📄 Tu factura sigue disponible en tu orden de pedido, por si la necesitas.</p>`,
+          boton: productos.length ? ['Seguir comprando', `${BASE()}productos.html`] : ['Dejar mi reseña', `${BASE()}pedidos.html`],
+          boton2: ['Ver mi orden de pedido', enlace]
+        });
       } else if (estadoNuevo === 'Cancelado') {
         asunto = `Tu pedido ${p.numero} fue cancelado`;
-        texto = `Tu pedido ${p.numero} fue cancelado y el pago simulado quedó anulado. Si tienes dudas, escríbenos desde la sección Ayuda.`;
-        html = plantillaCorreo({ nombre, parrafo: `Tu pedido <b>${h(p.numero)}</b> fue cancelado y el pago simulado quedó anulado. Si tienes dudas, escríbenos desde la sección Ayuda.`, boton: ['Ir a Ayuda', `${BASE()}ayuda.html`], icono: 'ℹ️' });
+        texto = `Tu pedido ${p.numero} fue cancelado y el pago simulado quedó anulado: no se realizó ningún cobro.`;
+        html = plantillaCorreo({
+          nombre, titulo: 'Tu pedido fue cancelado',
+          parrafo: `Tu pedido <b>${h(p.numero)}</b> fue cancelado.`,
+          cuerpo: `<div style="margin:0 0 18px;padding:14px 16px;background:#F3F5F7;border-left:4px solid ${SUAVE};border-radius:6px;font-size:14px;line-height:1.6">💳 El pago quedó <b>anulado</b>: no se realizó ningún cobro a tu tarjeta.<br>📦 Los productos volvieron a estar disponibles en la tienda, por si quieres pedirlos de nuevo.</div>`,
+          boton: ['Volver a la tienda', `${BASE()}productos.html`], boton2: ['Ir a Ayuda', `${BASE()}ayuda.html`]
+        });
       } else return {};
       const r = await porGmail({ tipo: 'estado', pedido: p.id, asunto, html });
       if (r) return r;
       return enviar(CONFIG.emailjs.plantillaCliente, {
         to_email: p.correo, nombre: p.cliente, numero: p.numero, total: Number(p.total).toFixed(2), tienda: p.tienda, horario: p.horario,
-        asunto, mensaje: texto, enlace, detalle_html: ''
+        asunto, mensaje: texto, enlace, detalle_html: detalle ? detalleRespaldo(d.items, d) : ''
       }).then((x) => (x.error ? { error: x.error + ' El estado sí se guardó.' } : x));
     },
     /* Al administrador, cada vez que un cliente hace un pedido */

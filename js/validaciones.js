@@ -74,33 +74,34 @@ const Validar = (() => {
     return suma % 10 === 0;
   }
 
-  function marcaTarjeta(numero) {
-    if (/^4/.test(numero)) return 'Visa';
-    const dos = Number(numero.slice(0, 2));
-    const cuatro = Number(numero.slice(0, 4));
-    if ((dos >= 51 && dos <= 55) || (cuatro >= 2221 && cuatro <= 2720)) return 'Mastercard';
-    return '';
+  /* Marca de la tarjeta según sus primeros dígitos (rangos públicos de cada red) y largos válidos */
+  const MARCAS = [
+    ['American Express', (n) => /^3[47]/.test(n), [15]],
+    ['Diners Club', (n) => /^3(0[0-5]|[689])/.test(n), [14, 15, 16, 17, 18, 19]],
+    ['JCB', (n) => { const c = Number(n.slice(0, 4)); return c >= 3528 && c <= 3589; }, [16, 17, 18, 19]],
+    ['Visa', (n) => /^4/.test(n), [13, 16, 19]],
+    ['Mastercard', (n) => { const d = Number(n.slice(0, 2)), c = Number(n.slice(0, 4)); return (d >= 51 && d <= 55) || (c >= 2221 && c <= 2720); }, [16]],
+    ['Discover', (n) => /^(6011|65|64[4-9])/.test(n), [16, 17, 18, 19]],
+    ['UnionPay', (n) => /^62/.test(n), [16, 17, 18, 19]],
+    ['Maestro', (n) => /^(50|5[6-9]|6[0-9])/.test(n), [12, 13, 14, 15, 16, 17, 18, 19]]
+  ];
+  function datosMarca(numero) {
+    const n = String(numero || '').replace(/\D/g, '');
+    if (n.length < 2) return null;
+    const m = MARCAS.find(([, prueba]) => prueba(n));
+    return m ? { marca: m[0], largos: m[2] } : null;
   }
-
-  // Tarjetas de prueba oficiales (Stripe y Visa/Mastercard para desarrolladores)
-  const TARJETAS_PRUEBA = {
-    '4242424242424242': 'aprobada', '4000056655665556': 'aprobada', '4111111111111111': 'aprobada', '4012888888881881': 'aprobada',
-    '5555555555554444': 'aprobada', '5200828282828210': 'aprobada', '2223003122003222': 'aprobada', '5105105105105100': 'aprobada',
-    '4000000000000002': 'rechazada', '4000000000009995': 'sin fondos'
-  };
+  function marcaTarjeta(numero) { const d = datosMarca(numero); return d ? d.marca : ''; }
+  const unir = (l) => (l.length === 1 ? String(l[0]) : `${l.slice(0, -1).join(', ')} o ${l[l.length - 1]}`);
 
   function tarjeta(valor) {
     const n = String(valor || '').replace(/\D/g, '');
     if (!n) return 'Escribe el número de la tarjeta.';
-    if (n.length !== 16) return 'El número de la tarjeta debe tener 16 dígitos.';
-    if (!marcaTarjeta(n)) return 'Solo aceptamos tarjetas Visa o Mastercard.';
+    const d = datosMarca(n);
+    if (!d) return 'No reconocemos esta tarjeta. Aceptamos Visa, Mastercard, American Express, Diners Club, Discover, JCB, UnionPay y Maestro.';
+    if (!d.largos.includes(n.length)) return `Una tarjeta ${d.marca} tiene ${unir(d.largos)} dígitos. La tuya tiene ${n.length}.`;
     if (!luhn(n)) return 'El número de la tarjeta no es válido. Revisa que esté bien escrito.';
-    if (!TARJETAS_PRUEBA[n]) return 'Esta es una tienda académica: usa una de las tarjetas de prueba que aparecen abajo. No uses tu tarjeta real.';
     return '';
-  }
-
-  function resultadoTarjeta(valor) {
-    return TARJETAS_PRUEBA[String(valor || '').replace(/\D/g, '')] || 'aprobada';
   }
 
   function vencimiento(valor, hoy = new Date()) {
@@ -133,7 +134,15 @@ const Validar = (() => {
     return '';
   }
 
-  return { cedula, nombre, telefono, correo, clave, tarjeta, resultadoTarjeta, marcaTarjeta, luhn, vencimiento, cvv, titular, texto, TARJETAS_PRUEBA };
+  function direccion(valor) {
+    const v = String(valor || '').trim();
+    if (!v) return 'Escribe tu dirección.';
+    if (v.length < 8) return 'Escribe la dirección completa: calle principal, número y calle secundaria.';
+    if (v.length > 150) return 'La dirección puede tener hasta 150 caracteres.';
+    return '';
+  }
+
+  return { cedula, nombre, telefono, correo, clave, tarjeta, marcaTarjeta, datosMarca, luhn, vencimiento, cvv, titular, direccion, texto };
 })();
 
 if (typeof module !== 'undefined') module.exports = Validar;

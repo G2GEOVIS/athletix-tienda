@@ -24,13 +24,13 @@ function leerEntrega() {
   return e;
 }
 
-/* Explicación del pago simulado (el docente pidió que el cliente sepa cómo paga) */
+/* Explicación de cómo funciona el pago simulado */
 function comoFuncionaPago() {
   return `
     <details class="como-funciona" open>
       <summary>${icono('info')}¿Cómo funciona el pago? (simulación)</summary>
       <ol>
-        <li><strong>Eliges tu tarjeta:</strong> Visa o Mastercard (solo tarjetas de prueba).</li>
+        <li><strong>Eliges tu tarjeta:</strong> Visa, Mastercard, American Express, Diners Club u otra marca reconocida.</li>
         <li><strong>La tienda revisa los datos:</strong> que el número de la tarjeta sea válido (algoritmo de Luhn), la fecha de vencimiento y el CVV.</li>
         <li><strong>Aprobación simulada:</strong> el pago se aprueba al instante. <strong>No se mueve dinero real</strong> ni se contacta a ningún banco.</li>
         <li><strong>Registro en la base de datos:</strong> se guarda el pago con la marca y los últimos 4 dígitos de la tarjeta, el monto, la fecha y el estado.</li>
@@ -77,13 +77,14 @@ async function vistaRetiro() {
           </fieldset>
 
           <section class="panel" aria-labelledby="titulo-quien">
-            <h2 id="titulo-quien">Quién retira</h2>
+            <h2 id="titulo-quien">Quién retira y datos de tu factura</h2>
             <dl class="datos-lista">
               <dt>Nombre</dt><dd>${esc(c.nombres)} ${esc(c.apellidos)}</dd>
               <dt>Cédula</dt><dd>${esc(c.cedula)}</dd>
               <dt>Celular</dt><dd>${esc(c.telefono)}</dd>
               <dt>Correo</dt><dd>${esc(correoSesion())}</dd>
             </dl>
+            <div style="margin-top:1rem">${campo({ id: 'direccion', etiqueta: 'Dirección de domicilio', ayuda: 'Calle principal, número y calle secundaria, ciudad. Aparece en tu factura.', valor: c.direccion || '', max: 150, extra: 'autocomplete="street-address"' })}</div>
             <p class="alerta alerta--info" style="margin-top:1.25rem">${icono('correo')}<span>Al pagar recibes la <strong>orden de pedido</strong> con un código de 6 caracteres. Preséntalo junto con tu cédula al retirar tu pedido en la tienda.</span></p>
           </section>
         </form>
@@ -93,10 +94,19 @@ async function vistaRetiro() {
     montar(main) {
       const form = $('#form-retiro', main);
       activarEnlacesError(form);
-      form.addEventListener('submit', (ev) => {
+      validarAlSalir(form, 'direccion', (v) => Validar.direccion(v));
+      form.addEventListener('submit', async (ev) => {
         ev.preventDefault();
         const tienda = Number(new FormData(form).get('tienda'));
         if (!tienda) { aviso('Elige la tienda donde retirarás tu pedido.', 'error'); return; }
+        // La dirección se guarda en la base (CLIENTE) para la factura
+        const direccion = $('#direccion', form).value.trim().replace(/\s+/g, ' ');
+        if (!validarFormulario(form, [['direccion', Validar.direccion(direccion)]], 'Revisa tus datos:')) return;
+        if (direccion !== (c.direccion || '')) {
+          const r = await conEspera($('button[form="form-retiro"]', main), 'Guardando…', () => Api.cliente.actualizar(c.id, { ...c, direccion }));
+          if (!r || r.error) { if (r) aviso(r.error, 'error'); return; }
+          estado.cliente = r.datos;
+        }
         guardarTemporal('entrega', { tipo: 'Retiro', tienda });
         guardarLocal(claveCuenta(CLAVE_ENTREGA), leerEntrega());
         ir('pago.html');
@@ -195,8 +205,6 @@ async function vistaPago() {
         if (usarNueva()) {
           datosTarjeta = leerTarjeta(form);
           if (!datosTarjeta) return;
-          if (datosTarjeta.resultado === 'rechazada') { validarFormulario(form, [['tarjeta', 'Tu banco rechazó el pago. Prueba con otra tarjeta.']], 'Pago rechazado:'); return; }
-          if (datosTarjeta.resultado === 'sin fondos') { validarFormulario(form, [['tarjeta', 'La tarjeta no tiene fondos suficientes. Prueba con otra tarjeta.']], 'Pago rechazado:'); return; }
         } else {
           if (!validarFormulario(form, [['cvv-g', Validar.cvv(cvvG.value)]], 'Revisa el pago:')) return;
           pago = { tarjeta: Number($('input[name="metodo"]:checked', form).value) };
@@ -229,8 +237,18 @@ async function vistaPago() {
         // Correos de confirmación al cliente y de aviso al administrador (no detienen la compra si fallan).
         // Se esperan como máximo 6 segundos antes de cambiar de página para que alcancen a salir.
         mostrarProcesando(main, true);
+        // Factura en PDF (se adjunta al correo) con el detalle de lo que compró
+        const items = estado.carrito.map((l) => { const pr = producto(l.id); return { codigo: pr.dbId, nombre: pr.nombre, talla: l.talla, cantidad: l.cantidad, precio: pr.precio }; });
+        const datosFactura = {
+          id: fila.id, pedido: fila.numero, fecha: new Date(), codigoRetiro: fila.codigoRetiro, items, pago: textoPago(pago, datosTarjeta),
+          cliente: { ...estado.cliente, correo: correoSesion() }, tienda: { nombre: tienda.nombre, direccion: tienda.direccion },
+          subtotal: subtotalCarrito(), iva: ivaCarrito(), total: Number(fila.total)
+        };
+        let pdf = null;
+        try { pdf = await Promise.race([Factura.generar(datosFactura), new Promise((ok) => setTimeout(() => ok(null), 4000))]); } catch (err) { pdf = null; }
         const correos = Promise.allSettled([
-          Api.correo.compraConfirmada({ correo: correoSesion(), nombre: estado.cliente.nombres, numero: fila.numero, total: fila.total, codigo: fila.codigoRetiro, pagoTexto: textoPago(pago, datosTarjeta), id: fila.id, ...detalleEntrega }),
+          Api.correo.compraConfirmada({ correo: correoSesion(), nombre: estado.cliente.nombres, numero: fila.numero, total: fila.total, codigo: fila.codigoRetiro, pagoTexto: textoPago(pago, datosTarjeta), id: fila.id, ...detalleEntrega,
+            items, subtotal: datosFactura.subtotal, iva: datosFactura.iva, numeroFactura: Factura.numero(fila.id), factura: pdf ? pdf.dataUri : '' }),
           Api.correo.nuevoPedido({
             numero: fila.numero, total: fila.total, tienda: detalleEntrega.tienda,
             cliente: `${estado.cliente.nombres} ${estado.cliente.apellidos}`, cedula: estado.cliente.cedula,
@@ -344,11 +362,12 @@ async function vistaOrden(partes, params) {
     <div class="contenedor pagina">
       <div class="botones-fila no-imprimir" style="margin-bottom:1rem">
         <a class="boton boton--texto" href="${estado.esAdmin && !p.esMio ? 'admin.html' : 'pedidos.html'}">${icono('izquierda')}Volver</a>
-        <button class="boton boton--principal" type="button" id="imprimir">${icono('documento')}Imprimir o guardar en PDF</button>
+        <button class="boton boton--principal" type="button" id="descargar-factura">${icono('documento')}Descargar factura (PDF)</button>
+        <button class="boton boton--secundario" type="button" id="imprimir">${icono('documento')}Imprimir orden</button>
       </div>
       <article class="panel orden-pedido" aria-labelledby="titulo-orden">
         <header class="orden-pedido__cabecera">
-          <div><span class="logo logo--orden" aria-hidden="true">ATHLETIX</span><p class="texto-suave">Tienda deportiva en línea · tienda académica</p></div>
+          <div><span class="logo logo--orden" aria-hidden="true">ATHLETIX</span><p class="texto-suave">Tienda deportiva en línea</p></div>
           <div class="orden-pedido__numero"><h1 id="titulo-orden">Orden de pedido</h1><p><strong>N.º ${esc(p.numero)}</strong></p><p class="texto-suave">${fechaHora(p.creado_en)}</p></div>
         </header>
         <div class="codigo-retiro codigo-retiro--orden">
@@ -361,6 +380,7 @@ async function vistaOrden(partes, params) {
               <dt>Nombre</dt><dd>${esc(cli.nombres)} ${esc(cli.apellidos)}</dd>
               <dt>Cédula</dt><dd>${esc(cli.cedula)}</dd>
               <dt>Celular</dt><dd>${esc(cli.telefono)}</dd>
+              <dt>Dirección</dt><dd>${esc(cli.direccion || '—')}</dd>
               <dt>Correo</dt><dd>${esc(cli.correo || correoSesion())}</dd>
             </dl></section>
           <section aria-labelledby="orden-entrega"><h2 id="orden-entrega">Retiro en tienda</h2>
@@ -384,9 +404,16 @@ async function vistaOrden(partes, params) {
           </table>
         </div>
         <p style="margin-top:1rem"><strong>Pago:</strong> ${esc(p.pagoTexto)} · ${esc(p.pago ? p.pago.estado : '')} · ${p.pago ? fechaHora(p.pago.fecha) : ''}</p>
-        <p class="texto-suave" style="margin-top:.5rem">Pago simulado de una tienda académica: no es una factura ni un comprobante tributario.</p>
+        <p class="texto-suave" style="margin-top:.5rem">Orden de pedido: no reemplaza a la factura, que te llega por correo en PDF.</p>
       </article>
     </div>`,
-    montar(main) { $('#imprimir', main).addEventListener('click', () => window.print()); }
+    montar(main) {
+      $('#imprimir', main).addEventListener('click', () => window.print());
+      const b = $('#descargar-factura', main);
+      b.addEventListener('click', async () => {
+        const r = await conEspera(b, 'Generando…', async () => { try { await Factura.descargar(Factura.desdePedido(p, { ...cli, correo: cli.correo || correoSesion() })); return {}; } catch (e) { return { error: 'No se pudo generar la factura. Intenta de nuevo.' }; } });
+        if (r && r.error) aviso(r.error, 'error');
+      });
+    }
   };
 }

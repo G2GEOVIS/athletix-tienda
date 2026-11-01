@@ -134,14 +134,6 @@ function tituloCatalogo(f) {
 }
 
 function vistaProductos(partes, params) {
-  // Si entra al catálogo sin filtros, se usan los últimos que eligió (guardados en el navegador)
-  let recordados = false;
-  const guardados = leerLocal(CLAVE_FILTROS);
-  if (![...params.keys()].length && typeof guardados === 'string' && guardados) {
-    params = new URLSearchParams(guardados);
-    history.replaceState(null, '', 'productos.html?' + params);
-    recordados = true;
-  }
   const f = filtrar(params);
   const radio = (grupo, valor, texto, actual) =>
     `<label class="opcion"><input type="radio" name="${grupo}" value="${valor}" ${valor === actual ? 'checked' : ''}> ${texto}</label>`;
@@ -155,7 +147,6 @@ function vistaProductos(partes, params) {
         <h1 class="titulo-pagina" id="titulo-catalogo">${tituloCatalogo(f)}</h1>
         <div class="resultados__orden">
           <p class="texto-suave" id="conteo" aria-live="polite">${plural(f.lista.length, 'producto', 'productos')}</p>
-          ${recordados ? `<p class="texto-suave" id="aviso-filtros">Usamos tus últimos filtros. <button class="boton-enlace" type="button" id="ver-todo">Ver todos los productos</button></p>` : ''}
           <label class="orden"><span>Ordenar por</span>
             <select id="orden">${Object.entries(ORDENES).map(([k, [t]]) => `<option value="${k}" ${k === f.orden ? 'selected' : ''}>${t}</option>`).join('')}</select>
           </label>
@@ -203,8 +194,6 @@ function vistaProductos(partes, params) {
         const orden = $('#orden', main).value;
         if (orden !== 'relevancia') p.set('orden', orden);
         history.replaceState(null, '', 'productos.html' + (p.toString() ? '?' + p : ''));
-        const sinBusqueda = new URLSearchParams(p); sinBusqueda.delete('q');
-        guardarLocal(CLAVE_FILTROS, sinBusqueda.toString() || null);
         const f2 = filtrar(p);
         // En entrenamiento se oculta el género y se vuelve a "Todos"
         const grupoGenero = $('#grupo-publico', main);
@@ -222,15 +211,7 @@ function vistaProductos(partes, params) {
       };
       form.addEventListener('change', aplicar);
       $('#orden', main).addEventListener('change', aplicar);
-      const verTodo = () => {
-        guardarLocal(CLAVE_FILTROS, null);
-        history.replaceState(null, '', 'productos.html');
-        render();
-        anunciar('Se muestran todos los productos.');
-      };
-      if ($('#ver-todo', main)) $('#ver-todo', main).addEventListener('click', verTodo);
       $('#limpiar-filtros', main).addEventListener('click', () => {
-        guardarLocal(CLAVE_FILTROS, null);
         history.replaceState(null, '', 'productos.html');
         render();
         anunciar('Filtros limpiados. Se muestran todos los productos.');

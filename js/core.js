@@ -2,12 +2,10 @@
 'use strict';
 
 /* ======================= Estado ======================= */
-// En el navegador (localStorage) se guardan el carrito, los favoritos, los últimos filtros y la última
-// forma de entrega. Las cuentas, pedidos, pagos y reseñas viven en la base de datos.
+// En el navegador (localStorage) se guardan el carrito, los favoritos y la última tienda de retiro. Las cuentas, pedidos, pagos y reseñas viven en la base de datos.
 // Cada cuenta tiene sus propias claves (clave base + id del usuario); sin sesión se usa la clave base.
 const CLAVE_CARRITO = 'athletix-carrito-v2';
 const CLAVE_FAVORITOS = 'athletix-favoritos';
-const CLAVE_FILTROS = 'athletix-ultimos-filtros';
 const CLAVE_ENTREGA = 'athletix-ultima-entrega';
 const estado = {
   carrito: leerCarrito(CLAVE_CARRITO),

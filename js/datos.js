@@ -181,7 +181,7 @@ const PRODUCTOS = [
     ficha: [['Peso', '6 kg'], ['Diámetro', '≈28 cm'], ['Superficie', 'Texturizada antideslizante'], ['Material', 'Caucho reforzado'], ['Uso ideal', 'Abdomen y fuerza funcional']],
     claves: ['balon', 'medicinal', 'pelota', 'abdomen', 'fuerza', 'entrenamiento']
   },
-  /* ---- Catálogo ampliado (fotos recortadas de los catálogos del proyecto) ---- */
+  /* ---- Catálogo ampliado ---- */
   {
     id: 'zh01', nombre: 'Asics Gel-Kayano 31', categoria: 'calzado', publico: 'Hombre', precio: 149.99,
     etiqueta: '',
@@ -718,11 +718,11 @@ const AYUDA = [
   ['¿Cómo compro?', 'Elige un producto (y tu talla si es calzado), agrégalo al carrito, inicia sesión, elige la tienda donde lo retiras y paga con tarjeta.'],
   ['¿Qué necesito para crear mi cuenta?', 'Tu nombre, apellido, cédula ecuatoriana, celular y un correo al que tengas acceso. Te enviaremos un enlace para confirmar el correo antes de tu primera compra. También puedes entrar con tu cuenta de Google y completar tu cédula y celular.'],
   ['No me llega el correo de confirmación', 'Revisa la carpeta de spam o promociones. Si no aparece en unos minutos, en «Iniciar sesión» puedes pedir que te lo enviemos otra vez.'],
-  ['¿Cómo puedo pagar?', 'Solo con tarjeta Visa o Mastercard. Es una simulación: no se mueve dinero real. Usa las tarjetas de prueba que aparecen en la pantalla de pago; validamos el número, la fecha y el CVV, y solo guardamos los últimos 4 dígitos.'],
-  ['¿Entregan factura?', 'No. Esta es una tienda académica y no emite facturas. Recibes una orden de pedido con el detalle de tu compra.'],
+  ['¿Cómo puedo pagar?', 'Con tarjeta de crédito o débito: Visa, Mastercard, American Express, Diners Club, Discover, JCB, UnionPay o Maestro. Validamos el número, la fecha de vencimiento y el CVV. El pago es simulado: no se cobra dinero real, y solo guardamos la marca y los últimos 4 dígitos.'],
+  ['¿Entregan factura?', 'Sí. Al comprar te llega un correo con el detalle de tu pedido y la factura en PDF con tus datos (nombre, cédula, dirección y celular). Es un documento sin validez tributaria.'],
   ['¿Cómo recibo mi pedido?', 'Lo retiras gratis en la tienda que elijas; está listo en 1 hora. Te enviamos la orden de pedido con un código de 6 caracteres: preséntalo en la tienda junto con tu cédula. No hacemos envíos a domicilio.'],
-  ['Privacidad: ¿qué datos guardan?', 'Solo los necesarios para tu cuenta y tus pedidos: nombre, cédula, celular, correo, tus pedidos y los últimos 4 dígitos de las tarjetas de prueba. Tu contraseña se guarda cifrada (bcrypt) y nadie puede verla. Si entras con Google, solo recibimos tu nombre y tu correo. En tu navegador (localStorage) guardamos tu carrito, tus favoritos, tus últimos filtros y la última tienda de retiro que elegiste, separados por cuenta; se borran si limpias los datos del navegador. No vendemos ni compartimos tus datos. Es una tienda académica (PUCE).'],
-  ['Condiciones de uso', 'ATHLETIX es un proyecto académico: las compras y los pagos son simulados, no se cobra dinero real y no se emiten facturas. Usa solo las tarjetas de prueba que aparecen en la pantalla de pago.'],
+  ['Privacidad: ¿qué datos guardan?', 'Solo los necesarios para tu cuenta y tus pedidos: nombre, cédula, dirección, celular, correo, tus pedidos y la marca y últimos 4 dígitos de tus tarjetas. Tu contraseña se guarda cifrada (bcrypt) y nadie puede verla. Si entras con Google, solo recibimos tu nombre y tu correo. En tu navegador (localStorage) guardamos tu carrito, tus favoritos y la última tienda de retiro que elegiste, separados por cuenta; se borran si limpias los datos del navegador. No vendemos ni compartimos tus datos.'],
+  ['Condiciones de uso', 'Los pagos con tarjeta son simulados: no se cobra dinero real. Los pedidos se retiran en la tienda elegida con la cédula y el código de retiro. Una vez pagado, el pedido no se puede modificar.'],
   ['¿Me avisan cuando cambia mi pedido?', 'Sí. Te llega un correo cuando recibimos tu compra y cada vez que tu pedido cambia: en preparación, listo para retirar, retirado o cancelado. También puedes verlo en «Mis pedidos».'],
   ['¿Cómo dejo una reseña?', 'Inicia sesión y entra a «Mis pedidos»: junto a cada producto que compraste está el botón «Escribir reseña». También puedes hacerlo desde la página del producto, en «Opiniones de clientes». La tienda verifica en tu cuenta que compraste ese producto: solo pueden opinar quienes lo compraron, y cada cliente deja una reseña por producto (puede editarla después).'],
   ['¿Puedo cambiar mi pedido después de pagar?', 'No. Antes de pagar puedes cambiar la talla, la cantidad o quitar productos del carrito. Una vez pagado, el pedido no se puede modificar.']

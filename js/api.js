@@ -98,7 +98,7 @@ const Api = (() => {
   /* ---------- Traducción entre la base (columnas CLI_, PRD_, PED_...) y la interfaz ---------- */
   const mapear = (r, fn) => (r.error || !r.datos ? r : { datos: Array.isArray(r.datos) ? r.datos.map(fn) : fn(r.datos) });
   const codigoPedido = (numero, fecha) => `AX-${new Date(fecha).getFullYear()}-${String(numero).padStart(5, '0')}`;
-  const aCliente = (c) => ({ id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_celular, correo: c.cli_correo, creado_en: c.cli_fecha_registro });
+  const aCliente = (c) => ({ id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_celular, direccion: c.cli_direccion || '', correo: c.cli_correo, creado_en: c.cli_fecha_registro });
   const aTarjeta = (t) => ({ id: t.mtp_codigo, marca: t.mtp_marca, ultimos4: t.mtp_ultimos4, titular: t.mtp_titular, mes_vence: t.mtp_mes_vence, anio_vence: t.mtp_anio_vence });
   const CAMPOS_PEDIDO = 'ped_numero, ped_estado, ped_subtotal, ped_iva, ped_total, ped_fecha, ped_codigo_retiro, ped_hora_estimada, '
     + 'tienda(tie_nombre, tie_direccion, tie_horario, tie_ciudad), pago(pag_marca, pag_ultimos4, pag_monto, pag_fecha, pag_estado), '
@@ -114,7 +114,7 @@ const Api = (() => {
       tiendas: p.tienda ? { nombre: p.tienda.tie_nombre, direccion: p.tienda.tie_direccion, horario: p.tienda.tie_horario, ciudad: p.tienda.tie_ciudad } : null,
       pago: g ? { estado: g.pag_estado, fecha: g.pag_fecha, monto: g.pag_monto } : null,
       pagoTexto: textoDePago(g),
-      cliente: c ? { id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_celular, correo: c.cli_correo } : null,
+      cliente: c ? { id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_celular, direccion: c.cli_direccion || '', correo: c.cli_correo } : null,
       detalle_pedido: (p.detalle_pedido || []).map((d) => ({ producto_id: d.prd_codigo, talla: d.dpe_talla === 'U' ? null : d.dpe_talla, cantidad: d.dpe_cantidad, precio_unitario: d.dpe_precio }))
     };
   };
@@ -151,10 +151,10 @@ const Api = (() => {
     async correoRegistrado(correo) { const r = await ejecutar(sb.rpc('correo_registrado', { p_correo: correo })); return r.error ? r : { datos: !!r.datos }; },
     async perfil(usuario) { return mapear(await ejecutar(sb.from('cliente').select('*').eq('cli_usuario', usuario).maybeSingle()), aCliente); },
     async crear(d) {
-      return mapear(await ejecutar(sb.from('cliente').insert({ cli_cedula: d.cedula, cli_usuario: d.id, cli_nombres: d.nombres, cli_apellidos: d.apellidos, cli_celular: d.telefono, cli_correo: d.correo }).select().single()), aCliente);
+      return mapear(await ejecutar(sb.from('cliente').insert({ cli_cedula: d.cedula, cli_usuario: d.id, cli_nombres: d.nombres, cli_apellidos: d.apellidos, cli_celular: d.telefono, cli_direccion: d.direccion || null, cli_correo: d.correo }).select().single()), aCliente);
     },
     async actualizar(usuario, d) {
-      return mapear(await ejecutar(sb.from('cliente').update({ cli_nombres: d.nombres, cli_apellidos: d.apellidos, cli_celular: d.telefono }).eq('cli_usuario', usuario).select().single()), aCliente);
+      return mapear(await ejecutar(sb.from('cliente').update({ cli_nombres: d.nombres, cli_apellidos: d.apellidos, cli_celular: d.telefono, cli_direccion: d.direccion }).eq('cli_usuario', usuario).select().single()), aCliente);
     },
     async esAdmin() { const r = await ejecutar(sb.rpc('es_admin')); return !r.error && r.datos === true; },
 
@@ -187,7 +187,7 @@ const Api = (() => {
     },
     /* Un pedido con todos sus datos (confirmación y orden de pedido). El cliente solo ve los suyos; el administrador, todos */
     async uno(numero) {
-      const r = await ejecutar(sb.from('pedido').select(CAMPOS_PEDIDO + ', cliente(cli_usuario, cli_cedula, cli_nombres, cli_apellidos, cli_celular, cli_correo)').eq('ped_numero', numero).maybeSingle());
+      const r = await ejecutar(sb.from('pedido').select(CAMPOS_PEDIDO + ', cliente(cli_usuario, cli_cedula, cli_nombres, cli_apellidos, cli_celular, cli_direccion, cli_correo)').eq('ped_numero', numero).maybeSingle());
       return mapear(r, aPedido);
     },
     /* Verifica en la base si el cliente compró este producto (cualquier pedido que no esté cancelado) */
@@ -293,15 +293,52 @@ const Api = (() => {
   };
   const correo = {
     configurado() { return !!(window.emailjs && CONFIG.emailjs.servicio && CONFIG.emailjs.plantillaCliente && CONFIG.emailjs.clavePublica); },
-    /* Al cliente, apenas paga: confirma que su pedido se recibió */
-    compraConfirmada(p) {
+    /* Al cliente, apenas paga: detalle de lo que pidió y la factura en PDF adjunta.
+       Sale desde el Gmail de la tienda con la función "correo-compra" de Supabase (EmailJS gratis no adjunta archivos);
+       si la función falla, se envía igual por EmailJS con el detalle, pero sin el PDF. */
+    async compraConfirmada(p) {
       const base = location.origin + location.pathname.replace(/[^/]*$/, '');
+      const h = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      const plata = (n) => '$' + Number(n || 0).toFixed(2);
+      const celda = 'padding:10px 8px;border-bottom:1px solid #dde3ea;';
+      const filas = (p.items || []).map((it) => `<tr><td style="${celda}">${h(it.nombre)}${it.talla ? `<br><span style="color:#45556B;font-size:13px">Talla ${h(it.talla)}</span>` : ''}</td><td style="${celda}text-align:center">${it.cantidad}</td><td style="${celda}text-align:right">${plata(it.precio)}</td><td style="${celda}text-align:right">${plata(it.precio * it.cantidad)}</td></tr>`).join('');
+      const detalle = `<table role="presentation" style="width:100%;border-collapse:collapse;font-size:14px;color:#1E293B">
+        <tr style="background:#F3F5F7"><th style="padding:10px 8px;text-align:left">Producto</th><th style="padding:10px 8px">Cant.</th><th style="padding:10px 8px;text-align:right">Precio</th><th style="padding:10px 8px;text-align:right">Subtotal</th></tr>${filas}
+        <tr><td colspan="3" style="padding:6px 8px;text-align:right">Subtotal</td><td style="padding:6px 8px;text-align:right">${plata(p.subtotal)}</td></tr>
+        <tr><td colspan="3" style="padding:6px 8px;text-align:right">IVA 15 %</td><td style="padding:6px 8px;text-align:right">${plata(p.iva)}</td></tr>
+        <tr><td colspan="3" style="padding:6px 8px;text-align:right">Retiro en tienda</td><td style="padding:6px 8px;text-align:right">Gratis</td></tr>
+        <tr><td colspan="3" style="padding:10px 8px;text-align:right;font-weight:bold;font-size:17px">Total pagado</td><td style="padding:10px 8px;text-align:right;font-weight:bold;font-size:17px">${plata(p.total)}</td></tr></table>`;
+      const enlace = `${base}orden.html?pedido=${p.id}`;
+      const asunto = `Pedido ${p.numero} confirmado · código de retiro ${p.codigo}`;
+      const html = `<div style="background:#F3F5F7;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;color:#1E293B">
+<div style="max-width:620px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #dde3ea">
+  <div style="background:#0B1F3A;padding:20px 24px;color:#ffffff"><div style="font-size:24px;font-weight:bold;font-style:italic">ATHLETIX</div><div style="font-size:13px;opacity:.85">Tienda deportiva en línea</div></div>
+  <div style="padding:24px">
+    <p style="margin:0 0 12px;font-size:16px">Hola ${h(p.nombre)},</p>
+    <p style="margin:0 0 16px;line-height:1.5">¡Gracias por tu compra! Tu pago con ${h(p.pagoTexto)} fue aprobado. Este es el resumen de tu pedido <b>${h(p.numero)}</b>:</p>
+    ${detalle}
+    <div style="margin:20px 0;padding:14px 16px;background:#E6F4F2;border-left:4px solid #0F766E;border-radius:6px;line-height:1.6">
+      <b>Retiro en local físico:</b> ${h(p.tienda)}<br>${p.horario ? `<b>Horario:</b> ${h(p.horario)}<br>` : ''}<b>Código de retiro:</b> <span style="font-size:18px;font-weight:bold;letter-spacing:2px">${h(p.codigo)}</span><br>Presenta tu cédula y este código. Tu pedido estará listo en menos de ${h(ENTREGA.retiro)}.
+    </div>
+    <p style="margin:0 0 18px;line-height:1.5">Adjuntamos tu factura en PDF (N.º ${h(p.numeroFactura)}).</p>
+    <p style="margin:0 0 8px"><a href="${enlace}" style="display:inline-block;background:#0F766E;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:6px;font-weight:bold">Ver mi orden de pedido</a></p>
+  </div>
+  <div style="padding:14px 24px;background:#F3F5F7;font-size:12px;color:#45556B">Te escribimos porque hiciste un pedido en ATHLETIX. Pago simulado, sin cobro real.</div>
+</div></div>`;
+      if (sb) {
+        try {
+          const { data, error } = await Promise.race([
+            sb.functions.invoke('correo-compra', { body: { pedido: p.id, asunto, html, pdf: p.factura || '', archivo: `Factura-${p.numeroFactura}.pdf` } }),
+            new Promise((ok) => setTimeout(() => ok({ error: 'tiempo' }), 12000))
+          ]);
+          if (!error && data && data.ok) return { datos: true };
+        } catch (e) { /* se usa EmailJS */ }
+      }
       return enviar(CONFIG.emailjs.plantillaCliente, {
         to_email: p.correo, nombre: p.nombre, numero: p.numero, tienda: p.tienda, horario: p.horario, total: Number(p.total).toFixed(2),
-        asunto: `Recibimos tu pedido ${p.numero} · código de retiro ${p.codigo}`,
-        mensaje: `Gracias por tu compra. Tu pago fue aprobado (${p.pagoTexto}, pago simulado). `
-          + `Tu pedido estará listo para retirar en ${ENTREGA.retiro}. Tu código de retiro es ${p.codigo}: preséntalo con tu cédula en la tienda. `
-          + `Mira tu orden de pedido aquí: ${base}orden.html?pedido=${p.id}`
+        asunto,
+        mensaje: `Gracias por tu compra. Tu pago con ${p.pagoTexto} fue aprobado. Retira tu pedido en ${p.tienda} con tu cédula y el código ${p.codigo}. Descarga tu factura en PDF desde tu orden de pedido: ${enlace}`,
+        detalle_html: detalle
       });
     },
     /* Al cliente, cada vez que el administrador cambia el estado de su pedido */
@@ -318,7 +355,7 @@ const Api = (() => {
       if (!asunto) return Promise.resolve({});
       return enviar(CONFIG.emailjs.plantillaCliente, {
         to_email: p.correo, nombre: p.cliente, numero: p.numero, total: Number(p.total).toFixed(2), tienda: p.tienda, horario: p.horario,
-        asunto, mensaje: mensaje + ` Mira tu orden de pedido aquí: ${base}orden.html?pedido=${p.id}`
+        asunto, mensaje: mensaje + ` Mira tu orden de pedido aquí: ${base}orden.html?pedido=${p.id}`, detalle_html: ''
       }).then((r) => (r.error ? { error: r.error + ' El estado sí se guardó.' } : r));
     },
     /* Al administrador, cada vez que un cliente hace un pedido */

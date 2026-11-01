@@ -166,7 +166,8 @@ function camposDatosPersonales(v, { cedulaFija = false } = {}) {
         ? `<div class="campo"><p style="font-weight:700">Cédula</p><p class="campo-fijo">${esc(v.cedula)}</p><p class="campo__ayuda">La cédula no se puede cambiar.</p></div>`
         : campo({ id: 'cedula', etiqueta: 'Cédula', ayuda: '10 números, sin guion', valor: v.cedula || '', max: 10, extra: 'inputmode="numeric" autocomplete="off"' })}
       ${campo({ id: 'telefono', etiqueta: 'Celular', tipo: 'tel', ayuda: '10 números, empieza con 09', valor: v.telefono || '', max: 10, extra: 'autocomplete="tel-national" inputmode="numeric"' })}
-    </div>`;
+    </div>
+    ${campo({ id: 'direccion', etiqueta: 'Dirección de domicilio', ayuda: 'Calle principal, número y calle secundaria, ciudad. Aparece en tu factura.', valor: v.direccion || '', max: 150, extra: 'autocomplete="street-address"' })}`;
 }
 function activarDatosPersonales(form) {
   filtrarEntrada($('#nombres', form), NO_LETRAS, 60);
@@ -175,6 +176,7 @@ function activarDatosPersonales(form) {
   validarAlSalir(form, 'nombres', (v) => Validar.nombre(v, 'nombre'));
   validarAlSalir(form, 'apellidos', (v) => Validar.nombre(v, 'apellido'));
   validarAlSalir(form, 'telefono', (v) => Validar.telefono(v));
+  validarAlSalir(form, 'direccion', (v) => Validar.direccion(v));
   const ced = $('#cedula', form);
   if (ced) { filtrarEntrada(ced, NO_DIGITOS, 10); validarAlSalir(form, 'cedula', (v) => Validar.cedula(v)); }
 }
@@ -185,7 +187,8 @@ function leerDatosPersonales(form) {
     nombres: limpiarNombre($('#nombres', form).value),
     apellidos: limpiarNombre($('#apellidos', form).value),
     cedula: ced ? ced.value.trim() : undefined,
-    telefono: $('#telefono', form).value.trim()
+    telefono: $('#telefono', form).value.trim(),
+    direccion: $('#direccion', form).value.trim().replace(/\s+/g, ' ')
   };
 }
 function reglasDatosPersonales(d) {
@@ -195,6 +198,7 @@ function reglasDatosPersonales(d) {
   ];
   if (d.cedula !== undefined) r.push(['cedula', Validar.cedula(d.cedula)]);
   r.push(['telefono', Validar.telefono(d.telefono)]);
+  r.push(['direccion', Validar.direccion(d.direccion)]);
   return r;
 }
 
@@ -230,7 +234,7 @@ function vistaCompletarPerfil(partes, params) {
   if (estado.cliente) { ir('perfil.html'); return null; }
   const meta = estado.sesion.user.user_metadata || {};
   const [nombreG, ...apellidoG] = String(meta.full_name || meta.name || '').split(' ');
-  const v = { nombres: meta.nombres || nombreG || '', apellidos: meta.apellidos || apellidoG.join(' '), cedula: meta.cedula || '', telefono: meta.telefono || '' };
+  const v = { nombres: meta.nombres || nombreG || '', apellidos: meta.apellidos || apellidoG.join(' '), cedula: meta.cedula || '', telefono: meta.telefono || '', direccion: meta.direccion || '' };
   const volver = params.get('volver') === 'retiro' || leerTemporal('volver') === 'retiro';
   return {
     titulo: 'Completa tu perfil',
@@ -509,7 +513,7 @@ async function vistaPagos() {
 /* Campos de tarjeta (compartidos por el pago y el perfil) */
 function camposTarjeta() {
   return `
-    ${campo({ id: 'tarjeta', etiqueta: 'Número de tarjeta', ayuda: '16 dígitos, Visa o Mastercard', max: 19, extra: 'autocomplete="cc-number" inputmode="numeric" placeholder="0000 0000 0000 0000"' })}
+    ${campo({ id: 'tarjeta', etiqueta: 'Número de tarjeta', ayuda: 'Normalmente 16 dígitos. Te mostramos la marca al escribir.', max: 23, extra: 'autocomplete="cc-number" inputmode="numeric" placeholder="0000 0000 0000 0000"' })}
     <p class="marca-tarjeta texto-suave" id="marca-tarjeta" aria-live="polite"></p>
     ${campo({ id: 'titular', etiqueta: 'Nombre del titular', ayuda: 'Como aparece en la tarjeta', max: 60, extra: 'autocomplete="cc-name" autocapitalize="characters"' })}
     <div class="formulario__fila formulario__fila--doble">
@@ -517,30 +521,25 @@ function camposTarjeta() {
       ${campo({ id: 'cvv', etiqueta: 'CVV', tipo: 'password', ayuda: '3 dígitos al reverso', max: 3, extra: 'autocomplete="cc-csc" inputmode="numeric"' })}
     </div>`;
 }
-/* Aviso siempre visible con las tarjetas de prueba (la tienda es académica: no se cobra dinero real) */
+/* Aviso de seguridad del pago (no se cobra dinero: solo se guardan la marca y los últimos 4 dígitos) */
 function avisoTarjetasPrueba() {
   return `
     <section class="tarjetas-prueba" aria-labelledby="titulo-prueba">
-      <h3 id="titulo-prueba">${icono('info')}No uses tu tarjeta real</h3>
-      <p>Esta es una tienda académica: no se cobra dinero. Paga con una de estas tarjetas de prueba, con cualquier nombre, una fecha futura (por ejemplo 12/28) y cualquier CVV de 3 números:</p>
-      <ul>
-        <li><strong>4242 4242 4242 4242</strong> · Visa · pago aprobado</li>
-        <li><strong>5555 5555 5555 4444</strong> · Mastercard · pago aprobado</li>
-        <li><strong>4000 0566 5566 5556</strong> · Visa débito · pago aprobado</li>
-        <li><strong>4000 0000 0000 0002</strong> · Visa · pago rechazado</li>
-        <li><strong>4000 0000 0000 9995</strong> · Visa · fondos insuficientes</li>
-      </ul>
+      <h3 id="titulo-prueba">${icono('candado')}Pago seguro y simulado</h3>
+      <p>Aceptamos Visa, Mastercard, American Express, Diners Club, Discover, JCB, UnionPay y Maestro. Revisamos que el número sea válido, la fecha de vencimiento y el CVV. No se cobra dinero real y nunca guardamos el número completo ni el CVV: solo la marca y los últimos 4 dígitos.</p>
     </section>`;
 }
 function activarCamposTarjeta(form) {
   activarEnlacesError(form);
   const tarjeta = $('#tarjeta', form);
   tarjeta.addEventListener('input', () => {
-    const d = tarjeta.value.replace(/\D/g, '').slice(0, 16);
+    const d = tarjeta.value.replace(/\D/g, '').slice(0, 19);
     const formateado = d.replace(/(\d{4})(?=\d)/g, '$1 ');
     if (formateado !== tarjeta.value) tarjeta.value = formateado;
-    const marca = Validar.marcaTarjeta(d);
-    $('#marca-tarjeta', form).textContent = d.length >= 2 ? (marca ? `Tarjeta ${marca}` : 'Solo aceptamos Visa o Mastercard') : '';
+    const info = Validar.datosMarca(d);
+    $('#marca-tarjeta', form).textContent = d.length >= 2
+      ? (info ? `Tarjeta ${info.marca} · ${d.length} de ${info.largos.length === 1 ? info.largos[0] : info.largos.join('/')} dígitos` : 'No reconocemos esta tarjeta')
+      : '';
   });
   validarAlSalir(form, 'tarjeta', (v) => Validar.tarjeta(v));
   filtrarEntrada($('#titular', form), NO_LETRAS, 60);
@@ -568,7 +567,6 @@ function leerTarjeta(form) {
   if (!ok) return null;
   const [mm, aa] = vence.split('/');
   return {
-    resultado: Validar.resultadoTarjeta(numero),
     registro: { cedula: estado.cliente.cedula, marca: Validar.marcaTarjeta(numero), ultimos4: numero.slice(-4), titular: titular.toUpperCase(), mes_vence: Number(mm), anio_vence: 2000 + Number(aa) }
   };
 }

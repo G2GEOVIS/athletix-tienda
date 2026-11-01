@@ -1,0 +1,28 @@
+/*==============================================================*/
+/* ATHLETIX - Dejar la tienda lista para empezar de cero         */
+/*  1. Devuelve al stock lo de los pedidos no cancelados         */
+/*  2. Borra todos los pedidos (con su detalle y su pago)        */
+/*  3. Borra los clientes y sus cuentas, menos el administrador  */
+/* El catálogo, las tiendas y el administrador se conservan.     */
+/*==============================================================*/
+begin;
+
+-- 1. El stock vuelve a su total (los pedidos cancelados ya lo devolvieron)
+update producto_talla t set pta_cantidad = t.pta_cantidad + x.cantidad
+  from (select d.prd_codigo, d.dpe_talla, sum(d.dpe_cantidad) as cantidad
+          from detalle_pedido d join pedido p on p.ped_numero = d.ped_numero
+         where p.ped_estado <> 'Cancelado'
+         group by d.prd_codigo, d.dpe_talla) x
+ where t.prd_codigo = x.prd_codigo and t.pta_talla = x.dpe_talla;
+
+-- 2. Pedidos, detalle y pagos
+delete from pedido;
+alter sequence seq_ped_numero restart with 1001;
+
+-- 3. Clientes (con sus tarjetas y reseñas) y sus cuentas de acceso, menos el administrador
+delete from resena where cli_cedula in (select cli_cedula from cliente where cli_usuario not in (select adm_usuario from administrador));
+delete from metodo_pago where cli_cedula in (select cli_cedula from cliente where cli_usuario not in (select adm_usuario from administrador));
+delete from cliente where cli_usuario not in (select adm_usuario from administrador);
+delete from auth.users where id not in (select adm_usuario from administrador);
+
+commit;

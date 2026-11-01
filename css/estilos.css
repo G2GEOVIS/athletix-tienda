@@ -814,7 +814,6 @@ fieldset.panel { margin: 0; min-width: 0; }
   background: var(--naranja); color: var(--azul); font-size: .8rem; font-weight: 800; display: inline-grid; place-items: center;
 }
 .navegacion__cantidad[hidden] { display: none; }
-#aviso-filtros { width: 100%; }
 
 /* Pantallas muy angostas (320 px): el encabezado entra sin desplazamiento horizontal (WCAG 1.4.10) */
 @media (max-width: 22.5rem) {

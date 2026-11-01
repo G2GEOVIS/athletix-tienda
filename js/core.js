@@ -294,24 +294,6 @@ function validarAlSalir(form, id, regla) {
   const input = $('#' + id, form);
   input.addEventListener('blur', () => { if (input.value || input.getAttribute('aria-invalid')) marcarError(form, id, regla(input.value)); });
 }
-function atajosCorreo(id) {
-  return `<div class="atajos" role="group" aria-label="Completar el correo">
-    <button class="chip" type="button" data-correo="${id}" data-dominio="@gmail.com">@gmail.com</button>
-    <button class="chip" type="button" data-correo="${id}" data-dominio="@hotmail.com">@hotmail.com</button>
-    <button class="chip" type="button" data-correo="${id}" data-dominio="@outlook.com">@outlook.com</button>
-  </div>`;
-}
-function activarAtajosCorreo(raiz) {
-  raiz.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-dominio]');
-    if (!b) return;
-    const input = $('#' + b.dataset.correo, raiz);
-    const usuario = input.value.split('@')[0].trim();
-    input.value = usuario + b.dataset.dominio;
-    input.focus();
-    anunciar(`Correo: ${input.value}`);
-  });
-}
 /* Filtra lo que no corresponde DESPUÉS de escribir (evento input).
    Así funcionan mayúsculas, Alt Gr, Alt + números, pegar y dictado: nunca se bloquea una tecla. */
 function filtrarEntrada(input, patron, max) {

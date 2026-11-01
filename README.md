@@ -10,6 +10,7 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 
 - Catálogo de 68 productos (calzado, tecnología deportiva y entrenamiento) con filtros por categoría, género y precio que se quedan visibles al bajar, orden y buscador. Todo viene de la base de datos.
 - El género es un atributo del producto: calzado y tecnología son solo de Hombre o de Mujer (al menos 10 de cada uno); entrenamiento es para todos (Unisex). Una regla en la base lo asegura.
+- La sesión dura solo mientras la pestaña está abierta: al abrir la tienda de nuevo nadie aparece con la sesión iniciada.
 - Cuentas reales con Supabase: registro con cédula ecuatoriana validada (módulo 10), confirmación por correo, recuperar contraseña y botón para mostrar la contraseña. Las contraseñas se guardan cifradas con bcrypt (Supabase Auth); la tienda nunca las ve.
 - No se permite registrar dos veces la misma cédula ni el mismo correo.
 - Ingreso con cuenta de Google (OAuth de Supabase). El botón aparece solo cuando el proveedor Google está activado en Supabase; al primer ingreso el cliente completa su cédula y celular.

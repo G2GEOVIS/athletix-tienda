@@ -8,8 +8,13 @@ const Api = (() => {
   let sb = null;
   try {
     if (window.supabase && CONFIG.supabase.url && CONFIG.supabase.clave) {
+      // La sesión vive solo mientras la pestaña está abierta (sessionStorage): al volver a abrir la tienda
+      // nadie aparece con la sesión iniciada. Se borra la sesión que antes quedaba guardada en localStorage.
+      try { Object.keys(localStorage).filter((k) => /^sb-.*-auth-token/.test(k)).forEach((k) => localStorage.removeItem(k)); } catch (e) { /* sin almacenamiento */ }
+      let almacen;
+      try { sessionStorage.setItem('athletix-prueba', '1'); sessionStorage.removeItem('athletix-prueba'); almacen = sessionStorage; } catch (e) { almacen = undefined; }
       sb = window.supabase.createClient(CONFIG.supabase.url, CONFIG.supabase.clave, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'implicit' }
+        auth: { persistSession: true, storage: almacen, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'implicit' }
       });
     }
   } catch (e) { sb = null; }

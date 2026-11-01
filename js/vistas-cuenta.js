@@ -32,7 +32,6 @@ function vistaIngresar(partes, params) {
         <form class="formulario" id="form-ingresar" novalidate>
           <div class="alerta alerta-errores" tabindex="-1" role="alert" hidden></div>
           ${campo({ id: 'correo', etiqueta: 'Correo electrónico', tipo: 'email', extra: 'autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false"' })}
-          ${atajosCorreo('correo')}
           ${campoClave({ id: 'clave', etiqueta: 'Contraseña' })}
           <button class="boton boton--principal boton--bloque" type="submit">Ingresar</button>
           <a class="boton boton--texto" href="recuperar.html">¿Olvidaste tu contraseña?</a>
@@ -44,7 +43,7 @@ function vistaIngresar(partes, params) {
     </div>`,
     montar(main) {
       const form = $('#form-ingresar', main);
-      activarAtajosCorreo(form); activarEnlacesError(form); activarVerClave(form); activarGoogle(main, volver);
+      activarEnlacesError(form); activarVerClave(form); activarGoogle(main, volver);
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const correo = $('#correo', form).value.trim().toLowerCase();
@@ -96,7 +95,7 @@ function vistaRegistro(partes, params) {
         <form class="formulario" id="form-registro" novalidate>
           <div class="alerta alerta-errores" tabindex="-1" role="alert" hidden></div>
           ${camposDatosPersonales({})}
-          <div>${campo({ id: 'correo-r', etiqueta: 'Correo electrónico', tipo: 'email', ayuda: 'Usa un correo al que tengas acceso: ahí te llegará la confirmación y el aviso de tus pedidos.', extra: 'autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false"' })}<div style="margin-top:.5rem">${atajosCorreo('correo-r')}</div></div>
+          <div>${campo({ id: 'correo-r', etiqueta: 'Correo electrónico', tipo: 'email', ayuda: 'Usa un correo al que tengas acceso: ahí te llegará la confirmación y el aviso de tus pedidos.', extra: 'autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false"' })}</div>
           <div class="formulario__fila formulario__fila--doble">
             ${campoClave({ id: 'clave-r', etiqueta: 'Contraseña', ayuda: 'Mínimo 8 caracteres, con letras y números', autocomplete: 'new-password' })}
             ${campoClave({ id: 'clave-r2', etiqueta: 'Confirmar contraseña', ayuda: 'Escríbela otra vez', autocomplete: 'new-password' })}
@@ -109,7 +108,7 @@ function vistaRegistro(partes, params) {
     </div>`,
     montar(main) {
       const form = $('#form-registro', main);
-      activarAtajosCorreo(form); activarEnlacesError(form); activarVerClave(form); activarGoogle(main, volver);
+      activarEnlacesError(form); activarVerClave(form); activarGoogle(main, volver);
       activarDatosPersonales(form);
       validarAlSalir(form, 'correo-r', (v) => Validar.correo(v));
       validarAlSalir(form, 'clave-r', (v) => Validar.clave(v));

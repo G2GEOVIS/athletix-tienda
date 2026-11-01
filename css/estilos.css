@@ -505,8 +505,6 @@ svg { width: 1.25rem; height: 1.25rem; flex-shrink: 0; fill: none; stroke: curre
 .campo__error { display: flex; gap: .4rem; align-items: flex-start; font-weight: 600; font-size: .95rem; }
 .campo__error svg { color: #C25E00; width: 1.1rem; height: 1.1rem; margin-top: .15rem; }
 .campo__error[hidden] { display: none; }
-.atajos { display: flex; flex-wrap: wrap; gap: .5rem; }
-.atajos .chip { min-height: 2.25rem; font-size: .95rem; }
 .requerido { color: #C25E00; }
 .alerta {
   display: flex; gap: .65rem; align-items: flex-start; border: 2px solid var(--naranja); border-radius: var(--radio-sm);

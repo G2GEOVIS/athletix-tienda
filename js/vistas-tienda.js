@@ -182,10 +182,12 @@ function vistaProductos(partes, params) {
         abrir.setAttribute('aria-expanded', ab);
         form.classList.toggle('abierto', ab);
       });
-      const aplicar = () => {
+      // Al tocar un filtro se deja la búsqueda escrita y se muestra la categoría elegida; al cambiar el orden la búsqueda se mantiene
+      const aplicar = (conBusqueda) => {
         const p = new URLSearchParams();
         const q = leerRuta().params.get('q');
-        if (q) p.set('q', q);
+        if (q && conBusqueda === true) p.set('q', q);
+        else { const campo = $('#buscar-texto'); if (campo) campo.value = ''; }
         const d = new FormData(form);
         const cat = d.get('cat');
         if (cat !== 'todas') p.set('cat', cat);
@@ -209,8 +211,8 @@ function vistaProductos(partes, params) {
         const reducir = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
         $('#resultados', main).scrollIntoView({ behavior: reducir ? 'auto' : 'smooth', block: 'start' });
       };
-      form.addEventListener('change', aplicar);
-      $('#orden', main).addEventListener('change', aplicar);
+      form.addEventListener('change', () => aplicar(false));
+      $('#orden', main).addEventListener('change', () => aplicar(true));
       $('#limpiar-filtros', main).addEventListener('click', () => {
         history.replaceState(null, '', 'productos.html');
         render();

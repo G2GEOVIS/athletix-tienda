@@ -136,12 +136,18 @@ function guardarVolverPendiente(v) {
 function leerVolverPendiente() {
   try { const x = JSON.parse(localStorage.getItem('athletix-volver')); return x && Date.now() - x.t < 2 * 3600 * 1000 ? volverSeguro(x.v) : ''; } catch (e) { return ''; }
 }
-// Después de ingresar: a la página donde estaba; si no hay, al carrito cuando tiene productos; si no, al inicio
+// Al iniciar sesión se va a la portada (inicio de la tienda). Solo si venía de algo que pedía la sesión
+// (seguir con la compra, una página de su cuenta o el enlace de reseña de un correo) se vuelve ahí.
+// Si todavía no completó su perfil (por ejemplo, entró con Google por primera vez): se le pide solo cuando lo necesita
+// (al comprar o al ver su cuenta); si no venía de ahí, va a la portada y completa el perfil al hacer su primera compra.
+function destinoSinPerfil(volver) {
+  const v = volverSeguro(volver);
+  return v ? conVolver('completar-perfil.html', v) : 'index.html';
+}
 function destinoTrasIngreso(volver) {
   const v = volverSeguro(volver);
   if (v === 'retiro.html') return estado.carrito.length ? 'retiro.html' : 'carrito.html';
-  if (v) return v;
-  return estado.carrito.length ? 'carrito.html' : 'index.html';
+  return v || 'index.html';
 }
 
 /* ======================= Tiempo de retiro ======================= */

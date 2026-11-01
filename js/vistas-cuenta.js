@@ -19,7 +19,7 @@ function activarGoogle(main, volver) {
 /* ======================= Ingresar ======================= */
 function vistaIngresar(partes, params) {
   const volver = volverSeguro(params.get('volver'));
-  if (estado.sesion) { ir(estado.cliente ? destinoTrasIngreso(volver) : conVolver('completar-perfil.html', volver)); return null; }
+  if (estado.sesion) { ir(estado.cliente ? destinoTrasIngreso(volver) : destinoSinPerfil(volver)); return null; }
   return {
     titulo: 'Inicia sesión',
     seccion: 'ingresar',
@@ -62,8 +62,8 @@ function vistaIngresar(partes, params) {
           return;
         }
         await alIniciarSesion(r.datos.session);
-        aviso(estado.cliente ? `Hola, ${nombreCliente()}. Iniciaste sesión.` : 'Iniciaste sesión. Completa tu perfil para comprar.');
-        if (!estado.cliente) { ir(conVolver('completar-perfil.html', volver)); return; }
+        aviso(estado.cliente ? `Hola, ${nombreCliente()}. Iniciaste sesión.` : 'Iniciaste sesión. Antes de tu primera compra te pediremos tu cédula y celular.');
+        if (!estado.cliente) { ir(destinoSinPerfil(volver)); return; }
         ir(destinoTrasIngreso(volver));
       });
     }
@@ -83,7 +83,7 @@ function mostrarReenviar(zona, correo) {
 /* ======================= Registro ======================= */
 function vistaRegistro(partes, params) {
   const volver = volverSeguro(params.get('volver'));
-  if (estado.sesion) { ir(estado.cliente ? destinoTrasIngreso(volver) : conVolver('completar-perfil.html', volver)); return null; }
+  if (estado.sesion) { ir(estado.cliente ? destinoTrasIngreso(volver) : destinoSinPerfil(volver)); return null; }
   return {
     titulo: 'Crea tu cuenta',
     seccion: 'ingresar',
@@ -238,7 +238,7 @@ function vistaVerificaCorreo() {
         const volver = leerVolverPendiente();
         guardarVolverPendiente(null);
         aviso(estado.cliente ? '¡Correo confirmado! Tu perfil quedó guardado.' : '¡Correo confirmado! Completa tu perfil.');
-        ir(estado.cliente ? destinoTrasIngreso(volver) : conVolver('completar-perfil.html', volver));
+        ir(estado.cliente ? destinoTrasIngreso(volver) : destinoSinPerfil(volver));
       }, 3000);
     }
   };

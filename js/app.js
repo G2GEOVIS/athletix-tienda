@@ -93,6 +93,7 @@ async function alIniciarSesion(sesion) {
     actualizarContador();
   }
   estado.nuevos = undefined;
+  recordarProveedorCorreo();
   renderCuenta();
   vigilarPedidos();
 }
@@ -121,9 +122,8 @@ function actualizarContador() {
 function renderCuenta() {
   const zona = $('#zona-cuenta');
   if (!estado.sesion) {
-    zona.innerHTML = `<a class="cuenta__boton" href="${conVolver('login.html', paginaActual())}" data-ruta="ingresar">${icono('usuario')}<span class="cuenta__nombre-largo">Ingresar</span></a>`;
-    // Se calcula al hacer clic porque los filtros cambian la dirección sin recargar la página
-    $('a', zona).addEventListener('click', (e) => { e.currentTarget.href = conVolver('login.html', paginaActual()); });
+    // Desde el botón Ingresar, después de iniciar sesión se va a la portada
+    zona.innerHTML = `<a class="cuenta__boton" href="login.html" data-ruta="ingresar">${icono('usuario')}<span class="cuenta__nombre-largo">Ingresar</span></a>`;
     return;
   }
   const nombre = estado.cliente ? nombreCliente() : 'Mi cuenta';
@@ -218,16 +218,17 @@ function escribirnos(mailto) {
   const [destino, consulta = ''] = mailto.replace(/^mailto:/, '').split('?');
   const asunto = new URLSearchParams(consulta).get('subject') || 'Consulta ATHLETIX';
   const a = encodeURIComponent(destino), s = encodeURIComponent(asunto);
-  const abrir = (url) => window.open(url, '_blank', 'noopener');
+  // Proveedor del correo de la cuenta; sin sesión, el del último correo usado en este navegador; si no, Gmail (el más usado)
+  let prov = proveedorDeCorreo(estado.cliente ? estado.cliente.correo : correoSesion());
+  if (!prov) { try { prov = localStorage.getItem('athletix-proveedor-correo') || ''; } catch (e) { prov = ''; } }
+  if (!CORREOS_WEB[prov]) prov = 'gmail';
+  aviso(`Abriendo ${CORREOS_WEB[prov][0]} para escribirnos…`);
+  window.open(CORREOS_WEB[prov][1](a, s), '_blank', 'noopener');
+}
+// Se recuerda el proveedor del correo de quien inició sesión, para el botón de contacto aunque luego salga
+function recordarProveedorCorreo() {
   const prov = proveedorDeCorreo(estado.cliente ? estado.cliente.correo : correoSesion());
-  if (prov) { abrir(CORREOS_WEB[prov][1](a, s)); return; }
-  abrirDialogo(`
-    <h2 class="dialogo__titulo" id="dialogo-titulo">Escríbenos</h2>
-    <p>Elige con qué correo quieres escribirnos a <strong>${esc(destino)}</strong>:</p>
-    <div class="opciones-correo">
-      ${Object.entries(CORREOS_WEB).map(([k, [t, url]]) => `<a class="boton boton--secundario boton--bloque" href="${url(a, s)}" target="_blank" rel="noopener" data-cerrar-dialogo>${t}</a>`).join('')}
-      <a class="boton boton--texto boton--bloque" href="mailto:${destino}?subject=${s}" data-app-correo data-cerrar-dialogo>Otra app de correo</a>
-    </div>`, { alAbrir: (d) => $('a', d).focus() });
+  if (prov) { try { localStorage.setItem('athletix-proveedor-correo', prov); } catch (e) { /* sin almacenamiento */ } }
 }
 
 /* ======================= Enrutador ======================= */
@@ -404,8 +405,8 @@ async function iniciar() {
     guardarTemporal('correo-pendiente', null);
     const volver = leerVolverPendiente();
     const conGoogle = (estado.sesion.user.app_metadata || {}).provider === 'google';
-    aviso(estado.cliente ? `¡Bienvenido, ${nombreCliente()}!` + (conGoogle ? '' : ' Tu correo está confirmado.') : (conGoogle ? '¡Ingresaste con Google! Completa tu perfil con tu cédula y celular.' : '¡Correo confirmado! Completa tu perfil.'));
-    if (!estado.cliente) { ir(conVolver('completar-perfil.html', volver)); return; }
+    aviso(estado.cliente ? `¡Bienvenido, ${nombreCliente()}!` + (conGoogle ? '' : ' Tu correo está confirmado.') : (conGoogle ? '¡Ingresaste con Google! Antes de tu primera compra te pediremos tu cédula y celular.' : '¡Correo confirmado! Antes de tu primera compra te pediremos tus datos.'));
+    if (!estado.cliente) { const d = destinoSinPerfil(volver); if (d !== 'index.html') { ir(d); return; } }
     guardarVolverPendiente(null);
     const destino = destinoTrasIngreso(volver);
     if (destino !== 'index.html') { ir(destino); return; }

@@ -592,7 +592,7 @@ const Api = (() => {
       const hora = horaCorta(d.horaEstimada);
       const fila = (k, v) => `<tr><td style="padding:3px 10px 3px 0;color:${SUAVE};white-space:nowrap;vertical-align:top">${k}</td><td style="padding:3px 0"><b>${v}</b></td></tr>`;
       const html = plantillaCorreo({
-        nombre: 'equipo ATHLETIX', titulo: `🛒 Nuevo pedido ${h(p.numero)}`, paso: 1,
+        nombre: 'equipo ATHLETIX', titulo: `🛒 Nuevo pedido ${h(p.numero)}`,
         parrafo: `Llegó un pedido nuevo de <b>${h(p.cliente)}</b> por <b>${plata(p.total)}</b>. ${hora ? `Debe estar listo para retirar a las <b>${hora}</b>.` : ''}`,
         cuerpo: `${tablaDetalle(items.length ? items : d.items, { subtotal: p.subtotal ?? d.subtotal, iva: p.iva ?? d.iva, total: p.total, pendiente: !!p.enTienda })}
           <div style="margin:20px 0;padding:16px;background:#F3F5F7;border-left:4px solid #0B1F3A;border-radius:6px;font-size:14px">

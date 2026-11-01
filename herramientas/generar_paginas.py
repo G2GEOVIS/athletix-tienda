@@ -4,6 +4,8 @@ Todas las páginas comparten el mismo encabezado, pie de página y scripts; cada
 indica qué pantalla es con <body data-pagina="...">. Si cambias el encabezado o el
 pie, edita plantilla.html y vuelve a ejecutar:  python3 herramientas/generar_paginas.py
 """
+import hashlib
+import re
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -19,8 +21,8 @@ PAGINAS = [
     ('completar-perfil.html', 'completar-perfil', 'Completa tu perfil | ATHLETIX', 'Completa tus datos para poder comprar.'),
     ('recuperar.html', 'recuperar', 'Recuperar contraseña | ATHLETIX', 'Recibe un enlace para crear una nueva contraseña.'),
     ('nueva-clave.html', 'nueva-clave', 'Nueva contraseña | ATHLETIX', 'Crea una nueva contraseña para tu cuenta.'),
-    ('retiro.html', 'retiro', 'Retiro en tienda | ATHLETIX', 'Elige la tienda donde retiras tu pedido: listo en 1 hora.'),
-    ('pago.html', 'pago', 'Pago | ATHLETIX', 'Paga tu pedido con tarjeta o transferencia (pago simulado).'),
+    ('retiro.html', 'retiro', 'Retiro en tienda | ATHLETIX', 'Elige la tienda donde retiras tu pedido: listo de 1 a 3 horas.'),
+    ('pago.html', 'pago', 'Pago | ATHLETIX', 'Paga tu pedido con cualquier tarjeta o en efectivo al retirar.'),
     ('confirmacion.html', 'confirmacion', 'Compra realizada | ATHLETIX', 'Tu compra se realizó con éxito.'),
     ('pedidos.html', 'pedidos', 'Mis pedidos | ATHLETIX', 'Revisa el estado de tus pedidos.'),
     ('perfil.html', 'perfil', 'Mi perfil | ATHLETIX', 'Revisa y edita los datos de tu cuenta.'),
@@ -38,6 +40,14 @@ PAGINAS = [
 ]
 
 plantilla = (RAIZ / 'plantilla.html').read_text(encoding='utf-8')
+
+# Versión de cada archivo propio (huella de su contenido): al publicar cambios, el navegador
+# descarga los archivos nuevos en vez de mezclar una versión vieja guardada con una nueva.
+def con_version(m):
+    ruta = m.group(2)
+    huella = hashlib.sha1((RAIZ / ruta).read_bytes()).hexdigest()[:8]
+    return f'{m.group(1)}{ruta}?v={huella}"'
+plantilla = re.sub(r'((?:src|href)=")((?:js|css)/[^"?]+)"', con_version, plantilla)
 for archivo, pantalla, titulo, descripcion in PAGINAS:
     html = (plantilla.replace('{{TITULO}}', titulo)
                      .replace('{{DESCRIPCION}}', descripcion)

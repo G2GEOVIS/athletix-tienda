@@ -69,7 +69,7 @@ ayuda.html               Centro de ayuda
 404.html                 Página no encontrada
 
 plantilla.html           Base común de todas las páginas
-herramientas/generar_paginas.py  Crea los HTML desde la plantilla (si cambias el encabezado o el pie)
+herramientas/generar_paginas.py  Crea los HTML desde la plantilla y les pone la versión de cada JS y CSS (ejecutarlo después de cambiar el encabezado, el pie, un JS o el CSS)
 
 css/estilos.css          Estilos (primero celular)
 img/                     Logo y fotos de productos (img/productos/<código>-1.jpg)

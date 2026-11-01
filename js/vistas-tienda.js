@@ -257,6 +257,7 @@ function vistaProducto(partes) {
         <section class="galeria" aria-label="Fotos del producto">
           <div class="galeria__principal">
             <img id="foto-principal" src="${img(p, 1)}" alt="${esc(p.nombre)}, ${p.vistas[0]}" width="500" height="500">
+            <button class="galeria__ampliar" type="button" id="ampliar-foto" aria-label="Ampliar la foto">${icono('lupa')}<span>Ampliar</span></button>
             <button class="galeria__flecha galeria__flecha--anterior" type="button" data-paso="-1" aria-label="Foto anterior">${icono('chevronIzq')}</button>
             <button class="galeria__flecha galeria__flecha--siguiente" type="button" data-paso="1" aria-label="Foto siguiente">${icono('chevronDer')}</button>
           </div>
@@ -341,12 +342,38 @@ function vistaProducto(partes) {
       const mostrar = (v) => {
         const n = p.vistas.length;
         vista = ((v - 1 + n) % n) + 1;
+        delete foto.dataset.zoom;
         foto.src = img(p, vista);
         foto.alt = `${p.nombre}, ${p.vistas[vista - 1]}`;
         $$('.galeria__miniatura', main).forEach((b) => {
           if (Number(b.dataset.vista) === vista) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
         });
       };
+      // Zoom: con el mouse la foto se amplía 2,2 veces y sigue al puntero (usa la foto de 1600 px);
+      // con el botón Ampliar (o tocando la foto en el celular) se abre en grande y se puede pellizcar para acercar
+      const principal = $('.galeria__principal', main);
+      const ponerAlta = () => { if (RE_FOTO.test(foto.getAttribute('src'))) { foto.dataset.zoom = '1'; foto.sizes = '1600px'; foto.srcset = srcsetFoto(foto.getAttribute('src'), [1600]); } };
+      const quitarZoom = () => { principal.classList.remove('galeria__principal--zoom'); foto.style.transformOrigin = ''; };
+      principal.addEventListener('pointermove', (e) => {
+        if (e.pointerType !== 'mouse' || e.target.closest('button')) { quitarZoom(); return; }
+        const r = principal.getBoundingClientRect();
+        ponerAlta();
+        principal.classList.add('galeria__principal--zoom');
+        foto.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`;
+      });
+      principal.addEventListener('pointerleave', quitarZoom);
+      const ampliar = () => {
+        const src = foto.getAttribute('src');
+        const grande = RE_FOTO.test(src) ? srcsetFoto(src, [1600]).split(' ')[0] : src;
+        abrirDialogo(`
+          <h2 class="dialogo__titulo" id="dialogo-titulo">${esc(p.nombre)}</h2>
+          <p class="texto-suave">${esc(p.vistas[vista - 1] || '')} · En el celular puedes pellizcar la foto para acercarla.</p>
+          <div class="foto-ampliada"><img src="${grande}" alt="${esc(foto.alt)}" width="1600" height="1600"></div>
+          <button class="boton boton--principal boton--bloque" type="button" data-cerrar-dialogo style="margin-top:1rem">Cerrar</button>`, { ancho: true });
+      };
+      $('#ampliar-foto', main).addEventListener('click', ampliar);
+      foto.addEventListener('click', (e) => { if (!matchMedia('(hover: hover)').matches) ampliar(); });
+
       $$('[data-paso]', main).forEach((b) => b.addEventListener('click', () => { mostrar(vista + Number(b.dataset.paso)); anunciar(`Foto ${vista} de ${p.vistas.length}: ${p.vistas[vista - 1]}`); }));
       $$('.galeria__miniatura', main).forEach((b) => {
         b.addEventListener('click', () => mostrar(Number(b.dataset.vista)));

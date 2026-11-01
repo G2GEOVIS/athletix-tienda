@@ -182,6 +182,29 @@ const productoPorDbId = (dbId) => PRODUCTOS.find((p) => p.dbId === dbId);
 PRODUCTOS.forEach((p) => { if (p.dbId === undefined) p.dbId = p.id; });
 const normalizar = (t) => String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+/* Fotos responsivas: cada foto de producto existe en WebP de 600, 1000 y 1600 px (img/productos/w/).
+   El navegador elige la justa para el tamaño en pantalla y la densidad de píxeles (srcset y sizes);
+   el JPG de 1600 px queda como respaldo y para los correos. Se aplica sola a toda imagen de producto. */
+const RE_FOTO = /(?:^|\/)img\/productos\/([a-z0-9]+-\d)\.jpg(?:\?.*)?$/;
+const srcsetFoto = (src, lados = [600, 1000, 1600]) => { const m = RE_FOTO.exec(src || ''); return m ? lados.map((l) => `img/productos/w/${m[1]}-${l}.webp ${l}w`).join(', ') : ''; };
+function mejorarFoto(im) {
+  const src = im.getAttribute('src');
+  if (im.dataset.fotoDe === src || im.dataset.zoom) return;
+  const set = srcsetFoto(src);
+  im.dataset.fotoDe = src;
+  if (!set) { im.removeAttribute('srcset'); return; }
+  const ancho = Math.round(im.getBoundingClientRect().width);
+  im.sizes = ancho > 0 ? `${ancho}px` : '(max-width: 40rem) 50vw, 320px';
+  im.srcset = set;
+}
+function vigilarFotos() {
+  const revisar = (raiz) => { if (raiz.tagName === 'IMG') mejorarFoto(raiz); else if (raiz.querySelectorAll) raiz.querySelectorAll('img').forEach(mejorarFoto); };
+  revisar(document.body);
+  new MutationObserver((cambios) => cambios.forEach((c) => {
+    if (c.type === 'attributes') mejorarFoto(c.target); else c.addedNodes.forEach((n) => n.nodeType === 1 && revisar(n));
+  })).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['src'] });
+}
+
 const img = (p, vista = 1) => (p.imagenes && p.imagenes[vista - 1]) || `img/productos/${p.id}-${vista}.jpg`;
 // Si una foto no carga (archivo faltante o red lenta), se muestra una imagen de respaldo en vez de un hueco roto
 const FOTO_RESPALDO = 'img/sin-foto.svg';

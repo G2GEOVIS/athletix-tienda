@@ -368,6 +368,7 @@ document.addEventListener('click', (e) => {
 
 async function iniciar() {
   iniciarEncabezado();
+  vigilarFotos();
   actualizarContador();
   renderCuenta();
   const regreso = revisarEnlaceDeRegreso();

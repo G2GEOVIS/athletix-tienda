@@ -458,6 +458,7 @@ function abrirGuiaTallas() {
 }
 
 /* ======================= Reseñas de compra verificada ======================= */
+const PALABRA_ESTRELLAS = { 5: 'Excelente', 4: 'Muy bueno', 3: 'Bueno', 2: 'Regular', 1: 'Malo' };
 async function cargarResenas(p, main) {
   const zona = $('#zona-resenas', main);
   if (!p.dbId) { zona.innerHTML = '<p class="texto-suave">Las opiniones no están disponibles en este momento.</p>'; return; }
@@ -489,9 +490,15 @@ async function cargarResenas(p, main) {
         <div id="zona-escribir" style="margin-top:1.25rem"></div>
       </div>
       <ul class="resenas">
-        ${lista.map((x) => `<li class="resena">${estrellas(x.estrellas)}<span class="solo-lector">${x.estrellas} de 5 estrellas</span>
-          <p style="margin-top:.5rem">${esc(x.comentario)}</p>
-          <p class="resena__pie"><span>${esc(x.autor || 'Cliente')} · ${fecha(x.creado_en)}</span><span class="verificada">${icono('check')}Compra verificada</span></p></li>`).join('')}
+        ${lista.map((x) => { const autor = x.autor || 'Cliente'; const iniciales = autor.split(' ').map((w) => w[0] || '').join('').slice(0, 2).toUpperCase(); return `<li class="resena${x.mia ? ' resena--mia' : ''}">
+          <div class="resena__cabecera">
+            <span class="resena__avatar" aria-hidden="true">${esc(iniciales)}</span>
+            <div><p class="resena__autor">${esc(autor)}${x.mia ? ' <span class="resena__tuya">Tu reseña</span>' : ''}</p>
+            <p class="resena__fecha">${fecha(x.creado_en)}</p></div>
+          </div>
+          <p class="resena__nota">${estrellas(x.estrellas)}<span class="solo-lector">${x.estrellas} de 5 estrellas</span><strong>${PALABRA_ESTRELLAS[x.estrellas] || ''}</strong></p>
+          <p class="resena__texto">${esc(x.comentario)}</p>
+          <p class="resena__pie"><span class="verificada">${icono('check')}Compra verificada</span><span>Compró este producto en ATHLETIX</span></p></li>`; }).join('')}
       </ul>
     </div>`;
   pintarZonaEscribir(p, main, mia);

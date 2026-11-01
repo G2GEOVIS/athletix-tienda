@@ -16,6 +16,7 @@ const Api = (() => {
       try {
         sessionStorage.setItem('athletix-prueba', '1'); sessionStorage.removeItem('athletix-prueba');
         const canal = 'BroadcastChannel' in window ? new BroadcastChannel('athletix-sesion') : null;
+        const preguntas = {};
         if (canal) {
           canal.onmessage = ({ data }) => {
             if (!data || !/^sb-.*-auth-token/.test(data.clave || '')) return;
@@ -28,9 +29,12 @@ const Api = (() => {
           getItem(clave) {
             const v = sessionStorage.getItem(clave);
             if (v || !canal || !/^sb-.*-auth-token$/.test(clave)) return v;
-            // Pestaña nueva: pregunta a las otras pestañas abiertas si ya hay una sesión
-            canal.postMessage({ tipo: 'pedir', clave });
-            return new Promise((ok) => setTimeout(() => ok(sessionStorage.getItem(clave)), 250));
+            // Pestaña nueva: pregunta una sola vez a las otras pestañas abiertas si ya hay una sesión
+            if (!preguntas[clave]) {
+              canal.postMessage({ tipo: 'pedir', clave });
+              preguntas[clave] = new Promise((ok) => setTimeout(ok, 250));
+            }
+            return preguntas[clave].then(() => sessionStorage.getItem(clave));
           },
           setItem(clave, valor) { sessionStorage.setItem(clave, valor); if (canal) canal.postMessage({ tipo: 'guardar', clave, valor }); },
           removeItem(clave) { sessionStorage.removeItem(clave); if (canal) canal.postMessage({ tipo: 'borrar', clave }); }

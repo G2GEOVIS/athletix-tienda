@@ -10,7 +10,7 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 
 - Catálogo de 68 productos (calzado, tecnología deportiva y entrenamiento) con filtros por categoría, género y precio que se quedan visibles al bajar, orden y buscador. Todo viene de la base de datos.
 - El género es un atributo del producto: calzado y tecnología son solo de Hombre o de Mujer (al menos 10 de cada uno); entrenamiento es para todos (Unisex). Una regla en la base lo asegura.
-- La sesión dura solo mientras la pestaña está abierta: al abrir la tienda de nuevo nadie aparece con la sesión iniciada.
+- La sesión dura mientras la tienda está abierta (se comparte entre sus pestañas): al cerrar el navegador y volver a abrir el enlace, nadie aparece con la sesión iniciada. Al iniciar sesión se vuelve a la página donde estaba el cliente (o al carrito si tiene productos).
 - Cuentas reales con Supabase: registro con cédula ecuatoriana validada (módulo 10), confirmación por correo, recuperar contraseña y botón para mostrar la contraseña. Las contraseñas se guardan cifradas con bcrypt (Supabase Auth); la tienda nunca las ve.
 - No se permite registrar dos veces la misma cédula ni el mismo correo.
 - Ingreso con cuenta de Google (OAuth de Supabase). El botón aparece solo cuando el proveedor Google está activado en Supabase; al primer ingreso el cliente completa su cédula y celular.
@@ -18,13 +18,13 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - Solo retiro en tienda: el cliente elige la tienda y su pedido está listo en 1 hora (código de retiro de 6 caracteres). No hay envíos a domicilio.
 - Pago simulado solo con tarjeta (sin dinero real): acepta Visa, Mastercard, American Express, Diners Club, Discover, JCB, UnionPay y Maestro; reconoce la marca por los primeros dígitos, revisa la cantidad de dígitos de cada marca y el número con Luhn, la fecha y el CVV (3 dígitos). Solo se guardan la marca y los últimos 4 dígitos. Cada pago queda en la tabla PAGO.
 - Orden de pedido imprimible con lo que el cliente debe retirar y el código para identificar su pedido.
-- Correo de compra con el detalle de lo pedido y la factura en PDF adjunta (función de Supabase `correo-compra`, que envía desde el Gmail de la tienda). Correo al cliente cada vez que cambia el estado de su pedido (EmailJS). Llegan a cualquier correo (Gmail, Outlook, Hotmail, etc.).
+- Correo de compra con el detalle de lo pedido y la factura en PDF adjunta, y correo al cliente cada vez que cambia el estado de su pedido, con botón para ver su pedido. Salen desde el Gmail de la tienda (función de Supabase `correo-compra`); si falla, EmailJS envía una copia sin el PDF. Llegan a cualquier correo (Gmail, Outlook, Hotmail, etc.).
 - Factura en PDF (jsPDF) con los datos del cliente (nombre, cédula, dirección, celular y correo), productos, IVA y total; también se descarga desde la orden de pedido. Lleva la nota «Documento sin validez tributaria: no está autorizado por el SRI».
 - Mis pedidos con su estado, orden, seguimiento y reseña de cada producto comprado.
 - Administrador: pedidos (cambiar estado; al cancelar se devuelve el stock y se anula el pago), productos (crear, editar, ocultar y borrar, con subida de fotos) y pagos recibidos.
 - Compras seguras ante concurrencia: el stock se descuenta con bloqueo por fila en una sola transacción y cada intento de pago tiene una clave única para no duplicar pedidos.
 - Datos guardados en el navegador (localStorage), separados por cuenta: carrito (no se pierde al cerrar la página o la sesión; lo agregado sin sesión se suma al ingresar), favoritos (página Mis favoritos), y última tienda de retiro.
-- Reseñas de compra verificada: la base verifica que el cliente compró el producto; una reseña por cliente y producto.
+- Reseñas de compra verificada: la base verifica que el cliente compró el producto (pedido no cancelado); una reseña por cliente y producto, de 1 a 5 estrellas. La calificación del producto es el promedio de sus reseñas. Cada reseña muestra el nombre del cliente (nombre e inicial del apellido), la fecha y la marca «Compra verificada».
 
 ## Enlace permanente
 

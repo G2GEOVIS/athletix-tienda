@@ -437,12 +437,20 @@ svg { width: 1.25rem; height: 1.25rem; flex-shrink: 0; fill: none; stroke: curre
 .resumen-opiniones__nota { font-family: var(--fuente-titulo); font-weight: 800; font-size: 3.5rem; line-height: 1; }
 .barras { list-style: none; display: grid; gap: .4rem; margin-top: 1rem; }
 .barra { display: grid; grid-template-columns: 5.5rem 1fr 2.5rem; align-items: center; gap: .5rem; font-size: .9rem; }
-.barra__pista { height: .5rem; background: var(--gris); border: 1px solid var(--borde); border-radius: 999px; overflow: hidden; }
-.barra__relleno { height: 100%; background: var(--naranja); }
+.barra__pista { display: block; height: .5rem; background: var(--gris); border: 1px solid var(--borde); border-radius: 999px; overflow: hidden; }
+.barra__relleno { display: block; height: 100%; background: var(--naranja); }
 .resenas { list-style: none; display: grid; gap: 1rem; }
 .resena { border: 1px solid var(--borde); border-radius: var(--radio); padding: 1rem 1.25rem; }
 .resena h3 { font-size: 1.05rem; margin: .4rem 0 .25rem; }
 .resena__pie { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin-top: .6rem; font-size: .9rem; color: var(--texto-suave); }
+.resena--mia { border-color: var(--verde); background: #F4FBFA; }
+.resena__cabecera { display: flex; align-items: center; gap: .75rem; margin-bottom: .6rem; }
+.resena__avatar { flex-shrink: 0; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: var(--azul); color: #fff; font-weight: 700; font-size: .95rem; }
+.resena__autor { font-weight: 700; margin: 0; }
+.resena__tuya { display: inline-block; margin-left: .35rem; padding: .05rem .5rem; border-radius: 999px; background: var(--verde); color: #fff; font-size: .75rem; font-weight: 700; vertical-align: middle; }
+.resena__fecha { margin: 0; font-size: .85rem; color: var(--texto-suave); }
+.resena__nota { display: flex; align-items: center; gap: .5rem; margin: 0; }
+.resena__texto { margin-top: .5rem; line-height: 1.55; }
 .verificada { display: inline-flex; gap: .3rem; align-items: center; color: var(--verde); font-weight: 600; }
 .verificada svg { width: 1rem; height: 1rem; }
 

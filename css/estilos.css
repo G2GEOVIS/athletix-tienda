@@ -916,3 +916,11 @@ fieldset.panel { margin: 0; min-width: 0; }
 .menos { color: #B42318; }
 .mas { color: var(--verde); }
 .fila-cambio td { background: #FFF7ED; transition: background 1s; }
+.donde-vives { border: 0; padding: 0; margin: 0; }
+.donde-vives legend { font-weight: 700; margin-bottom: .5rem; padding: 0; }
+.donde-vives__opciones { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.campo-telefono { display: flex; align-items: stretch; }
+.campo-telefono input { flex: 1; min-width: 0; }
+.campo-telefono__codigo { display: grid; place-items: center; padding: 0 .8rem; border: 1.5px solid var(--borde-fuerte); border-right: 0; border-radius: var(--radio-sm) 0 0 var(--radio-sm); background: var(--gris); font-weight: 700; font-size: 1.05rem; }
+.campo-telefono__codigo:not([hidden]) + input { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.formulario__fila--doble > .campo > .campo-telefono { grid-row: 3; align-self: start; }

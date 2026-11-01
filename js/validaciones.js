@@ -32,6 +32,22 @@ const Validar = (() => {
     return '';
   }
 
+  /* Clientes de otros países: pasaporte de 5 a 20 letras y números */
+  function pasaporte(valor) {
+    const v = String(valor || '').trim().toUpperCase();
+    if (!v) return 'Escribe tu número de pasaporte.';
+    if (!/^[A-Z0-9]{5,20}$/.test(v)) return 'El pasaporte debe tener de 5 a 20 letras y números, sin espacios ni guiones.';
+    return '';
+  }
+  /* Celular de otro país: solo el número, sin el código del país (ese se elige con el país) */
+  function telefonoInternacional(valor, codigo) {
+    const t = String(valor || '').replace(/\s+/g, '');
+    if (!t) return 'Escribe tu número de celular.';
+    if (!/^\d+$/.test(t)) return 'Escribe solo números, sin el código del país.';
+    if (t.length < 6 || (String(codigo).replace(/\D/g, '') + t).length > 15) return 'El número no tiene un largo válido. Escríbelo sin el código del país.';
+    return '';
+  }
+
   function telefono(valor) {
     const t = String(valor || '').trim();
     if (!t) return 'Escribe tu número de celular.';
@@ -143,7 +159,7 @@ const Validar = (() => {
     return '';
   }
 
-  return { cedula, nombre, telefono, correo, clave, tarjeta, marcaTarjeta, datosMarca, luhn, vencimiento, cvv, titular, direccion, texto };
+  return { cedula, pasaporte, nombre, telefono, telefonoInternacional, correo, clave, tarjeta, marcaTarjeta, datosMarca, luhn, vencimiento, cvv, titular, direccion, texto };
 })();
 
 if (typeof module !== 'undefined') module.exports = Validar;

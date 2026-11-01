@@ -12,6 +12,7 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - El género es un atributo del producto: calzado y tecnología son solo de Hombre o de Mujer (al menos 10 de cada uno); entrenamiento es para todos (Unisex). Una regla en la base lo asegura.
 - La sesión dura mientras la tienda está abierta (se comparte entre sus pestañas): al cerrar el navegador y volver a abrir el enlace, nadie aparece con la sesión iniciada. Al iniciar sesión se vuelve a la página donde estaba el cliente (o al carrito si tiene productos).
 - Cuentas reales con Supabase: registro con cédula ecuatoriana validada (módulo 10), confirmación por correo, recuperar contraseña y botón para mostrar la contraseña. Las contraseñas se guardan cifradas con bcrypt (Supabase Auth); la tienda nunca las ve.
+- Clientes de Ecuador (cédula y celular 09…) y de otros países: al elegir «Otro país» aparecen el país, el pasaporte y el celular con el código del país. La factura muestra C.I. o Pasaporte.
 - No se permite registrar dos veces la misma cédula, el mismo celular ni el mismo correo (la base lo asegura con reglas únicas).
 - Ingreso con cuenta de Google (OAuth de Supabase). El botón aparece solo cuando el proveedor Google está activado en Supabase; al primer ingreso el cliente completa su cédula y celular.
 - Carrito: agregar, cambiar cantidad y quitar productos. Se puede comprar todo el stock de una talla (botón «Llevar todo»).
@@ -107,6 +108,7 @@ bd/16_favoritos_y_carrito.sql    Tablas FAVORITO y CARRITO de cada cuenta (ejecu
 bd/17_celular_unico.sql          Un celular por cuenta (regla única y función celular_registrado)
 bd/18_pago_en_tienda.sql         Pago en la tienda (PAGO.pag_forma, estado Pendiente) y tiempo de retiro de 1 a 3 horas
 bd/19_movimientos_y_factura.sql  MOVIMIENTO_STOCK (trigger que registra cada cambio de stock) y número de factura propio (seq_factura)
+bd/20_clientes_extranjeros.sql   Clientes de otros países: cli_pais, cli_tipo_documento (Cédula o Pasaporte) y celular internacional
 bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner

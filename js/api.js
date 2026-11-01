@@ -131,7 +131,7 @@ const Api = (() => {
   /* ---------- Traducción entre la base (columnas CLI_, PRD_, PED_...) y la interfaz ---------- */
   const mapear = (r, fn) => (r.error || !r.datos ? r : { datos: Array.isArray(r.datos) ? r.datos.map(fn) : fn(r.datos) });
   const codigoPedido = (numero, fecha) => `AX-${new Date(fecha).getFullYear()}-${String(numero).padStart(5, '0')}`;
-  const aCliente = (c) => ({ id: c.cli_usuario, cedula: c.cli_cedula, nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_celular, direccion: c.cli_direccion || '', correo: c.cli_correo, creado_en: c.cli_fecha_registro });
+  const aCliente = (c) => ({ id: c.cli_usuario, cedula: c.cli_cedula, pais: c.cli_pais || 'Ecuador', tipoDocumento: c.cli_tipo_documento || 'Cédula', nombres: c.cli_nombres, apellidos: c.cli_apellidos, telefono: c.cli_celular, direccion: c.cli_direccion || '', correo: c.cli_correo, creado_en: c.cli_fecha_registro });
   const aTarjeta = (t) => ({ id: t.mtp_codigo, marca: t.mtp_marca, ultimos4: t.mtp_ultimos4, titular: t.mtp_titular, mes_vence: t.mtp_mes_vence, anio_vence: t.mtp_anio_vence });
   const CAMPOS_PEDIDO = 'ped_numero, ped_factura, ped_estado, ped_subtotal, ped_iva, ped_total, ped_fecha, ped_codigo_retiro, ped_hora_estimada, '
     + 'tienda(tie_nombre, tie_direccion, tie_horario, tie_ciudad), pago(pag_forma, pag_marca, pag_ultimos4, pag_monto, pag_fecha, pag_estado), '
@@ -186,7 +186,7 @@ const Api = (() => {
     async correoRegistrado(correo) { const r = await ejecutar(sb.rpc('correo_registrado', { p_correo: correo })); return r.error ? r : { datos: !!r.datos }; },
     async perfil(usuario) { return mapear(await ejecutar(sb.from('cliente').select('*').eq('cli_usuario', usuario).maybeSingle()), aCliente); },
     async crear(d) {
-      return mapear(await ejecutar(sb.from('cliente').insert({ cli_cedula: d.cedula, cli_usuario: d.id, cli_nombres: d.nombres, cli_apellidos: d.apellidos, cli_celular: d.telefono, cli_direccion: d.direccion || null, cli_correo: d.correo }).select().single()), aCliente);
+      return mapear(await ejecutar(sb.from('cliente').insert({ cli_cedula: d.cedula, ...(d.pais && d.pais !== 'Ecuador' ? { cli_pais: d.pais, cli_tipo_documento: 'Pasaporte' } : {}), cli_usuario: d.id, cli_nombres: d.nombres, cli_apellidos: d.apellidos, cli_celular: d.telefono, cli_direccion: d.direccion || null, cli_correo: d.correo }).select().single()), aCliente);
     },
     async actualizar(usuario, d) {
       return mapear(await ejecutar(sb.from('cliente').update({ cli_nombres: d.nombres, cli_apellidos: d.apellidos, cli_celular: d.telefono, cli_direccion: d.direccion || null }).eq('cli_usuario', usuario).select().single()), aCliente);
@@ -437,7 +437,7 @@ const Api = (() => {
     </div>`;
   };
   const queLlevar = () => `<div style="margin:0 0 18px;font-size:14px;line-height:1.7"><b>Para retirar trae:</b><br>
-    ✔ Tu <b>cédula</b> (el pedido está a tu nombre)<br>✔ Tu <b>número de pedido</b> o el <b>código de retiro</b> (puedes mostrar este correo)<br>✔ Revisa tus productos en el mostrador antes de irte</div>`;
+    ✔ Tu <b>cédula o pasaporte</b> (el pedido está a tu nombre)<br>✔ Tu <b>número de pedido</b> o el <b>código de retiro</b> (puedes mostrar este correo)<br>✔ Revisa tus productos en el mostrador antes de irte</div>`;
   const ayuda = () => `<p style="margin:18px 0 0;font-size:13px;color:${SUAVE};line-height:1.5">¿Tienes dudas? Responde a este correo, escríbenos a <a href="mailto:${CORREO_TIENDA}" style="color:${VERDE}">${CORREO_TIENDA}</a> o visita nuestra <a href="${BASE()}ayuda.html" style="color:${VERDE}">sección de Ayuda</a>.</p>`;
   const botonHtml = ([texto, url], principal = true) => `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 8px 8px 0;display:inline-table"><tr><td style="background:${principal ? VERDE : '#ffffff'};border:2px solid ${VERDE};border-radius:6px"><a href="${url}" style="display:inline-block;color:${principal ? '#ffffff' : VERDE};text-decoration:none;padding:10px 20px;font-weight:bold;font-size:15px">${h(texto)}</a></td></tr></table>`;
 
@@ -597,7 +597,7 @@ const Api = (() => {
         cuerpo: `${tablaDetalle(items.length ? items : d.items, { subtotal: p.subtotal ?? d.subtotal, iva: p.iva ?? d.iva, total: p.total, pendiente: !!p.enTienda })}
           <div style="margin:20px 0;padding:16px;background:#F3F5F7;border-left:4px solid #0B1F3A;border-radius:6px;font-size:14px">
             <div style="font-size:15px;font-weight:bold;margin-bottom:6px">👤 Cliente</div>
-            <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px">${fila('Nombre', h(p.cliente))}${fila('Cédula', h(p.cedula))}${fila('Celular', h(p.telefono))}${fila('Correo', h(p.correo))}${p.direccion ? fila('Dirección', h(p.direccion)) : ''}${fila('Pago', h(p.pagoTexto || ''))}</table>
+            <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px">${fila('Nombre', h(p.cliente))}${fila(nombreDocumento(p.cedula, false), h(p.cedula))}${fila('Celular', h(p.telefono))}${fila('Correo', h(p.correo))}${p.direccion ? fila('Dirección', h(p.direccion)) : ''}${fila('Pago', h(p.pagoTexto || ''))}</table>
           </div>
           ${cajaRetiro({ numero: p.numero, codigo: p.codigo, tienda, nota: p.enTienda ? `💵 El cliente paga ${plata(p.total)} en efectivo al retirar.` : '✅ Pago con tarjeta aprobado.' })}`,
         boton: ['Abrir panel de pedidos', `${BASE()}admin.html?estado=Recibido`], boton2: ['Ver orden de pedido', enlaceOrden(p.id)],

@@ -63,7 +63,7 @@ const Factura = (() => {
       ['Entrega', `Retiro en ${d.tienda.nombre}`], ['Código retiro', d.codigoRetiro]
     ], m, 88);
     const y2 = bloque('Cliente', [
-      ['Nombre', `${c.nombres || ''} ${c.apellidos || ''}`.trim()], ['C.I.', c.cedula], ['Dirección', c.direccion],
+      ['Nombre', `${c.nombres || ''} ${c.apellidos || ''}`.trim()], [nombreDocumento(c.cedula), c.cedula], ['Dirección', c.direccion],
       ['Celular', c.telefono], ['Correo', c.correo]
     ], 110, 85);
     y = Math.max(y1, y2) + 4;

@@ -2,6 +2,18 @@
 'use strict';
 
 /* Entrega: solo retiro en la tienda que elija el cliente (la base usa el mismo tiempo) */
+/* Países para clientes que no viven en Ecuador (con el código para el celular) */
+const PAISES = [
+  ['Argentina', '+54'], ['Bolivia', '+591'], ['Brasil', '+55'], ['Canadá', '+1'], ['Chile', '+56'], ['China', '+86'], ['Colombia', '+57'],
+  ['Costa Rica', '+506'], ['Cuba', '+53'], ['El Salvador', '+503'], ['España', '+34'], ['Estados Unidos', '+1'], ['Francia', '+33'],
+  ['Alemania', '+49'], ['Guatemala', '+502'], ['Honduras', '+504'], ['Italia', '+39'], ['Japón', '+81'], ['México', '+52'],
+  ['Nicaragua', '+505'], ['Panamá', '+507'], ['Paraguay', '+595'], ['Perú', '+51'], ['Portugal', '+351'], ['Reino Unido', '+44'],
+  ['República Dominicana', '+1'], ['Uruguay', '+598'], ['Venezuela', '+58']
+].sort((a, b) => a[0].localeCompare(b[0], 'es'));
+const codigoPais = (pais) => (PAISES.find(([p]) => p === pais) || [])[1] || '';
+// "C.I." para la cédula ecuatoriana (10 números) y "Pasaporte" para los demás documentos
+const nombreDocumento = (numero, corto = true) => (/^\d{10}$/.test(String(numero || '').trim()) ? (corto ? 'C.I.' : 'Cédula') : 'Pasaporte');
+
 const ENTREGA = { retiro: 'de 1 a 3 horas' }; // el tiempo exacto depende de los productos (ver minutosRetiro)
 
 

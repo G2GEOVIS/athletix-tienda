@@ -80,12 +80,12 @@ async function vistaRetiro() {
             <h2 id="titulo-quien">Quién retira y datos de tu factura</h2>
             <dl class="datos-lista">
               <dt>Nombre</dt><dd>${esc(c.nombres)} ${esc(c.apellidos)}</dd>
-              <dt>Cédula</dt><dd>${esc(c.cedula)}</dd>
+              <dt>${nombreDocumento(c.cedula, false)}</dt><dd>${esc(c.cedula)}</dd>
               <dt>Celular</dt><dd>${esc(c.telefono)}</dd>
               <dt>Correo</dt><dd>${esc(correoSesion())}</dd>
             </dl>
             <div style="margin-top:1rem">${campo({ id: 'direccion', etiqueta: 'Dirección de domicilio', ayuda: 'Calle principal, número y calle secundaria, ciudad. Aparece en tu factura.', valor: c.direccion || '', max: 150, extra: 'autocomplete="street-address"' })}</div>
-            <p class="alerta alerta--info" style="margin-top:1.25rem">${icono('correo')}<span>Al pagar recibes la <strong>orden de pedido</strong> con tu número de pedido y un código de retiro de 6 caracteres. En la tienda presenta tu <strong>cédula</strong> y tu <strong>número de pedido</strong> (o el código) para verificar tu compra.</span></p>
+            <p class="alerta alerta--info" style="margin-top:1.25rem">${icono('correo')}<span>Al pagar recibes la <strong>orden de pedido</strong> con tu número de pedido y un código de retiro de 6 caracteres. En la tienda presenta tu <strong>${nombreDocumento(c.cedula, false).toLowerCase()}</strong> y tu <strong>número de pedido</strong> (o el código) para verificar tu compra.</span></p>
           </section>
         </form>
         <div id="zona-resumen">${resumenPedido(botonesEntrega())}</div>
@@ -399,7 +399,7 @@ async function vistaOrden(partes, params) {
           <section aria-labelledby="orden-cliente"><h2 id="orden-cliente">Cliente</h2>
             <dl class="datos-lista datos-lista--compacta">
               <dt>Nombre</dt><dd>${esc(cli.nombres)} ${esc(cli.apellidos)}</dd>
-              <dt>Cédula</dt><dd>${esc(cli.cedula)}</dd>
+              <dt>${nombreDocumento(cli.cedula, false)}</dt><dd>${esc(cli.cedula)}</dd>
               <dt>Celular</dt><dd>${esc(cli.telefono)}</dd>
               <dt>Dirección</dt><dd>${esc(cli.direccion || '—')}</dd>
               <dt>Correo</dt><dd>${esc(cli.correo || correoSesion())}</dd>

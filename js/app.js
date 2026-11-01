@@ -83,8 +83,9 @@ async function alIniciarSesion(sesion) {
   } else if (!r.error) {
     // Primer ingreso después de confirmar el correo: se crea el perfil con los datos del registro
     const m = sesion.user.user_metadata || {};
-    if (m.cedula && m.nombres && m.apellidos && m.telefono && !Validar.cedula(m.cedula)) {
-      const rc = await Api.cliente.crear({ id: sesion.user.id, correo: sesion.user.email, cedula: m.cedula, nombres: m.nombres, apellidos: m.apellidos, telefono: m.telefono, direccion: m.direccion });
+    const extranjero = m.pais && m.pais !== 'Ecuador';
+    if (m.cedula && m.nombres && m.apellidos && m.telefono && !(extranjero ? Validar.pasaporte(m.cedula) : Validar.cedula(m.cedula))) {
+      const rc = await Api.cliente.crear({ id: sesion.user.id, correo: sesion.user.email, cedula: m.cedula, pais: m.pais || 'Ecuador', nombres: m.nombres, apellidos: m.apellidos, telefono: m.telefono, direccion: m.direccion });
       if (!rc.error) estado.cliente = rc.datos;
     }
   }

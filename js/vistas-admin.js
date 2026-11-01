@@ -50,7 +50,7 @@ async function vistaAdmin(partes, params) {
           </div>
           <p class="texto-suave">${fechaHora(p.creado_en)} · ${icono('tienda')} Retiro en ${esc(p.tienda)}</p>
           <dl class="datos-lista datos-lista--compacta" style="margin-top:.75rem">
-            <dt>Cliente</dt><dd>${esc(p.cliente)} · C.I. ${esc(p.cedula)}</dd>
+            <dt>Cliente</dt><dd>${esc(p.cliente)} · ${nombreDocumento(p.cedula)} ${esc(p.cedula)}</dd>
             <dt>Contacto</dt><dd>${esc(p.correo)} · ${esc(p.telefono)}</dd>
             ${productosHtml(p)}
             <dt>Código</dt><dd><strong>${esc(p.codigoRetiro || '')}</strong> · listo aprox. ${p.horaEstimada ? fechaHora(p.horaEstimada) : ''}</dd>

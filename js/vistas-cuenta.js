@@ -155,50 +155,114 @@ function vistaRegistro(partes, params) {
   };
 }
 
-/* Campos compartidos por registro, completar perfil y editar perfil */
+/* Campos compartidos por registro, completar perfil y editar perfil.
+   Por defecto es un cliente de Ecuador (cédula y celular 09…). Solo si elige "Otro país" aparecen
+   el país, el pasaporte y el celular con el código del país. */
 function camposDatosPersonales(v, { cedulaFija = false } = {}) {
+  const extranjero = !!(v.pais && v.pais !== 'Ecuador');
+  const telNacional = extranjero && v.telefono ? String(v.telefono).replace(codigoPais(v.pais), '') : (v.telefono || '');
   return `
     <div class="formulario__fila formulario__fila--doble">
       ${campo({ id: 'nombres', etiqueta: 'Nombres', ayuda: 'Solo letras, por ejemplo: Ana', valor: v.nombres || '', max: 60, extra: 'autocomplete="given-name" autocapitalize="words"' })}
       ${campo({ id: 'apellidos', etiqueta: 'Apellidos', ayuda: 'Solo letras, por ejemplo: Pérez', valor: v.apellidos || '', max: 60, extra: 'autocomplete="family-name" autocapitalize="words"' })}
     </div>
+    ${cedulaFija ? '' : `
+    <fieldset class="donde-vives">
+      <legend>¿Dónde vives?</legend>
+      <div class="donde-vives__opciones">
+        <label class="opcion opcion--caja"><input type="radio" name="residencia" value="ecuador" ${extranjero ? '' : 'checked'}> <span>Ecuador</span></label>
+        <label class="opcion opcion--caja"><input type="radio" name="residencia" value="otro" ${extranjero ? 'checked' : ''}> <span>Otro país</span></label>
+      </div>
+    </fieldset>
+    <div class="campo" id="campo-pais" ${extranjero ? '' : 'hidden'}>
+      <label for="pais">País <span class="requerido" aria-hidden="true">*</span></label>
+      <select id="pais" autocomplete="country-name" aria-describedby="pais-error"><option value="">Elige tu país</option>${PAISES.map(([p, c]) => `<option value="${p}" ${p === v.pais ? 'selected' : ''}>${p} (${c})</option>`).join('')}</select>
+      <p class="campo__error" id="pais-error" hidden>${icono('alerta')}<span></span></p>
+    </div>`}
     <div class="formulario__fila formulario__fila--doble">
       ${cedulaFija
-        ? `<div class="campo"><p style="font-weight:700">Cédula</p><p class="campo-fijo">${esc(v.cedula)}</p><p class="campo__ayuda">La cédula no se puede cambiar.</p></div>`
-        : campo({ id: 'cedula', etiqueta: 'Cédula', ayuda: '10 números, sin guion', valor: v.cedula || '', max: 10, extra: 'inputmode="numeric" autocomplete="off"' })}
-      ${campo({ id: 'telefono', etiqueta: 'Celular', tipo: 'tel', ayuda: '10 números, empieza con 09', valor: v.telefono || '', max: 10, extra: 'autocomplete="tel-national" inputmode="numeric"' })}
+        ? `<div class="campo"><p style="font-weight:700">${extranjero ? 'Pasaporte' : 'Cédula'}</p><p class="campo-fijo">${esc(v.cedula)}${extranjero ? ` · ${esc(v.pais)}` : ''}</p><p class="campo__ayuda">${extranjero ? 'El pasaporte' : 'La cédula'} no se puede cambiar.</p></div>`
+        : campo({ id: 'cedula', etiqueta: extranjero ? 'Pasaporte' : 'Cédula', ayuda: extranjero ? '5 a 20 letras y números, sin espacios' : '10 números, sin guion', valor: v.cedula || '', max: 20, extra: 'autocomplete="off" autocapitalize="characters" spellcheck="false"' + (extranjero ? '' : ' inputmode="numeric"') })}
+      <div class="campo">
+        <label for="telefono">Celular <span class="requerido" aria-hidden="true">*</span></label>
+        <p class="campo__ayuda" id="telefono-ayuda">${extranjero ? 'Solo el número, sin el código del país' : '10 números, empieza con 09'}</p>
+        <div class="campo-telefono"><span class="campo-telefono__codigo" id="codigo-pais" ${extranjero ? '' : 'hidden'} aria-hidden="true">${esc(codigoPais(v.pais))}</span>
+          <input id="telefono" name="telefono" type="tel" value="${esc(telNacional)}" maxlength="15" required aria-required="true" aria-describedby="telefono-ayuda telefono-error" autocomplete="tel-national" inputmode="numeric" data-extranjero="${extranjero ? '1' : ''}" data-pais="${esc(v.pais || 'Ecuador')}"></div>
+        <p class="campo__error" id="telefono-error" hidden>${icono('alerta')}<span></span></p>
+      </div>
     </div>
-    ${campo({ id: 'direccion', etiqueta: 'Dirección de domicilio', ayuda: 'Calle principal, número y calle secundaria, ciudad. Aparece en tu factura.', valor: v.direccion || '', max: 150, extra: 'autocomplete="street-address"' })}`;
+    ${campo({ id: 'direccion', etiqueta: 'Dirección de domicilio', ayuda: extranjero ? 'Calle, número, ciudad y país. Aparece en tu factura.' : 'Calle principal, número y calle secundaria, ciudad. Aparece en tu factura.', valor: v.direccion || '', max: 150, extra: 'autocomplete="street-address"' })}`;
+}
+// País elegido en el formulario ("Ecuador" si no eligió "Otro país")
+function paisDelFormulario(form) {
+  const otro = $('input[name="residencia"]:checked', form);
+  if (otro) return otro.value === 'otro' ? ($('#pais', form).value || '') : 'Ecuador';
+  return $('#telefono', form).dataset.pais || 'Ecuador';
 }
 function activarDatosPersonales(form) {
   filtrarEntrada($('#nombres', form), NO_LETRAS, 60);
   filtrarEntrada($('#apellidos', form), NO_LETRAS, 60);
-  filtrarEntrada($('#telefono', form), NO_DIGITOS, 10);
+  const tel = $('#telefono', form);
+  const ced = $('#cedula', form);
+  const esOtro = () => paisDelFormulario(form) !== 'Ecuador';
+  tel.addEventListener('input', () => { const d = tel.value.replace(/\D/g, '').slice(0, esOtro() ? 14 : 10); if (d !== tel.value) tel.value = d; });
+  if (ced) ced.addEventListener('input', () => {
+    const v = esOtro() ? ced.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 20) : ced.value.replace(/\D/g, '').slice(0, 10);
+    if (v !== ced.value) ced.value = v;
+  });
   validarAlSalir(form, 'nombres', (v) => Validar.nombre(v, 'nombre'));
   validarAlSalir(form, 'apellidos', (v) => Validar.nombre(v, 'apellido'));
-  validarAlSalir(form, 'telefono', (v) => Validar.telefono(v));
+  validarAlSalir(form, 'telefono', (v) => (esOtro() ? Validar.telefonoInternacional(v, codigoPais(paisDelFormulario(form))) : Validar.telefono(v)));
   validarAlSalir(form, 'direccion', (v) => Validar.direccion(v));
-  const ced = $('#cedula', form);
-  if (ced) { filtrarEntrada(ced, NO_DIGITOS, 10); validarAlSalir(form, 'cedula', (v) => Validar.cedula(v)); }
+  if (ced) validarAlSalir(form, 'cedula', (v) => (esOtro() ? Validar.pasaporte(v) : Validar.cedula(v)));
+  // Al cambiar entre Ecuador y otro país se cambian el documento, el celular y sus ayudas
+  const pintar = () => {
+    const otro = esOtro() || (($('input[name="residencia"]:checked', form) || {}).value === 'otro');
+    const campoPais = $('#campo-pais', form);
+    if (campoPais) campoPais.hidden = !otro;
+    if (ced) {
+      $('label[for="cedula"]', form).innerHTML = `${otro ? 'Pasaporte' : 'Cédula'} <span class="requerido" aria-hidden="true">*</span>`;
+      $('#cedula-ayuda', form).textContent = otro ? '5 a 20 letras y números, sin espacios' : '10 números, sin guion';
+      ced.inputMode = otro ? 'text' : 'numeric';
+    }
+    $('#telefono-ayuda', form).textContent = otro ? 'Solo el número, sin el código del país' : '10 números, empieza con 09';
+    const codigo = $('#codigo-pais', form);
+    codigo.textContent = otro ? codigoPais(paisDelFormulario(form)) : '';
+    codigo.hidden = !otro || !codigo.textContent;
+    $('#direccion-ayuda', form).textContent = otro ? 'Calle, número, ciudad y país. Aparece en tu factura.' : 'Calle principal, número y calle secundaria, ciudad. Aparece en tu factura.';
+  };
+  form.addEventListener('change', (e) => {
+    if (e.target.name === 'residencia' || e.target.id === 'pais') {
+      pintar();
+      if (e.target.name === 'residencia' && e.target.value === 'otro') $('#pais', form).focus();
+    }
+  });
 }
 const limpiarNombre = (t) => t.trim().replace(/\s+/g, ' ').replace(/(^|[ '-])([a-záéíóúüñ])/g, (m, a, b) => a + b.toUpperCase());
 function leerDatosPersonales(form) {
   const ced = $('#cedula', form);
+  const pais = paisDelFormulario(form);
+  const tel = $('#telefono', form).value.replace(/\s+/g, '');
   return {
     nombres: limpiarNombre($('#nombres', form).value),
     apellidos: limpiarNombre($('#apellidos', form).value),
-    cedula: ced ? ced.value.trim() : undefined,
-    telefono: $('#telefono', form).value.trim(),
+    cedula: ced ? ced.value.trim().toUpperCase() : undefined,
+    pais,
+    // En otro país se guarda en formato internacional: +código y número
+    telefono: pais !== 'Ecuador' && tel ? codigoPais(pais) + tel : tel,
+    telefonoNacional: tel,
     direccion: $('#direccion', form).value.trim().replace(/\s+/g, ' ')
   };
 }
 function reglasDatosPersonales(d) {
+  const otro = d.pais !== 'Ecuador';
   const r = [
     ['nombres', Validar.nombre(d.nombres, 'nombre')],
     ['apellidos', Validar.nombre(d.apellidos, 'apellido')]
   ];
-  if (d.cedula !== undefined) r.push(['cedula', Validar.cedula(d.cedula)]);
-  r.push(['telefono', Validar.telefono(d.telefono)]);
+  if (otro && document.getElementById('pais') && !d.pais) r.push(['pais', 'Elige el país donde vives.']);
+  if (d.cedula !== undefined) r.push(['cedula', otro ? Validar.pasaporte(d.cedula) : Validar.cedula(d.cedula)]);
+  r.push(['telefono', otro ? Validar.telefonoInternacional(d.telefonoNacional, codigoPais(d.pais)) : Validar.telefono(d.telefonoNacional)]);
   r.push(['direccion', Validar.direccion(d.direccion)]);
   return r;
 }
@@ -392,7 +456,7 @@ function tarjetaCliente() {
       <span class="cliente-tarjeta__avatar" aria-hidden="true">${esc(iniciales)}</span>
       <div class="cliente-tarjeta__datos">
         <p class="cliente-tarjeta__nombre">${esc(completo)}${estado.esAdmin ? ' <span class="insignia-rol">Administrador</span>' : ''}</p>
-        <p class="texto-suave">${esc(c.correo || correoSesion())}${c.cedula ? ` · C.I. ${esc(c.cedula)}` : ''}</p>
+        <p class="texto-suave">${esc(c.correo || correoSesion())}${c.cedula ? ` · ${nombreDocumento(c.cedula)} ${esc(c.cedula)}` : ''}${c.pais && c.pais !== 'Ecuador' ? ` · ${esc(c.pais)}` : ''}</p>
       </div>
     </div>`;
 }

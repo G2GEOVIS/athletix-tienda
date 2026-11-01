@@ -23,7 +23,9 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - Mis pedidos con su estado, orden, seguimiento y reseña de cada producto comprado.
 - Administrador: pedidos (cambiar estado; al cancelar se devuelve el stock y se anula el pago), productos (crear, editar, ocultar y borrar, con subida de fotos) y pagos recibidos.
 - Compras seguras ante concurrencia: el stock se descuenta con bloqueo por fila en una sola transacción y cada intento de pago tiene una clave única para no duplicar pedidos.
-- Datos guardados en el navegador (localStorage), separados por cuenta: carrito (no se pierde al cerrar la página o la sesión; lo agregado sin sesión se suma al ingresar), favoritos (página Mis favoritos), y última tienda de retiro.
+- Carrito y favoritos guardados en la base (tablas CARRITO y FAVORITO): con la cuenta se ven iguales en la computadora y en el celular. Sin sesión se guardan en el navegador (localStorage) y se suman a la cuenta al ingresar.
+- Mis pedidos muestra la foto de cada producto comprado.
+- El correo de contacto abre el correo web del cliente (Gmail, Outlook/Hotmail o Yahoo, según su cuenta); sin sesión le deja elegir.
 - Reseñas de compra verificada: la base verifica que el cliente compró el producto (pedido no cancelado); una reseña por cliente y producto, de 1 a 5 estrellas. La calificación del producto es el promedio de sus reseñas. Cada reseña muestra el nombre del cliente (nombre e inicial del apellido), la fecha y la marca «Compra verificada».
 
 ## Enlace permanente
@@ -97,6 +99,7 @@ bd/12_solo_tarjeta.sql           Solo pago con tarjeta: quita las columnas de tr
 bd/13_sin_unisex.sql             Calzado y tecnología solo Hombre o Mujer
 bd/14_direccion_y_marcas.sql     Dirección del cliente (para la factura) y todas las marcas de tarjeta (base nueva: 01-08, 11 a 14)
 bd/15_limpiar_datos.sql          Borra pedidos y clientes (menos el administrador) y devuelve el stock
+bd/16_favoritos_y_carrito.sql    Tablas FAVORITO y CARRITO de cada cuenta (ejecutar antes del 15)
 bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner

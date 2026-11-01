@@ -20,6 +20,8 @@ delete from pedido;
 alter sequence seq_ped_numero restart with 1001;
 
 -- 3. Clientes (con sus tarjetas y reseñas) y sus cuentas de acceso, menos el administrador
+delete from carrito;
+delete from favorito;
 delete from resena where cli_cedula in (select cli_cedula from cliente where cli_usuario not in (select adm_usuario from administrador));
 delete from metodo_pago where cli_cedula in (select cli_cedula from cliente where cli_usuario not in (select adm_usuario from administrador));
 delete from cliente where cli_usuario not in (select adm_usuario from administrador);

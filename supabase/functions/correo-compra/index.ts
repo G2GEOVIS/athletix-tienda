@@ -73,7 +73,8 @@ Deno.serve(async (req) => {
     });
     return responder({ ok: true });
   } catch (e) {
-    console.error(e);
+    // Diagnóstico sin mostrar la contraseña: solo su largo y si son 16 letras como las que entrega Google
+    console.error(e, { usuario: usuarioGmail, largoClave: claveGmail.length, formatoGoogle: /^[a-z]{16}$/.test(claveGmail) });
     const credenciales = String((e as { code?: string })?.code) === 'EAUTH';
     return responder({ error: credenciales ? 'Gmail rechazó el usuario o la contraseña de aplicación de la tienda.' : 'No se pudo enviar el correo.' }, 502);
   }

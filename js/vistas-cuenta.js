@@ -613,7 +613,7 @@ async function vistaPedidos() {
               <span class="estado estado--${p.estado.toLowerCase()}">${nombreEstado(p.estado)}</span>
             </div>
             <p class="texto-suave" style="margin-top:.25rem">${fechaHora(p.creado_en)}</p>
-            <ul class="pedido__productos">${p.detalle_pedido.map((d) => { const pr = productoPorDbId(d.producto_id); return `<li class="pedido__producto"><span>${d.cantidad} × ${pr ? `<a href="producto.html?id=${pr.id}">${esc(pr.nombre)}</a>` : 'Producto'}${d.talla ? ` (talla ${esc(d.talla)})` : ''} · ${dinero(d.precio_unitario * d.cantidad)}</span><span class="pedido__resena">${botonResena(p, d, pr)}</span></li>`; }).join('')}</ul>
+            <ul class="pedido__productos">${p.detalle_pedido.map((d) => { const pr = productoPorDbId(d.producto_id); return `<li class="pedido__producto">${pr ? `<a class="pedido__foto" href="producto.html?id=${pr.id}" tabindex="-1" aria-hidden="true"><img src="${img(pr)}" alt="" width="500" height="500" loading="lazy"></a>` : '<span class="pedido__foto"></span>'}<span class="pedido__info"><span class="pedido__nombre">${pr ? `<a href="producto.html?id=${pr.id}">${esc(pr.nombre)}</a>` : 'Producto'}</span><span class="texto-suave">${d.cantidad} × ${dinero(d.precio_unitario)}${d.talla ? ` · Talla ${esc(d.talla)}` : ''} · <strong>${dinero(d.precio_unitario * d.cantidad)}</strong></span></span><span class="pedido__resena">${botonResena(p, d, pr)}</span></li>`; }).join('')}</ul>
             <dl class="datos-lista datos-lista--compacta">
               <dt>Subtotal</dt><dd>${dinero(p.subtotal)}</dd>
               <dt>IVA</dt><dd>${dinero(p.iva)}</dd>

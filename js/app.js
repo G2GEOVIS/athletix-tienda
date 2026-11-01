@@ -88,7 +88,10 @@ async function alIniciarSesion(sesion) {
       if (!rc.error) estado.cliente = rc.datos;
     }
   }
-  if (estado.cliente) estado.esAdmin = await Api.cliente.esAdmin();
+  if (estado.cliente) {
+    [estado.esAdmin] = await Promise.all([Api.cliente.esAdmin(), cargarCuentaDesdeBase()]);
+    actualizarContador();
+  }
   estado.nuevos = undefined;
   renderCuenta();
   vigilarPedidos();
@@ -188,9 +191,42 @@ function iniciarEncabezado() {
     if (e.target === dialogo()) cerrarDialogo(); // clic en el fondo del diálogo
     if (e.target.closest('[data-cerrar-dialogo]')) cerrarDialogo();
     if (e.target.closest('[data-accion="cerrar-sesion"]')) { cerrarMenuCuenta(); cerrarSesion(); return; }
+    const contacto = e.target.closest('a[href^="mailto:"]:not([data-app-correo])');
+    if (contacto) { e.preventDefault(); escribirnos(contacto.getAttribute('href')); return; }
     if (!e.target.closest('#zona-cuenta')) cerrarMenuCuenta();
   });
   $('.saltar').addEventListener('click', (e) => { e.preventDefault(); $('#contenido').focus(); });
+}
+
+/* ======================= Contacto por correo ======================= */
+/* El correo de la tienda abre el correo web del cliente (Gmail, Outlook/Hotmail o Yahoo) según el correo de su cuenta.
+   Sin sesión, o con otro proveedor, se le deja elegir. */
+const CORREOS_WEB = {
+  gmail: ['Gmail', (a, s) => `https://mail.google.com/mail/?view=cm&fs=1&to=${a}&su=${s}`],
+  outlook: ['Outlook / Hotmail', (a, s) => `https://outlook.live.com/mail/0/deeplink/compose?to=${a}&subject=${s}`],
+  yahoo: ['Yahoo', (a, s) => `https://compose.mail.yahoo.com/?to=${a}&subject=${s}`]
+};
+function proveedorDeCorreo(correo) {
+  const d = String(correo || '').split('@')[1] || '';
+  if (/^(gmail|googlemail)\./.test(d)) return 'gmail';
+  if (/^(hotmail|outlook|live|msn)\./.test(d)) return 'outlook';
+  if (/^(yahoo|ymail)\./.test(d)) return 'yahoo';
+  return '';
+}
+function escribirnos(mailto) {
+  const [destino, consulta = ''] = mailto.replace(/^mailto:/, '').split('?');
+  const asunto = new URLSearchParams(consulta).get('subject') || 'Consulta ATHLETIX';
+  const a = encodeURIComponent(destino), s = encodeURIComponent(asunto);
+  const abrir = (url) => window.open(url, '_blank', 'noopener');
+  const prov = proveedorDeCorreo(estado.cliente ? estado.cliente.correo : correoSesion());
+  if (prov) { abrir(CORREOS_WEB[prov][1](a, s)); return; }
+  abrirDialogo(`
+    <h2 class="dialogo__titulo" id="dialogo-titulo">Escríbenos</h2>
+    <p>Elige con qué correo quieres escribirnos a <strong>${esc(destino)}</strong>:</p>
+    <div class="opciones-correo">
+      ${Object.entries(CORREOS_WEB).map(([k, [t, url]]) => `<a class="boton boton--secundario boton--bloque" href="${url(a, s)}" target="_blank" rel="noopener" data-cerrar-dialogo>${t}</a>`).join('')}
+      <a class="boton boton--texto boton--bloque" href="mailto:${destino}?subject=${s}" data-app-correo data-cerrar-dialogo>Otra app de correo</a>
+    </div>`, { alAbrir: (d) => $('a', d).focus() });
 }
 
 /* ======================= Enrutador ======================= */

@@ -186,7 +186,7 @@ const Api = (() => {
       return mapear(await ejecutar(sb.from('cliente').insert({ cli_cedula: d.cedula, cli_usuario: d.id, cli_nombres: d.nombres, cli_apellidos: d.apellidos, cli_celular: d.telefono, cli_direccion: d.direccion || null, cli_correo: d.correo }).select().single()), aCliente);
     },
     async actualizar(usuario, d) {
-      return mapear(await ejecutar(sb.from('cliente').update({ cli_nombres: d.nombres, cli_apellidos: d.apellidos, cli_celular: d.telefono, cli_direccion: d.direccion }).eq('cli_usuario', usuario).select().single()), aCliente);
+      return mapear(await ejecutar(sb.from('cliente').update({ cli_nombres: d.nombres, cli_apellidos: d.apellidos, cli_celular: d.telefono, cli_direccion: d.direccion || null }).eq('cli_usuario', usuario).select().single()), aCliente);
     },
     async esAdmin() { const r = await ejecutar(sb.rpc('es_admin')); return !r.error && r.datos === true; },
 
@@ -313,6 +313,44 @@ const Api = (() => {
     borrar(cedula, producto) { return ejecutar(sb.from('resena').delete().eq('cli_cedula', cedula).eq('prd_codigo', producto)); }
   };
 
+  /* ---------- Favoritos y carrito de la cuenta (tablas FAVORITO y CARRITO) ----------
+     Se guardan en la base para que el cliente vea lo mismo en la computadora y en el celular. */
+  const cuenta = {
+    async favoritos() {
+      const r = await ejecutar(sb.from('favorito').select('prd_codigo').order('fav_fecha'));
+      return r.error ? r : { datos: (r.datos || []).map((x) => x.prd_codigo) };
+    },
+    async carrito() {
+      const r = await ejecutar(sb.from('carrito').select('prd_codigo, car_talla, car_cantidad').order('car_fecha'));
+      return r.error ? r : { datos: (r.datos || []).map((x) => ({ id: x.prd_codigo, talla: x.car_talla === 'U' ? null : x.car_talla, cantidad: x.car_cantidad })) };
+    },
+    /* Deja en la base exactamente la lista de la pantalla: agrega o actualiza lo que está y borra lo que ya no */
+    async guardarFavoritos(cedula, ids) {
+      if (ids.length) {
+        const r = await ejecutar(sb.from('favorito').upsert(ids.map((id) => ({ cli_cedula: cedula, prd_codigo: id })), { onConflict: 'cli_cedula,prd_codigo', ignoreDuplicates: true }));
+        if (r.error) return r;
+      }
+      let q = sb.from('favorito').delete().eq('cli_cedula', cedula);
+      if (ids.length) q = q.not('prd_codigo', 'in', `(${ids.map((x) => `"${x}"`).join(',')})`);
+      return ejecutar(q);
+    },
+    async guardarCarrito(cedula, lineas) {
+      const filas = lineas.map((l) => ({ cli_cedula: cedula, prd_codigo: l.id, car_talla: l.talla || 'U', car_cantidad: l.cantidad }));
+      if (filas.length) {
+        const r = await ejecutar(sb.from('carrito').upsert(filas, { onConflict: 'cli_cedula,prd_codigo,car_talla' }));
+        if (r.error) return r;
+      }
+      const r2 = await ejecutar(sb.from('carrito').select('prd_codigo, car_talla').eq('cli_cedula', cedula));
+      if (r2.error) return r2;
+      const sobran = (r2.datos || []).filter((x) => !filas.some((f) => f.prd_codigo === x.prd_codigo && f.car_talla === x.car_talla));
+      for (const x of sobran) {
+        const r3 = await ejecutar(sb.from('carrito').delete().eq('cli_cedula', cedula).eq('prd_codigo', x.prd_codigo).eq('car_talla', x.car_talla));
+        if (r3.error) return r3;
+      }
+      return { datos: true };
+    }
+  };
+
   /* ---------- Correos (EmailJS) ---------- */
   const enviar = async (plantilla, datos) => {
     if (!(window.emailjs && CONFIG.emailjs.servicio && plantilla && CONFIG.emailjs.clavePublica)) return { error: 'El envío de correos no está configurado.' };
@@ -333,19 +371,30 @@ const Api = (() => {
   const cajaRetiro = (numero, codigo, tienda, horario, nota) => `<div style="margin:20px 0;padding:14px 16px;background:#E6F4F2;border-left:4px solid #0F766E;border-radius:6px;line-height:1.6">
       <b>Retiro en local físico:</b> ${h(tienda)}<br>${horario ? `<b>Horario:</b> ${h(horario)}<br>` : ''}<b>Número de pedido:</b> ${h(numero)}<br>${codigo ? `<b>Código de retiro:</b> <span style="font-size:18px;font-weight:bold;letter-spacing:2px">${h(codigo)}</span><br>` : ''}Presenta tu <b>cédula</b> y tu <b>número de pedido</b> (o el código de retiro) en la tienda.${nota ? ' ' + nota : ''}
     </div>`;
-  const plantillaCorreo = ({ nombre, parrafo, detalle = '', caja = '', extra = '', boton }) => `<div style="background:#F3F5F7;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;color:#1E293B">
+  const plantillaCorreo = ({ nombre, parrafo, detalle = '', caja = '', extra = '', boton, icono = '' }) => `<div style="background:#F3F5F7;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;color:#1E293B">
 <div style="max-width:620px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #dde3ea">
   <div style="background:#0B1F3A;padding:20px 24px;color:#ffffff"><div style="font-size:24px;font-weight:bold;font-style:italic">ATHLETIX</div><div style="font-size:13px;opacity:.85">Tienda deportiva en línea</div></div>
   <div style="padding:24px">
-    <p style="margin:0 0 12px;font-size:16px">Hola ${h(nombre)},</p>
+    ${icono ? `<div style="font-size:34px;line-height:1;margin:0 0 12px">${icono}</div>` : ''}<p style="margin:0 0 12px;font-size:16px">Hola ${h(nombre)},</p>
     <p style="margin:0 0 16px;line-height:1.5">${parrafo}</p>
     ${detalle}${caja}
-    ${extra ? `<p style="margin:0 0 18px;line-height:1.5">${extra}</p>` : ''}
+    ${extra ? `<div style="margin:0 0 18px;line-height:1.5">${extra}</div>` : ''}
     ${boton ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0"><tr><td style="background:#0F766E;border-radius:6px"><a href="${boton[1]}" style="display:inline-block;color:#ffffff;text-decoration:none;padding:12px 22px;font-weight:bold;font-size:15px">${h(boton[0])}</a></td></tr></table>
     <p style="margin:12px 0 0;font-size:12px;color:#45556B">Si el botón no abre, copia este enlace en tu navegador: <a href="${boton[1]}" style="color:#0F766E">${boton[1]}</a></p>` : ''}
   </div>
   <div style="padding:14px 24px;background:#F3F5F7;font-size:12px;color:#45556B">Te escribimos porque hiciste un pedido en ATHLETIX. Pago simulado, sin cobro real.</div>
 </div></div>`;
+  // Productos de un pedido (para los botones de reseña); el administrador puede leer el detalle de cualquier pedido
+  async function productosDelPedido(numero) {
+    if (!sb) return [];
+    const r = await ejecutar(sb.from('detalle_pedido').select('prd_codigo').eq('ped_numero', numero));
+    if (r.error || !r.datos) return [];
+    const vistos = new Set();
+    return r.datos.filter((d) => !vistos.has(d.prd_codigo) && vistos.add(d.prd_codigo)).map((d) => {
+      const pr = typeof productoPorDbId === 'function' ? productoPorDbId(d.prd_codigo) : null;
+      return { id: pr ? pr.id : d.prd_codigo, nombre: pr ? pr.nombre : d.prd_codigo };
+    });
+  }
   // Envía por el Gmail de la tienda (función de Supabase). Devuelve null si no se pudo, para usar EmailJS.
   async function porGmail(cuerpo) {
     if (!sb) return null;
@@ -389,26 +438,36 @@ const Api = (() => {
         detalle_html: detalle
       });
     },
-    /* Al cliente, cada vez que el administrador cambia el estado de su pedido (desde el Gmail de la tienda) */
+    /* Al cliente, cada vez que el administrador cambia el estado de su pedido (desde el Gmail de la tienda).
+       Son avisos cortos y distintos; solo el de "listo para retirar" repite los datos del retiro.
+       El de "retirado" trae un botón por producto que abre directo el formulario de reseña. */
     async pedidoActualizado(p, estadoNuevo) {
       const enlace = enlaceOrden(p.id);
-      const textos = {
-        Preparando: [`Estamos preparando tu pedido ${p.numero}`, `Ya empezamos a preparar tu pedido <b>${h(p.numero)}</b>. Estará listo para retirar en menos de ${h(ENTREGA.retiro)}.`],
-        Listo: [`Tu pedido ${p.numero} está listo para retirar`, `¡Buenas noticias! Tu pedido <b>${h(p.numero)}</b> ya está listo. Pasa a retirarlo cuando quieras.`],
-        Retirado: [`Retiraste tu pedido ${p.numero}`, `Registramos el retiro de tu pedido <b>${h(p.numero)}</b>. ¡Gracias por comprar en ATHLETIX! Cuéntanos qué te pareció dejando tu reseña desde Mis pedidos.`],
-        Cancelado: [`Tu pedido ${p.numero} fue cancelado`, `Tu pedido <b>${h(p.numero)}</b> fue cancelado y el pago simulado quedó anulado. Si tienes dudas, escríbenos desde la sección Ayuda.`]
-      };
-      const [asunto, parrafo] = textos[estadoNuevo] || [];
-      if (!asunto) return {};
-      const conRetiro = estadoNuevo === 'Preparando' || estadoNuevo === 'Listo';
-      const html = plantillaCorreo({
-        nombre: String(p.cliente || '').split(' ')[0], parrafo,
-        caja: conRetiro ? cajaRetiro(p.numero, p.codigoRetiro, p.tienda, p.horario, '') : '',
-        boton: [estadoNuevo === 'Retirado' ? 'Dejar mi reseña' : 'Ver mi pedido', estadoNuevo === 'Retirado' ? `${BASE()}pedidos.html` : enlace]
-      });
+      const nombre = String(p.cliente || '').split(' ')[0];
+      let asunto, html, texto;
+      if (estadoNuevo === 'Preparando') {
+        asunto = `Estamos preparando tu pedido ${p.numero}`;
+        texto = `Ya empezamos a preparar tu pedido ${p.numero}. Te avisaremos por este medio apenas esté listo para retirar.`;
+        html = plantillaCorreo({ nombre, parrafo: `Ya empezamos a preparar tu pedido <b>${h(p.numero)}</b>. Te avisaremos por este medio apenas esté listo para retirar.`, boton: ['Ver mi pedido', enlace], icono: '📦' });
+      } else if (estadoNuevo === 'Listo') {
+        asunto = `Tu pedido ${p.numero} está listo para retirar`;
+        texto = `Tu pedido ${p.numero} ya está listo. Retíralo en ${p.tienda} presentando tu cédula y tu número de pedido.`;
+        html = plantillaCorreo({ nombre, parrafo: `¡Buenas noticias! Tu pedido <b>${h(p.numero)}</b> ya está listo. Te esperamos en la tienda.`, caja: cajaRetiro(p.numero, p.codigoRetiro, p.tienda, p.horario, ''), boton: ['Ver mi orden de pedido', enlace], icono: '✅' });
+      } else if (estadoNuevo === 'Retirado') {
+        asunto = `Gracias por retirar tu pedido ${p.numero}`;
+        texto = `Registramos el retiro de tu pedido ${p.numero}. ¡Gracias por comprar en ATHLETIX! Cuéntanos qué te pareció.`;
+        const productos = await productosDelPedido(p.id);
+        const botones = productos.length
+          ? `<p style="margin:0 0 10px;font-weight:bold">¿Qué te pareció? Califica tu compra:</p>${productos.map((x) => `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 10px;width:100%;border:1px solid #dde3ea;border-radius:8px"><tr><td style="padding:10px 12px;font-size:14px">${h(x.nombre)}</td><td style="padding:10px 12px;text-align:right"><a href="${BASE()}producto.html?id=${encodeURIComponent(x.id)}&resenar=1" style="display:inline-block;background:#F97316;color:#ffffff;text-decoration:none;padding:9px 14px;border-radius:6px;font-weight:bold;font-size:14px">★ Dejar reseña</a></td></tr></table>`).join('')}`
+          : '';
+        html = plantillaCorreo({ nombre, parrafo: `Registramos el retiro de tu pedido <b>${h(p.numero)}</b>. ¡Gracias por comprar en ATHLETIX! Tu opinión ayuda a otros clientes a elegir.`, extra: botones, boton: productos.length ? null : ['Dejar mi reseña', `${BASE()}pedidos.html`], icono: '🙌' });
+      } else if (estadoNuevo === 'Cancelado') {
+        asunto = `Tu pedido ${p.numero} fue cancelado`;
+        texto = `Tu pedido ${p.numero} fue cancelado y el pago simulado quedó anulado. Si tienes dudas, escríbenos desde la sección Ayuda.`;
+        html = plantillaCorreo({ nombre, parrafo: `Tu pedido <b>${h(p.numero)}</b> fue cancelado y el pago simulado quedó anulado. Si tienes dudas, escríbenos desde la sección Ayuda.`, boton: ['Ir a Ayuda', `${BASE()}ayuda.html`], icono: 'ℹ️' });
+      } else return {};
       const r = await porGmail({ tipo: 'estado', pedido: p.id, asunto, html });
       if (r) return r;
-      const texto = parrafo.replace(/<[^>]+>/g, '');
       return enviar(CONFIG.emailjs.plantillaCliente, {
         to_email: p.correo, nombre: p.cliente, numero: p.numero, total: Number(p.total).toFixed(2), tienda: p.tienda, horario: p.horario,
         asunto, mensaje: texto, enlace, detalle_html: ''
@@ -423,5 +482,5 @@ const Api = (() => {
     }
   };
 
-  return { disponible, auth, catalogo, cliente, pedidos, resenas, correo, admin, traducir };
+  return { disponible, auth, catalogo, cliente, cuenta, pedidos, resenas, correo, admin, traducir };
 })();

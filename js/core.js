@@ -16,7 +16,9 @@ const estado = {
   googleActivo: false, // se activa solo si el proveedor Google está encendido en Supabase
   tiendas: [],
   catalogoConectado: false,
-  errorCatalogo: ''
+  errorCatalogo: '',
+  invitado: { carrito: [], favoritos: [] }, // lo agregado sin sesión, para sumarlo a la cuenta al ingresar
+  cuentaCargada: false  // true cuando el carrito y los favoritos de la cuenta ya se leyeron de la base
 };
 
 /* ---------- localStorage ---------- */
@@ -35,13 +37,49 @@ function leerCarrito(clave) {
   return c.filter((i) => i && typeof i.id === 'string' && Number.isInteger(i.cantidad) && i.cantidad >= 1 && i.cantidad <= 9999)
     .map((i) => ({ id: i.id, talla: i.talla ? String(i.talla) : null, cantidad: i.cantidad }));
 }
-function guardarCarrito() { guardarLocal(claveCuenta(CLAVE_CARRITO), estado.carrito); }
+function guardarCarrito() { guardarLocal(claveCuenta(CLAVE_CARRITO), estado.carrito); sincronizarCuenta('carrito'); }
 
 function leerFavoritos(clave) {
   const f = leerLocal(clave);
   return Array.isArray(f) ? [...new Set(f.filter((id) => typeof id === 'string' && id.length <= 10))] : [];
 }
-function guardarFavoritos() { guardarLocal(claveCuenta(CLAVE_FAVORITOS), estado.favoritos); }
+function guardarFavoritos() { guardarLocal(claveCuenta(CLAVE_FAVORITOS), estado.favoritos); sincronizarCuenta('favoritos'); }
+
+/* Con sesión, el carrito y los favoritos también se guardan en la base (tablas CARRITO y FAVORITO).
+   Se espera un momento para juntar varios cambios seguidos en un solo envío. */
+const esperasCuenta = {};
+function sincronizarCuenta(que) {
+  if (!estado.cliente || !estado.cuentaCargada || typeof Api === 'undefined') return;
+  clearTimeout(esperasCuenta[que]);
+  esperasCuenta[que] = setTimeout(() => {
+    const cedula = estado.cliente.cedula;
+    if (que === 'carrito') Api.cuenta.guardarCarrito(cedula, estado.carrito.slice());
+    else Api.cuenta.guardarFavoritos(cedula, estado.favoritos.slice());
+  }, 400);
+}
+/* Al iniciar sesión: lo guardado en la cuenta (base) más lo que agregó sin sesión en este navegador */
+async function cargarCuentaDesdeBase() {
+  estado.cuentaCargada = false;
+  if (!estado.cliente) return;
+  const [rc, rf] = await Promise.all([Api.cuenta.carrito(), Api.cuenta.favoritos()]);
+  if (rc.error || rf.error) return; // sin las tablas o sin conexión: se sigue con lo guardado en el navegador
+  // Si la cuenta todavía no tiene nada en la base, se sube lo que ya había en este navegador
+  const primeraVez = !rc.datos.length && !rf.datos.length && (estado.carrito.length || estado.favoritos.length);
+  if (primeraVez) estado.invitado = { carrito: estado.carrito.slice(), favoritos: estado.favoritos.slice() };
+  const carrito = rc.datos;
+  (estado.invitado.carrito || []).forEach((l) => {
+    const igual = carrito.find((x) => x.id === l.id && x.talla === l.talla);
+    if (igual) igual.cantidad = Math.min(9999, igual.cantidad + l.cantidad); else carrito.push(l);
+  });
+  const favoritos = rf.datos;
+  (estado.invitado.favoritos || []).forEach((id) => { if (!favoritos.includes(id)) favoritos.push(id); });
+  const hayInvitado = (estado.invitado.carrito || []).length || (estado.invitado.favoritos || []).length;
+  estado.invitado = { carrito: [], favoritos: [] };
+  estado.carrito = carrito; estado.favoritos = favoritos;
+  estado.cuentaCargada = true;
+  guardarLocal(claveCuenta(CLAVE_CARRITO), carrito); guardarLocal(claveCuenta(CLAVE_FAVORITOS), favoritos);
+  if (hayInvitado) { sincronizarCuenta('carrito'); sincronizarCuenta('favoritos'); }
+}
 const esFavorito = (id) => estado.favoritos.includes(id);
 function alternarFavorito(id) {
   estado.favoritos = esFavorito(id) ? estado.favoritos.filter((x) => x !== id) : [...estado.favoritos, id];
@@ -58,6 +96,8 @@ function cargarDatosDeCuenta() {
   const carrito = leerCarrito(claveCuenta(CLAVE_CARRITO));
   const favoritos = leerFavoritos(claveCuenta(CLAVE_FAVORITOS));
   if (estado.sesion) {
+    // Lo agregado sin sesión se recuerda para sumarlo también a lo que la cuenta tiene en la base
+    estado.invitado = { carrito: leerCarrito(CLAVE_CARRITO), favoritos: leerFavoritos(CLAVE_FAVORITOS) };
     leerCarrito(CLAVE_CARRITO).forEach((l) => {
       const igual = carrito.find((x) => x.id === l.id && x.talla === l.talla);
       if (igual) igual.cantidad = Math.min(9999, igual.cantidad + l.cantidad); else carrito.push(l);
@@ -68,7 +108,8 @@ function cargarDatosDeCuenta() {
   }
   estado.carrito = carrito;
   estado.favoritos = favoritos;
-  guardarCarrito(); guardarFavoritos();
+  estado.cuentaCargada = false;
+  guardarLocal(claveCuenta(CLAVE_CARRITO), carrito); guardarLocal(claveCuenta(CLAVE_FAVORITOS), favoritos);
 }
 function guardarTemporal(clave, valor) {
   try { if (valor === null) sessionStorage.removeItem(clave); else sessionStorage.setItem(clave, JSON.stringify(valor)); } catch (e) { /* sin almacenamiento */ }

@@ -503,7 +503,10 @@ async function cargarResenas(p, main) {
 async function pintarZonaEscribir(p, main, mia) {
   const zona = $('#zona-escribir', main);
   if (!zona) return;
+  // Desde el correo de "pedido retirado" se llega con ?resenar=1: se abre directo el formulario de reseña
+  const desdeCorreo = leerRuta().params.get('resenar') === '1';
   if (!estado.sesion) {
+    if (desdeCorreo) { aviso('Inicia sesión para escribir tu reseña.'); ir(conVolver('login.html', paginaActual())); return; }
     zona.innerHTML = `<p class="texto-suave">¿Compraste este producto? <a href="${conVolver('login.html', paginaActual())}">Inicia sesión</a> para dejar tu opinión.</p>`;
     return;
   }
@@ -524,6 +527,12 @@ async function pintarZonaEscribir(p, main, mia) {
     }
     abrirFormularioResena(p, main, null, r.datos);
   });
+  if (desdeCorreo) {
+    history.replaceState(null, '', `producto.html?id=${encodeURIComponent(p.id)}`);
+    const pestana = $('#pestana-opin', main);
+    if (pestana) { pestana.click(); pestana.scrollIntoView({ block: 'start' }); }
+    $('#escribir-resena', zona).click();
+  }
 }
 
 /* alTerminar: qué hacer después de guardar o borrar (en el producto se recargan sus reseñas; en Mis pedidos se recarga la lista) */

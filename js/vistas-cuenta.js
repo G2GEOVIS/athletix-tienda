@@ -53,10 +53,26 @@ function vistaIngresar(partes, params) {
           ['correo', Validar.correo(correo)],
           ['clave', clave ? '' : 'Escribe tu contraseña.']
         ], 'No pudimos iniciar sesión:');
+        const previa = $('#invitar-registro', form); if (previa) previa.remove();
         if (!ok) return;
         const r = await conEspera($('button[type="submit"]', form), 'Ingresando…', () => Api.auth.ingresar(correo, clave));
         if (!r) return;
         if (r.error) {
+          // Si el correo no tiene cuenta, se le dice claramente y se le ofrece crearla (con el correo ya escrito)
+          if (/incorrectos/.test(r.error)) {
+            const existe = await Api.cliente.correoRegistrado(correo);
+            if (!existe.error && existe.datos === false) {
+              validarFormulario(form, [['correo', 'No existe una cuenta con este correo. Revisa que esté bien escrito o crea tu cuenta.']], 'No pudimos iniciar sesión:');
+              const crear = new URLSearchParams(conVolver('registro.html', volver).split('?')[1] || '');
+              crear.set('correo', correo);
+              // La invitación va justo debajo del aviso de error, donde la persona está mirando
+              $('.alerta-errores', form).insertAdjacentHTML('afterend', `<div class="alerta alerta--info" id="invitar-registro" style="margin-bottom:1rem">${icono('usuario')}<div><p><strong>¿Es tu primera vez en ATHLETIX?</strong> Crea tu cuenta con ${esc(correo)} en un minuto.</p>
+                <a class="boton boton--principal" style="margin-top:.6rem" href="registro.html?${crear}">Crear mi cuenta</a></div></div>`);
+              return;
+            }
+            validarFormulario(form, [['clave', `La contraseña no es correcta. Si no la recuerdas, usa «¿Olvidaste tu contraseña?»${estado.googleActivo ? '; si creaste tu cuenta con Google, entra con «Continuar con Google»' : ''}.`]], 'No pudimos iniciar sesión:');
+            return;
+          }
           errorGeneral(form, r.error);
           if (/confirmas tu correo/.test(r.error)) mostrarReenviar($('#zona-reenviar', main), correo);
           return;
@@ -84,6 +100,8 @@ function mostrarReenviar(zona, correo) {
 /* ======================= Registro ======================= */
 function vistaRegistro(partes, params) {
   const volver = volverSeguro(params.get('volver')) || paginaPrevia();
+  // Desde «Crear mi cuenta» del ingreso llega el correo que la persona ya escribió
+  const correoInicial = Validar.correo(params.get('correo') || '') ? '' : String(params.get('correo')).toLowerCase();
   if (estado.sesion) { ir(estado.cliente ? destinoTrasIngreso(volver) : destinoSinPerfil(volver)); return null; }
   return {
     titulo: 'Crea tu cuenta',
@@ -97,7 +115,7 @@ function vistaRegistro(partes, params) {
         <form class="formulario" id="form-registro" novalidate>
           <div class="alerta alerta-errores" tabindex="-1" role="alert" hidden></div>
           ${camposDatosPersonales({})}
-          <div>${campo({ id: 'correo-r', etiqueta: 'Correo electrónico', tipo: 'email', ayuda: 'Usa un correo al que tengas acceso: ahí te llegará la confirmación y el aviso de tus pedidos.', extra: 'autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false"' })}<div style="margin-top:.5rem">${atajosCorreo('correo-r')}</div></div>
+          <div>${campo({ id: 'correo-r', etiqueta: 'Correo electrónico', tipo: 'email', valor: correoInicial, ayuda: 'Usa un correo al que tengas acceso: ahí te llegará la confirmación y el aviso de tus pedidos.', extra: 'autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false"' })}<div style="margin-top:.5rem">${atajosCorreo('correo-r')}</div></div>
           <div class="formulario__fila formulario__fila--doble">
             ${campoClave({ id: 'clave-r', etiqueta: 'Contraseña', ayuda: 'Mínimo 8 caracteres, con letras, números y un carácter especial (! @ # $ % * ?)', autocomplete: 'new-password' })}
             ${campoClave({ id: 'clave-r2', etiqueta: 'Confirmar contraseña', ayuda: 'Escríbela otra vez', autocomplete: 'new-password' })}
@@ -661,6 +679,15 @@ function activarCamposTarjeta(form) {
       : '';
   });
   validarAlSalir(form, 'tarjeta', (v) => Validar.tarjeta(v));
+  // American Express trae 4 números al frente; las demás, 3 al reverso
+  const cvvCampo = $('#cvv', form);
+  const largoCvv = () => Validar.largoCvv(Validar.marcaTarjeta(tarjeta.value));
+  tarjeta.addEventListener('input', () => {
+    const n = largoCvv();
+    cvvCampo.maxLength = n;
+    $('#cvv-ayuda', form).textContent = n === 4 ? '4 dígitos al frente de la tarjeta' : '3 dígitos al reverso';
+    if (cvvCampo.value.length > n) cvvCampo.value = cvvCampo.value.slice(0, n);
+  });
   filtrarEntrada($('#titular', form), NO_LETRAS, 60);
   const vence = $('#vence', form);
   vence.addEventListener('input', (e) => {
@@ -670,7 +697,7 @@ function activarCamposTarjeta(form) {
     if (nuevo !== vence.value) vence.value = nuevo;
   });
   validarAlSalir(form, 'vence', (v) => Validar.vencimiento(v));
-  filtrarEntrada($('#cvv', form), NO_DIGITOS, 3);
+  filtrarEntrada(cvvCampo, NO_DIGITOS, largoCvv);
 }
 /* Valida y devuelve los datos seguros de la tarjeta (sin número completo ni CVV) */
 function leerTarjeta(form) {
@@ -681,7 +708,7 @@ function leerTarjeta(form) {
     ['tarjeta', Validar.tarjeta(numero)],
     ['titular', Validar.titular(titular)],
     ['vence', Validar.vencimiento(vence)],
-    ['cvv', Validar.cvv($('#cvv', form).value)]
+    ['cvv', Validar.cvv($('#cvv', form).value, Validar.marcaTarjeta(numero))]
   ], 'Revisa los datos de la tarjeta:');
   if (!ok) return null;
   const [mm, aa] = vence.split('/');

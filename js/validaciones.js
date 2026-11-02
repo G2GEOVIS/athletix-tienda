@@ -133,10 +133,13 @@ const Validar = (() => {
     return '';
   }
 
-  function cvv(valor) {
+  /* CVV: 3 números al reverso; American Express usa 4 números al frente */
+  const largoCvv = (marca) => (marca === 'American Express' ? 4 : 3);
+  function cvv(valor, marca = '') {
     const v = String(valor || '').trim();
+    const n = largoCvv(marca);
     if (!v) return 'Escribe el CVV.';
-    if (!/^\d{3}$/.test(v)) return 'El CVV debe tener 3 números.';
+    if (!new RegExp(`^\\d{${n}}$`).test(v)) return `El CVV debe tener ${n} números.`;
     return '';
   }
 
@@ -159,7 +162,7 @@ const Validar = (() => {
     return '';
   }
 
-  return { cedula, pasaporte, nombre, telefono, telefonoInternacional, correo, clave, tarjeta, marcaTarjeta, datosMarca, luhn, vencimiento, cvv, titular, direccion, texto };
+  return { cedula, pasaporte, nombre, telefono, telefonoInternacional, correo, clave, tarjeta, marcaTarjeta, datosMarca, luhn, vencimiento, cvv, largoCvv, titular, direccion, texto };
 })();
 
 if (typeof module !== 'undefined') module.exports = Validar;

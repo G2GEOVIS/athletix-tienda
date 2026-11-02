@@ -549,7 +549,8 @@ function validarAlSalir(form, id, regla) {
    Así funcionan mayúsculas, Alt Gr, Alt + números, pegar y dictado: nunca se bloquea una tecla. */
 function filtrarEntrada(input, patron, max) {
   input.addEventListener('input', () => {
-    const limpio = input.value.replace(patron, '').slice(0, max || undefined);
+    const tope = typeof max === 'function' ? max() : max;
+    const limpio = input.value.replace(patron, '').slice(0, tope || undefined);
     if (limpio !== input.value) {
       const pos = Math.max(0, (input.selectionStart || 0) - (input.value.length - limpio.length));
       input.value = limpio;

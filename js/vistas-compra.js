@@ -179,7 +179,16 @@ async function vistaPago() {
       const clavePago = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : null;
       activarCamposTarjeta(form);
       const cvvG = $('#cvv-g', form);
-      if (cvvG) filtrarEntrada(cvvG, NO_DIGITOS, 3);
+      // El CVV de la tarjeta guardada tiene 4 números si es American Express
+      const marcaGuardada = () => { const t = tarjetas.find((x) => String(x.id) === (($('input[name="metodo"]:checked', form) || {}).value)); return t ? t.marca : ''; };
+      const ajustarCvvG = () => {
+        if (!cvvG) return;
+        const n = Validar.largoCvv(marcaGuardada());
+        cvvG.maxLength = n;
+        $('#cvv-g-ayuda', form).textContent = n === 4 ? '4 dígitos al frente de la tarjeta' : '3 dígitos al reverso';
+        if (cvvG.value.length > n) cvvG.value = cvvG.value.slice(0, n);
+      };
+      if (cvvG) { filtrarEntrada(cvvG, NO_DIGITOS, () => Validar.largoCvv(marcaGuardada())); ajustarCvvG(); }
       const nueva = $('#tarjeta-nueva', form);
       const usarNueva = () => !tarjetas.length || (($('input[name="metodo"]:checked', form) || {}).value === 'nueva');
       const enTienda = () => (($('input[name="forma"]:checked', form) || {}).value === 'tienda');
@@ -192,6 +201,7 @@ async function vistaPago() {
       form.addEventListener('change', (e) => {
         if (e.target.name === 'forma') { pintarForma(); ocultarResumen(form); }
         if (e.target.name === 'metodo') {
+          ajustarCvvG();
           nueva.hidden = !usarNueva();
           $('#cvv-guardada', form).hidden = usarNueva();
           ocultarResumen(form);
@@ -208,7 +218,7 @@ async function vistaPago() {
           datosTarjeta = leerTarjeta(form);
           if (!datosTarjeta) return;
         } else {
-          if (!validarFormulario(form, [['cvv-g', Validar.cvv(cvvG.value)]], 'Revisa el pago:')) return;
+          if (!validarFormulario(form, [['cvv-g', Validar.cvv(cvvG.value, marcaGuardada())]], 'Revisa el pago:')) return;
           pago = { tarjeta: Number($('input[name="metodo"]:checked', form).value) };
         }
         const boton = $('button[type="submit"]', form);

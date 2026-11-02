@@ -238,7 +238,7 @@ async function vistaAdminProducto(partes, params) {
         <div class="campo"><label for="caracteristicas">Características</label><p class="campo__ayuda" id="caracteristicas-ayuda">Una por línea.</p>
           <textarea id="caracteristicas" rows="3" aria-describedby="caracteristicas-ayuda">${esc((v.caracteristicas || []).join('\n'))}</textarea></div>
         <div class="campo"><label for="ficha">Ficha técnica</label><p class="campo__ayuda" id="ficha-ayuda">Una por línea con el formato «Dato: valor». Ejemplo: Peso: 250 g</p>
-          <textarea id="ficha" rows="4" aria-describedby="ficha-ayuda">${esc((v.ficha || []).map(([a, b]) => `${a}: ${b}`).join('\n'))}</textarea></div>
+          <textarea id="ficha" rows="4" aria-describedby="ficha-ayuda ficha-error">${esc((v.ficha || []).map(([a, b]) => `${a}: ${b}`).join('\n'))}</textarea><p class="campo__error" id="ficha-error" hidden>${icono('alerta')}<span></span></p></div>
         <div class="formulario__fila formulario__fila--doble">
           ${campo({ id: 'etiqueta', etiqueta: 'Etiqueta', ayuda: 'Opcional, por ejemplo: Nuevo', valor: v.etiqueta || '', max: 20, opcional: true })}
           <div><p style="font-weight:700;margin-bottom:.5rem">Visibilidad</p><label class="opcion"><input type="checkbox" id="activo" ${v.activo !== false ? 'checked' : ''}> Mostrar en la tienda</label></div>
@@ -319,8 +319,16 @@ async function vistaAdminProducto(partes, params) {
           ['precio', precio > 0 && precio < 100000 && /^\d+([.,]\d{1,2})?$/.test(val('precio')) ? '' : 'Escribe un precio válido mayor que 0, con máximo 2 decimales.'],
           ['descripcion', val('descripcion').length >= 20 ? '' : 'La descripción debe tener al menos 20 caracteres.']
         ];
-        if (!usa) reglas.push(['stock-u', Number.isInteger(Number(val('stock-u'))) && Number(val('stock-u')) >= 0 ? '' : 'Escribe un número de unidades (0 o más).']);
-        if (usa && (!tallas.length || tallas.some((t) => !t.talla || !Number.isInteger(t.stock) || t.stock < 0) || repetidas)) reglas.push(['agregar-talla', 'Revisa las tallas: cada una necesita nombre, stock de 0 o más y no se pueden repetir.']);
+        // Stock: números enteros de 0 a 100 000 (lo mismo que exige la base)
+        const stockValido = (n) => Number.isInteger(n) && n >= 0 && n <= 100000;
+        if (!usa) reglas.push(['stock-u', val('stock-u') !== '' && stockValido(Number(val('stock-u'))) ? '' : 'Escribe un número entero de unidades, de 0 a 100 000.']);
+        if (usa && (!tallas.length || tallas.some((t) => !t.talla || !/^[A-Za-z0-9.,/ -]{1,5}$/.test(t.talla) || !stockValido(t.stock)) || repetidas)) reglas.push(['agregar-talla', 'Revisa las tallas: cada una necesita un nombre de hasta 5 caracteres, un stock entero de 0 a 100 000 y no se pueden repetir.']);
+        // Fotos: dirección https o una foto de la propia tienda (img/...)
+        const fotoMala = $$('input[name="foto-url"]', listaF).find((i) => i.value.trim() && !/^(https:\/\/|img\/)\S+$/.test(i.value.trim()));
+        if (fotoMala) reglas.push([fotoMala.id, 'La dirección de la foto debe empezar con https:// (o img/ para las fotos de la tienda) y no llevar espacios.']);
+        // Ficha técnica: cada línea con el formato «Dato: valor»
+        const lineaMala = val('ficha').split('\n').map((l) => l.trim()).filter(Boolean).find((l) => !/^[^:]{1,40}:\s*\S/.test(l));
+        if (lineaMala) reglas.push(['ficha', `Esta línea de la ficha no tiene el formato «Dato: valor»: ${lineaMala.slice(0, 40)}`]);
         if (!validarFormulario(form, reglas, 'Revisa el producto:')) return;
         const datos = {
           codigo, nombre: val('nombre'), categoria: $('#categoria', form).value, publico: $('#publico', form).value,

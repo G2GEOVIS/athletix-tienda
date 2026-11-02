@@ -335,6 +335,9 @@ svg { width: 1.25rem; height: 1.25rem; flex-shrink: 0; fill: none; stroke: curre
 .etiqueta { display: inline-block; font-size: .78rem; font-weight: 800; padding: .2rem .55rem; border-radius: .35rem; background: var(--verde); color: var(--blanco); }
 .etiqueta--naranja { background: var(--naranja); color: var(--azul); }
 .etiqueta--azul { background: var(--azul); color: var(--blanco); }
+/* Aviso de pocas unidades en la ficha del producto */
+#limite-cantidad.limite--pocas { color: #A84F00; font-weight: 700; }
+.lista-aviso { margin: .25rem 0 0 1.25rem; list-style: disc; }
 
 .estrellas { display: inline-flex; align-items: center; gap: .15rem; color: var(--naranja); }
 .estrellas svg { width: 1rem; height: 1rem; fill: currentColor; stroke: none; }
@@ -798,9 +801,6 @@ fieldset.panel { margin: 0; min-width: 0; }
 .boton-enlace { background: none; border: 0; padding: .35rem .25rem; color: var(--verde); font-weight: 700; text-decoration: underline; cursor: pointer; min-height: 2.75rem; }
 
 /* ===== Pago simulado, entrega y orden de pedido ===== */
-.como-funciona { border: 2px solid var(--verde); border-radius: var(--radio-sm); background: #E7F3F1; padding: .85rem 1.1rem; margin-bottom: 1.25rem; }
-.como-funciona summary { cursor: pointer; font-weight: 700; display: flex; gap: .5rem; align-items: center; min-height: 2.25rem; }
-.como-funciona ol { margin: .5rem 0 0; padding-left: 1.25rem; display: grid; gap: .4rem; }
 .metodos-pago { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
 .cuenta-tienda { border: 1.5px dashed var(--borde-fuerte); border-radius: var(--radio-sm); padding: 1rem; background: var(--gris); }
 .cuenta-tienda h3 { display: flex; gap: .5rem; align-items: center; font-size: 1.05rem; margin: 0 0 .6rem; }

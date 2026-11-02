@@ -24,21 +24,6 @@ function leerEntrega() {
   return e;
 }
 
-/* Explicación de cómo funciona el pago simulado */
-function comoFuncionaPago() {
-  return `
-    <details class="como-funciona" open>
-      <summary>${icono('info')}¿Cómo funciona el pago? (simulación)</summary>
-      <ol>
-        <li><strong>Eliges cómo pagar:</strong> con cualquier tarjeta (Visa, Mastercard, American Express, Diners Club y más) o en efectivo en la tienda al retirar.</li>
-        <li><strong>La tienda revisa los datos:</strong> que el número de la tarjeta sea válido (algoritmo de Luhn), la fecha de vencimiento y el CVV.</li>
-        <li><strong>Aprobación simulada:</strong> el pago se aprueba al instante. <strong>No se mueve dinero real</strong> ni se contacta a ningún banco.</li>
-        <li><strong>Registro en la base de datos:</strong> se guarda el pago con la marca y los últimos 4 dígitos de la tarjeta, el monto, la fecha y el estado.</li>
-        <li><strong>Confirmación:</strong> ves tu orden de pedido y te llega un correo con el número y el código de retiro.</li>
-      </ol>
-    </details>`;
-}
-
 /* ======================= Retiro en tienda ======================= */
 async function vistaRetiro() {
   if (!protegerCompra()) return null;
@@ -160,14 +145,13 @@ async function vistaPago() {
             <div class="alerta alerta-errores" tabindex="-1" role="alert" hidden></div>
             <fieldset class="formas-pago">
               <legend class="solo-lector">Forma de pago</legend>
-              <label class="opcion opcion--caja"><input type="radio" name="forma" value="tarjeta" checked> ${icono('tarjeta')}<span><strong>Tarjeta de crédito o débito</strong><span class="texto-suave d-bloque">Visa, Mastercard, American Express, Diners Club, Discover, JCB, UnionPay y Maestro</span></span></label>
+              <label class="opcion opcion--caja"><input type="radio" name="forma" value="tarjeta" checked> ${icono('tarjeta')}<span><strong>Tarjeta de crédito o débito</strong><span class="texto-suave d-bloque">Aceptamos todas las tarjetas</span></span></label>
               <label class="opcion opcion--caja"><input type="radio" name="forma" value="tienda"> ${icono('tienda')}<span><strong>Efectivo en la tienda al retirar</strong><span class="texto-suave d-bloque">Pagas en efectivo en la caja de ${esc(tienda.nombre)} cuando retiras tu pedido</span></span></label>
             </fieldset>
             <div id="pago-en-tienda" hidden>
               <p class="alerta alerta--info">${icono('info')}<span>Reservamos tus productos y los preparamos igual. Pagas <strong>${dinero(total)} en efectivo</strong> en la caja cuando retires tu pedido, presentando tu cédula y tu número de pedido.</span></p>
             </div>
             <div id="pago-tarjeta" class="formulario">
-              ${comoFuncionaPago()}
               ${avisoTarjetasPrueba()}
               ${tarjetas.length ? `
               <fieldset class="grupo-tarjetas">
@@ -228,35 +212,46 @@ async function vistaPago() {
           pago = { tarjeta: Number($('input[name="metodo"]:checked', form).value) };
         }
         const boton = $('button[type="submit"]', form);
-        const r = await conEspera(boton, enTienda() ? 'Confirmando pedido…' : 'Procesando pago…', async () => {
+        let r;
+        try {
+        r = await conEspera(boton, enTienda() ? 'Confirmando pedido…' : 'Procesando pago…', async () => {
           mostrarProcesando(main, true);
           if (datosTarjeta) {
             const rg = await Api.cliente.guardarTarjeta(datosTarjeta.registro);
             if (rg.error) return rg;
             pago = { tarjeta: rg.datos.id };
           }
-          const items = estado.carrito.map((l) => ({ producto: producto(l.id).dbId, talla: l.talla || '', cantidad: l.cantidad }));
+          const items = estado.carrito.map((l) => ({ producto: (producto(l.id) || {}).dbId, talla: l.talla || '', cantidad: l.cantidad }));
           if (items.some((i) => !i.producto)) return { error: 'Algunos productos no están disponibles en este momento. Recarga la página.' };
           guardarPendiente();
           const rp = await Api.pedidos.crear({ items, clave: clavePago, tienda: tienda.id, tarjeta: pago.tarjeta });
           if (rp.error) borrarPendiente();
           return rp;
         });
+        } catch (e) {
+          // Nunca se queda la pantalla de "procesando": se avisa y se puede volver a intentar
+          r = { error: 'No pudimos completar la compra. Revisa tu conexión e inténtalo otra vez.' };
+        }
         if (!r) return;
         mostrarProcesando(main, false);
         if (r.error) {
+          if (/stock|disponible/i.test(r.error)) {
+            // Otro cliente compró antes: se actualiza el stock y el carrito, y se explica qué cambió
+            await cargarCatalogo();
+            const cambios = revisarCarrito();
+            if (cambios.length) { aviso(`${r.error.replace(/\.?$/, '.')} ${cambios.join(' ')} Revisa tu pedido antes de pagar.`, 'error'); render(); return; }
+          }
           errorGeneral(form, r.error);
-          if (/stock|disponible/i.test(r.error)) cargarCatalogo();
           return;
         }
         const fila = r.datos;
         const detalleEntrega = { tienda: `${tienda.nombre} (${tienda.direccion})`, horario: `Listo aprox. a las ${horaCorta(fila.horaEstimada)} · ${tienda.horario}` };
-        const productosTexto = estado.carrito.map((l) => `${l.cantidad} × ${producto(l.id).nombre}${l.talla ? ' (talla ' + l.talla + ')' : ''}`).join(', ');
+        const productosTexto = estado.carrito.map((l) => `${l.cantidad} × ${(producto(l.id) || { nombre: l.id }).nombre}${l.talla ? ' (talla ' + l.talla + ')' : ''}`).join(', ');
         // Correos de confirmación al cliente y de aviso al administrador (no detienen la compra si fallan).
         // Se esperan como máximo 6 segundos antes de cambiar de página para que alcancen a salir.
         mostrarProcesando(main, true);
         // Factura en PDF (se adjunta al correo) con el detalle de lo que compró
-        const items = estado.carrito.map((l) => { const pr = producto(l.id); return { codigo: pr.dbId, nombre: pr.nombre, talla: l.talla, cantidad: l.cantidad, precio: pr.precio }; });
+        const items = estado.carrito.filter((l) => producto(l.id)).map((l) => { const pr = producto(l.id); return { codigo: pr.dbId, nombre: pr.nombre, talla: l.talla, cantidad: l.cantidad, precio: pr.precio }; });
         const datosFactura = {
           id: fila.factura || fila.id, pedido: fila.numero, fecha: new Date(), codigoRetiro: fila.codigoRetiro, items, pago: textoPago(pago, datosTarjeta),
           cliente: { ...estado.cliente, correo: correoSesion() }, tienda: { nombre: tienda.nombre, direccion: tienda.direccion },

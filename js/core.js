@@ -231,6 +231,9 @@ const nombreCliente = () => {
 };
 const correoSesion = () => (estado.sesion ? estado.sesion.user.email : '');
 const stockDe = (p, talla) => (p.stock ? (p.stock[talla || 'U'] ?? 0) : 10);
+// Desde cuántas unidades se avisa al cliente que quedan pocas
+const POCAS_UNIDADES = 3;
+const stockTotal = (p) => (p.stock ? Object.values(p.stock).reduce((s, n) => s + Math.max(0, n), 0) : null);
 
 const ICONOS = {
   corazon: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.5 2.4C19.5 15.4 12 20 12 20z"/>',

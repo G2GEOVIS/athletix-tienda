@@ -36,6 +36,7 @@ async function vistaAdmin(partes, params) {
       ${menuAdmin('pedidos')}
       <h1 class="titulo-pagina">Panel de pedidos</h1>
       <p class="subtitulo cabecera-pagina">Cambia el estado de cada pedido. Con cada cambio (preparando, listo para retirar, retirado o cancelado) el cliente recibe un correo automáticamente.</p>
+      ${avisoStockBajo()}
       ${Api.correo.configurado() ? '' : `<p class="alerta" style="margin-bottom:1rem">${icono('alerta')}<span>El envío de correos no está configurado (falta la plantilla de EmailJS).</span></p>`}
       <nav class="filtro-estados" aria-label="Filtrar pedidos por estado">
         <a href="admin.html" ${!filtro ? 'aria-current="page"' : ''}>Todos (${todos.length})</a>
@@ -372,8 +373,17 @@ async function vistaAdminPagos() {
 /* Existencias de cada producto por talla, con la última reducción (de qué cantidad a cuál) y los movimientos.
    Se actualiza sola cada 15 segundos: cuando un cliente compra, la fila del producto se resalta. */
 const STOCK_BAJO = 5;
+// Aviso en el panel: productos que hay que reponer pronto
+function avisoStockBajo() {
+  const totales = PRODUCTOS.map((p) => stockTotal(p)).filter((t) => t !== null);
+  const bajos = totales.filter((t) => t > 0 && t <= STOCK_BAJO).length;
+  const agotados = totales.filter((t) => t === 0).length;
+  if (!bajos && !agotados) return '';
+  const partes = [bajos ? `${plural(bajos, 'producto tiene', 'productos tienen')} stock bajo (${STOCK_BAJO} o menos)` : '', agotados ? `${plural(agotados, 'producto está agotado', 'productos están agotados')}` : ''].filter(Boolean);
+  return `<p class="alerta" style="margin-bottom:1rem">${icono('alerta')}<span>${partes.join(' y ')}. <a href="admin-stock.html?ver=${bajos ? 'bajo' : 'agotado'}">Revisar el stock</a></span></p>`;
+}
 const SEGUNDOS_STOCK = 15;
-async function vistaAdminStock() {
+async function vistaAdminStock(partes, params) {
   const ok = soloAdmin(); if (!ok) return null; if (ok === 'no') return vistaNoEncontrada();
   const r = await Api.admin.stock();
   if (r.error) return { titulo: 'Stock', seccion: 'admin', html: errorCargaHtml(r.error) };
@@ -409,6 +419,8 @@ async function vistaAdminStock() {
     </div>`,
     montar(main) {
       let datos = r.datos;
+      const verInicial = params && params.get('ver');
+      if (['bajo', 'agotado', 'movidos'].includes(verInicial)) $('#ver-stock', main).value = verInicial;
       let vistos = new Set((datos.movimientos || []).map((m) => m.id));
       let resaltar = new Set();
       const filtros = () => ({ q: $('#buscar-stock', main).value.trim().toLowerCase(), ver: $('#ver-stock', main).value, cat: $('#cat-stock', main).value });

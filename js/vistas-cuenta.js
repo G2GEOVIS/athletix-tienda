@@ -641,7 +641,7 @@ function avisoTarjetasPrueba() {
   return `
     <section class="tarjetas-prueba" aria-labelledby="titulo-prueba">
       <h3 id="titulo-prueba">${icono('candado')}Pago seguro y simulado</h3>
-      <p>Aceptamos Visa, Mastercard, American Express, Diners Club, Discover, JCB, UnionPay y Maestro. Revisamos que el número sea válido, la fecha de vencimiento y el CVV. No se cobra dinero real y nunca guardamos el número completo ni el CVV: solo la marca y los últimos 4 dígitos.</p>
+      <p>Aceptamos todas las tarjetas de crédito y débito. Revisamos que el número sea válido, la fecha de vencimiento y el CVV. No se cobra dinero real y nunca guardamos el número completo ni el CVV: solo la marca y los últimos 4 dígitos.</p>
     </section>`;
 }
 function activarCamposTarjeta(form) {
@@ -740,6 +740,7 @@ async function vistaPedidos() {
             ${seguimiento(p.estado)}
             <div class="botones-fila" style="margin-top:1rem">
               <a class="boton boton--secundario boton--chico" href="orden.html?pedido=${p.id}">${icono('documento')}Orden de pedido</a>
+              <button class="boton boton--secundario boton--chico" type="button" data-recomprar="${esc(p.id)}">${icono('carrito')}Volver a comprar<span class="solo-lector"> lo del pedido ${esc(p.numero)}</span></button>
             </div>
           </li>`).join('')}
         </ul>
@@ -748,6 +749,8 @@ async function vistaPedidos() {
     montar(main) {
       // Desde cada producto comprado se abre el formulario de reseña; la compra ya está verificada por el pedido
       main.addEventListener('click', (e) => {
+        const rb = e.target.closest('[data-recomprar]');
+        if (rb) { const ped = mios.find((x) => String(x.id) === rb.dataset.recomprar); if (ped) volverAComprar(ped); return; }
         const b = e.target.closest('[data-resena]');
         if (!b) return;
         const pr = producto(b.dataset.resena);
@@ -756,4 +759,31 @@ async function vistaPedidos() {
       });
     }
   };
+}
+
+/* Vuelve a poner en el carrito los productos de un pedido anterior, con la misma talla y cantidad.
+   Respeta el stock de hoy: si queda menos, agrega lo que hay; si un producto ya no está a la venta o se agotó, lo avisa. */
+function volverAComprar(pedido) {
+  let unidades = 0;
+  const faltan = [];
+  const incompletos = [];
+  pedido.detalle_pedido.forEach((d) => {
+    const pr = productoPorDbId(d.producto_id);
+    if (!pr || !producto(pr.id)) { faltan.push(pr ? pr.nombre : 'Un producto'); return; }
+    const talla = pr.tallas.length ? d.talla : null;
+    const n = agregarAlCarrito(pr.id, talla, d.cantidad);
+    unidades += n;
+    if (n <= 0) faltan.push(pr.nombre + (talla ? ` (talla ${talla})` : ''));
+    else if (n < d.cantidad) incompletos.push(`${pr.nombre}${talla ? ` (talla ${talla})` : ''}: solo ${plural(n, 'unidad', 'unidades')}`);
+  });
+  const lista = (titulo, xs) => xs.length ? `<p style="margin-top:.75rem"><strong>${titulo}</strong></p><ul class="lista-aviso">${xs.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
+  abrirDialogo(`
+    <h2 class="dialogo__titulo" id="dialogo-titulo"><span class="icono-ok">${icono(unidades ? 'check' : 'info')}</span>${unidades ? `Agregamos ${plural(unidades, 'unidad', 'unidades')} al carrito` : 'No se agregó ningún producto'}</h2>
+    <p>${unidades ? `Del pedido N.º ${esc(pedido.numero)}. Tienes ${plural(unidadesCarrito(), 'unidad', 'unidades')} en tu carrito · Subtotal ${dinero(subtotalCarrito())}.` : `Los productos del pedido N.º ${esc(pedido.numero)} no tienen stock ahora o ya están en tu carrito con todo lo disponible.`}</p>
+    ${lista('Con menos stock del que pediste:', incompletos)}
+    ${lista('Sin stock o ya en tu carrito:', faltan)}
+    <div class="dialogo__botones">
+      <button class="boton boton--secundario" type="button" id="seguir-pedidos">Seguir en mis pedidos</button>
+      <a class="boton boton--principal" href="carrito.html">${icono('carrito')}Ver carrito</a>
+    </div>`, { alAbrir: (d) => { $('#seguir-pedidos', d).addEventListener('click', cerrarDialogo); $('a.boton--principal', d).focus(); } });
 }

@@ -115,7 +115,7 @@ const Validar = (() => {
     const n = String(valor || '').replace(/\D/g, '');
     if (!n) return 'Escribe el número de la tarjeta.';
     const d = datosMarca(n);
-    if (!d) return 'No reconocemos esta tarjeta. Aceptamos Visa, Mastercard, American Express, Diners Club, Discover, JCB, UnionPay y Maestro.';
+    if (!d) return 'No reconocemos este número de tarjeta. Revisa que esté bien escrito.';
     if (!d.largos.includes(n.length)) return `Una tarjeta ${d.marca} tiene ${unir(d.largos)} dígitos. La tuya tiene ${n.length}.`;
     if (!luhn(n)) return 'El número de la tarjeta no es válido. Revisa que esté bien escrito.';
     return '';

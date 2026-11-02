@@ -208,12 +208,14 @@ function filtrar(params) {
 
 function tarjetaProducto(p) {
   const agotado = p.stock && Object.values(p.stock).every((s) => s <= 0);
+  const total = stockTotal(p);
+  const pocas = !agotado && total !== null && total <= POCAS_UNIDADES;
   return `
     <li>
       <article class="tarjeta-producto">
         <div class="tarjeta-producto__imagen"><img src="${img(p)}" alt="Foto de ${esc(p.nombre)}" width="800" height="600" loading="lazy"></div>
         ${botonFavorito(p, 'tarjeta-producto__favorito')}
-        ${agotado ? '<span class="etiqueta etiqueta--azul tarjeta-producto__etiqueta">Agotado</span>' : (p.etiqueta ? `<span class="etiqueta tarjeta-producto__etiqueta">${p.etiqueta}</span>` : '')}
+        ${agotado ? '<span class="etiqueta etiqueta--azul tarjeta-producto__etiqueta">Agotado</span>' : pocas ? `<span class="etiqueta etiqueta--naranja tarjeta-producto__etiqueta">${total === 1 ? '¡Última unidad!' : `¡Últimas ${total}!`}</span>` : (p.etiqueta ? `<span class="etiqueta tarjeta-producto__etiqueta">${p.etiqueta}</span>` : '')}
         <div class="tarjeta-producto__cuerpo">
           <h2 class="tarjeta-producto__nombre"><a href="producto.html?id=${p.id}">${esc(p.nombre)}</a></h2>
           <p class="texto-suave">${etiquetaCategoria(p)}</p>
@@ -514,7 +516,10 @@ function vistaProducto(partes) {
         const stock = stockDe(p, tieneTallas ? tallaElegida() : null);
         $('#limite-cantidad', main).textContent = tieneTallas && !tallaElegida()
           ? 'Elige tu talla para ver cuántas unidades hay'
-          : `Disponibles: ${plural(stock, 'unidad', 'unidades')}${tieneTallas ? ' en esta talla' : ''}. Puedes llevarlas todas.`;
+          : stock > 0 && stock <= POCAS_UNIDADES
+            ? (stock === 1 ? `¡Queda solo 1 unidad${tieneTallas ? ' en esta talla' : ''}!` : `¡Quedan solo ${stock} unidades${tieneTallas ? ' en esta talla' : ''}! Puedes llevarlas todas.`)
+            : `Disponibles: ${plural(stock, 'unidad', 'unidades')}${tieneTallas ? ' en esta talla' : ''}. Puedes llevarlas todas.`;
+        $('#limite-cantidad', main).classList.toggle('limite--pocas', stock > 0 && stock <= POCAS_UNIDADES && !(tieneTallas && !tallaElegida()));
         const todo = $('#llevar-todo', main);
         if (todo) { todo.hidden = (tieneTallas && !tallaElegida()) || stock < 2; todo.textContent = `Llevar todo (${stock})`; }
       };

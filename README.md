@@ -119,6 +119,7 @@ bd/24_blindaje.sql               Valida cada línea del carrito en crear_pedido;
 bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
 bd/25_catalogo_final.sql         Catálogo final de 90 productos (21 calzado de hombre, 20 de mujer, 29 de tecnología e
                                  implementos y 20 de entrenamiento); la categoría 2 se llama «Tecnología e implementos»
+bd/26_reglas_producto.sql        Reglas del producto también en la base (código, nombre, descripción, precio y fotos)
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner
 ```

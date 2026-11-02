@@ -3,6 +3,7 @@
 /*  1. Devuelve al stock lo de los pedidos no cancelados         */
 /*  2. Borra todos los pedidos (con su detalle y su pago)        */
 /*  3. Borra los clientes y sus cuentas, menos el administrador  */
+/*  4. Cierra todas las sesiones abiertas (también la del admin) */
 /* El catálogo, las tiendas y el administrador se conservan.     */
 /*==============================================================*/
 begin;
@@ -28,5 +29,9 @@ delete from resena where cli_cedula in (select cli_cedula from cliente where cli
 delete from metodo_pago where cli_cedula in (select cli_cedula from cliente where cli_usuario not in (select adm_usuario from administrador));
 delete from cliente where cli_usuario not in (select adm_usuario from administrador);
 delete from auth.users where id not in (select adm_usuario from administrador);
+
+-- 4. Nadie queda con la sesión iniciada: se borran las sesiones y sus tokens de renovación
+delete from auth.refresh_tokens;
+delete from auth.sessions;
 
 commit;

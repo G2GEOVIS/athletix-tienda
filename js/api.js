@@ -74,6 +74,11 @@ const Api = (() => {
     if (m.includes('pk_resena')) return 'Ya dejaste una reseña de este producto. Puedes editarla.';
     if (m.includes('ak_producto_nombre')) return 'Ya existe un producto con ese nombre. Usa otro nombre.';
     if (m.includes('ak_cliente_correo_minusculas')) return 'Ya existe una cuenta con este correo.';
+    if (m.includes('ckc_prd_codigo')) return 'El código debe tener de 2 a 10 letras minúsculas o números, sin espacios.';
+    if (m.includes('ckc_prd_nombre')) return 'Escribe el nombre del producto (mínimo 3 caracteres).';
+    if (m.includes('ckc_prd_descripcion')) return 'La descripción debe tener entre 20 y 600 caracteres.';
+    if (m.includes('ckc_prd_precio_max')) return 'El precio debe ser menor a $100.000.';
+    if (m.includes('ckc_pim_url')) return 'Cada foto necesita una dirección.';
     if (m.includes('ckc_res_comentario_max')) return 'Tu reseña puede tener hasta 1000 caracteres.';
     if (m.includes('ckc_res_estrellas')) return 'Elige de 1 a 5 estrellas.';
     if (m.includes('ckc_pta_cantidad')) return 'El stock debe ser un número entre 0 y 100000.';

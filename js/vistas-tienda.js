@@ -5,9 +5,9 @@
 function vistaInicio() {
   const destacado = producto('vx');
   const cats = [
-    ['calzado', 'Calzado', 'Para entrenar y competir', 'sf', 'Ver calzado'],
-    ['tecnologia', 'Tecnología e implementos', 'Relojes, sensores, audio e hidratación', 'pt', 'Ver tecnología e implementos'],
-    ['entrenamiento', 'Entrenamiento', 'Fuerza, velocidad y agilidad', 'fl', 'Ver entrenamiento']
+    ['calzado', 'Calzado', 'Para entrenar y competir', 'sf', 'Ver calzado', 'Par de zapatillas de running azules'],
+    ['tecnologia', 'Tecnología e implementos', 'Relojes, sensores, audio e hidratación', 'pt', 'Ver tecnología e implementos', 'Reloj GPS deportivo negro'],
+    ['entrenamiento', 'Entrenamiento', 'Fuerza, velocidad y agilidad', 'fl', 'Ver entrenamiento', 'Kit de tubos de resistencia con manijas']
   ];
   return {
     titulo: 'Tienda deportiva en línea',
@@ -38,9 +38,9 @@ function vistaInicio() {
       <h2 class="titulo-seccion" id="titulo-categorias">Compra por categoría</h2>
       <p class="subtitulo">Elige qué necesitas para entrenar hoy.</p>
       <div class="categorias__grilla">
-        ${cats.map(([c, t, d, foto, ver]) => `
+        ${cats.map(([c, t, d, foto, ver, altFoto]) => `
           <a class="tarjeta-categoria" href="productos.html?cat=${c}">
-            <img src="img/productos/${foto}-1.jpg" alt="" width="800" height="600" loading="lazy">
+            <img src="img/productos/${foto}-1.jpg" alt="${altFoto}" width="800" height="600" loading="lazy">
             <div class="tarjeta-categoria__texto"><h3>${t}</h3><p>${d}</p><span class="enlace-flecha">${ver} ${icono('derecha')}</span></div>
           </a>`).join('')}
       </div>
@@ -211,7 +211,7 @@ function tarjetaProducto(p) {
   return `
     <li>
       <article class="tarjeta-producto">
-        <div class="tarjeta-producto__imagen"><img src="${img(p)}" alt="" width="800" height="600" loading="lazy"></div>
+        <div class="tarjeta-producto__imagen"><img src="${img(p)}" alt="Foto de ${esc(p.nombre)}" width="800" height="600" loading="lazy"></div>
         ${botonFavorito(p, 'tarjeta-producto__favorito')}
         ${agotado ? '<span class="etiqueta etiqueta--azul tarjeta-producto__etiqueta">Agotado</span>' : (p.etiqueta ? `<span class="etiqueta tarjeta-producto__etiqueta">${p.etiqueta}</span>` : '')}
         <div class="tarjeta-producto__cuerpo">

@@ -506,7 +506,6 @@ async function vistaQuienesSomos() {
   const tiendas = rt.error ? [] : estado.tiendas;
   const activos = PRODUCTOS.filter((p) => p.activo !== false);
   const cuantos = (c) => activos.filter((p) => p.categoria === c).length;
-  const mapa = (t) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${t.nombre} ${t.direccion} ${t.ciudad || ''}`)}`;
   return {
     titulo: 'Quiénes somos',
     seccion: 'quienes-somos',
@@ -517,7 +516,9 @@ async function vistaQuienesSomos() {
 
       <section class="quienes__bloque" aria-labelledby="q-historia">
         <h2 class="titulo-seccion" id="q-historia">Nuestra historia</h2>
-        <p>Empezamos con una idea sencilla: que comprar calzado y equipo deportivo no te haga perder tiempo. Eliges en la web, pagas con tarjeta o al retirar, y en una a tres horas tu pedido te espera en la tienda que escogiste. Te avisamos por correo en cada paso, así no tienes que estar preguntando.</p>
+        <p>ATHLETIX nació de una queja que escuchábamos seguido entre amigos que corren y entrenan: para conseguir unas buenas zapatillas o un reloj deportivo había que recorrer varios locales, preguntar si quedaba la talla y muchas veces volver con las manos vacías.</p>
+        <p>Por eso juntamos en un solo lugar el calzado, la tecnología y el equipo de entrenamiento que usamos nosotros mismos, y mostramos en la web el stock real de cada talla. Antes de salir de casa ya sabes si lo que buscas está disponible.</p>
+        <p>Elegimos el retiro en tienda porque es más rápido que esperar un envío: compras en la web y en una a tres horas tu pedido está listo, sin costo extra. Hoy atendemos en Quito y Guayaquil, y seguimos escogiendo cada producto con el mismo criterio con el que empezamos: que de verdad sirva para entrenar.</p>
       </section>
 
       <div class="quienes__grilla">
@@ -558,15 +559,9 @@ async function vistaQuienesSomos() {
             <h3>${icono('tienda')}${esc(t.nombre)}</h3>
             <p>${esc(t.direccion)}${t.ciudad ? `, ${esc(t.ciudad)}` : ''}</p>
             ${t.horario ? `<p class="texto-suave">${esc(t.horario)}</p>` : ''}
-            <a class="enlace-flecha" href="${mapa(t)}" target="_blank" rel="noopener">${icono('ubicacion')}Ver en el mapa<span class="solo-lector"> (se abre en otra pestaña)</span></a>
           </li>`).join('')}
         </ul>
       </section>` : ''}
-
-      <div class="panel panel--gris quienes__nota">
-        <h2>Sobre este sitio</h2>
-        <p>ATHLETIX es un prototipo hecho para la materia Interacción Humano Computador de la PUCE. Los pagos son simulados: no se cobra dinero real. Si tienes dudas, revisa el <a href="ayuda.html">Centro de ayuda</a> o escríbenos a <a href="mailto:geovannymorocho621@gmail.com?subject=Consulta%20ATHLETIX">geovannymorocho621@gmail.com</a>.</p>
-      </div>
     </div>`
   };
 }

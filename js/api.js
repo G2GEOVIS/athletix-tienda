@@ -436,12 +436,11 @@ const Api = (() => {
       <tr><td></td><td style="padding:8px 6px;text-align:right;font-size:17px;font-weight:bold">${t.pendiente ? 'Total a pagar en la tienda' : 'Total pagado'}</td><td style="padding:8px 6px;text-align:right;font-size:17px;font-weight:bold">${plata(t.total)}</td></tr></table>`;
   };
 
-  // Datos del retiro: tienda con dirección y mapa, horario, número de pedido y código
+  // Datos del retiro: tienda con dirección, horario, número de pedido y código
   const cajaRetiro = ({ numero, codigo, tienda, nota = '' }) => {
-    const mapa = tienda.direccion ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${tienda.nombre} ${tienda.direccion} ${tienda.ciudad || ''}`)}` : '';
     return `<div style="margin:20px 0;padding:16px;background:#E6F4F2;border-left:4px solid ${VERDE};border-radius:6px;line-height:1.6;font-size:14px">
       <div style="font-size:15px;font-weight:bold;margin-bottom:6px">📍 Retiro en local físico</div>
-      <b>${h(tienda.nombre)}</b>${tienda.direccion ? `<br>${h(tienda.direccion)}${tienda.ciudad ? `, ${h(tienda.ciudad)}` : ''}` : ''}${mapa ? ` · <a href="${mapa}" style="color:${VERDE};font-weight:bold">Ver en el mapa</a>` : ''}
+      <b>${h(tienda.nombre)}</b>${tienda.direccion ? `<br>${h(tienda.direccion)}${tienda.ciudad ? `, ${h(tienda.ciudad)}` : ''}` : ''}
       ${tienda.horario ? `<br><b>Horario:</b> ${h(tienda.horario)}` : ''}
       <br><b>Número de pedido:</b> ${h(numero)}
       ${codigo ? `<br><b>Código de retiro:</b> <span style="font-size:20px;font-weight:bold;letter-spacing:3px;color:#0B1F3A">${h(codigo)}</span>` : ''}

@@ -981,7 +981,3 @@ fieldset.panel { margin: 0; min-width: 0; }
 .quienes__tiendas h3 { display: flex; align-items: center; gap: .5rem; font-size: 1.15rem; margin-bottom: .4rem; }
 .quienes__tiendas h3 svg { color: var(--verde); flex: none; }
 .quienes__tiendas p { margin-bottom: .3rem; }
-.quienes__tiendas .enlace-flecha { margin-top: .4rem; text-decoration: underline; }
-.quienes__tiendas .enlace-flecha svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-width: 2; }
-.quienes__nota { margin-top: 2.5rem; }
-.quienes__nota h2 { font-size: 1.2rem; margin-bottom: .4rem; }

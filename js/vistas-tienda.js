@@ -390,7 +390,7 @@ function vistaProducto(partes) {
           </div>
           <h1 id="nombre-producto">${esc(p.nombre)}</h1>
           <div id="calificacion-producto">${calificacionHtml(p)}</div>
-          <div class="compra__precio"><p class="precio">${dinero(p.precio)}</p><p class="texto-suave">IVA incluido en el total · Retiro gratis</p></div>
+          <div class="compra__precio"><p class="precio">${dinero(p.precio)}</p><p class="texto-suave">Precio sin IVA; el 15 % se suma al pagar · Retiro gratis</p></div>
           <hr class="separador">
 
           <form id="form-compra" novalidate>

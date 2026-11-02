@@ -227,7 +227,7 @@ async function vistaAdminProducto(partes, params) {
         </div>
         <div class="formulario__fila formulario__fila--doble">
           <div class="campo"><label for="categoria">Categoría <span class="requerido" aria-hidden="true">*</span></label><select id="categoria">${Object.entries(CATEGORIAS).map(([k, t]) => `<option value="${k}" ${k === v.categoria ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-          ${campo({ id: 'precio', etiqueta: 'Precio (USD, sin IVA)', ayuda: 'Ejemplo: 129.99', valor: v.precio, max: 9, extra: 'inputmode="decimal"' })}
+          ${campo({ id: 'precio', etiqueta: 'Precio (USD, sin IVA)', ayuda: 'Ejemplo: 129.50', valor: v.precio, max: 9, extra: 'inputmode="decimal"' })}
         </div>
         <div class="formulario__fila formulario__fila--doble">
           <div class="campo"><label for="publico">Género <span class="requerido" aria-hidden="true">*</span></label><select id="publico">${['Hombre', 'Mujer', 'Unisex'].map((x) => `<option ${x === (v.publico || 'Unisex') ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
@@ -255,7 +255,7 @@ async function vistaAdminProducto(partes, params) {
 
         <fieldset class="panel panel--gris">
           <legend class="leyenda-panel">Fotos (hasta 6)</legend>
-          <p class="texto-suave">Sube una foto cuadrada con fondo blanco (JPG, PNG o WEBP, máximo 3 MB) o escribe la dirección de una foto.</p>
+          <p class="texto-suave">Sube una foto horizontal (proporción 4:3) con fondo blanco (JPG, PNG o WEBP, máximo 3 MB) o escribe la dirección de una foto.</p>
           <ul class="lista-filas" id="lista-fotos">${fotos.map(([u, d]) => filaFoto(u, d)).join('')}</ul>
           <div class="campo"><label for="subir-foto">Subir foto nueva</label><input id="subir-foto" type="file" accept="image/jpeg,image/png,image/webp"></div>
           <p class="texto-suave" id="estado-foto" aria-live="polite"></p>
@@ -350,7 +350,7 @@ async function vistaAdminPagos() {
     <div class="contenedor pagina">
       ${menuAdmin('pagos')}
       <h1 class="titulo-pagina">Pagos</h1>
-      <p class="subtitulo cabecera-pagina">Cada pago con tarjeta queda guardado en la tabla PAGO de la base de datos. Son pagos simulados.</p>
+      <p class="subtitulo cabecera-pagina">Cada pago, con tarjeta o en efectivo al retirar, queda guardado en la tabla PAGO de la base de datos. Los pagos con tarjeta son simulados.</p>
       <dl class="tarjetas-resumen">
         <div><dt>Pagos registrados</dt><dd>${lista.length}</dd></div>
         <div><dt>Aprobados</dt><dd>${lista.filter((g) => g.estado === 'Aprobado').length}</dd></div>

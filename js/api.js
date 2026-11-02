@@ -552,7 +552,7 @@ const Api = (() => {
           boton: ['Ver mi pedido', enlace]
         });
       } else if (estadoNuevo === 'Listo') {
-        asunto = `✅ Tu pedido ${p.numero} está listo para retirar`;
+        asunto = `Tu pedido ${p.numero} está listo para retirar`;
         texto = `Tu pedido ${p.numero} ya está listo. Retíralo en ${tienda.nombre} presentando tu cédula y tu número de pedido.`;
         detalle = d.items.length ? tablaDetalle(d.items, d) : '';
         html = plantillaCorreo({

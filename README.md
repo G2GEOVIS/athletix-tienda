@@ -8,8 +8,8 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 
 ## Funciones
 
-- Catálogo de 68 productos (calzado, tecnología deportiva y entrenamiento) con filtros por categoría, género y precio que se quedan visibles al bajar, orden y buscador. Todo viene de la base de datos.
-- El género es un atributo del producto: calzado y tecnología son solo de Hombre o de Mujer (al menos 10 de cada uno); entrenamiento es para todos (Unisex). Una regla en la base lo asegura.
+- Catálogo de 90 productos (calzado, tecnología e implementos y entrenamiento) con filtros por categoría, género del calzado y precio que se quedan visibles al bajar, orden y buscador con sinónimos y tolerancia a errores de escritura. Todo viene de la base de datos.
+- El género es un atributo del producto: solo el calzado es de Hombre o de Mujer (21 y 20 modelos); tecnología e implementos y entrenamiento son para todos (Unisex). Una regla en la base lo asegura.
 - La sesión dura mientras la tienda está abierta (se comparte entre sus pestañas): al cerrar el navegador y volver a abrir el enlace, nadie aparece con la sesión iniciada. Al iniciar sesión se vuelve a la página donde estaba el cliente (o al carrito si tiene productos).
 - Cuentas reales con Supabase: registro con cédula ecuatoriana validada (módulo 10), confirmación por correo, recuperar contraseña y botón para mostrar la contraseña. Las contraseñas se guardan cifradas con bcrypt (Supabase Auth); la tienda nunca las ve.
 - Clientes de Ecuador (cédula y celular 09…) y de otros países: al elegir «Otro país» aparecen el país, el pasaporte y el celular con el código del país. La factura muestra C.I. o Pasaporte.
@@ -17,7 +17,7 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - Ingreso con cuenta de Google (OAuth de Supabase). El botón aparece solo cuando el proveedor Google está activado en Supabase; al primer ingreso el cliente completa su cédula y celular.
 - Carrito: agregar, cambiar cantidad y quitar productos. Se puede comprar todo el stock de una talla (botón «Llevar todo»).
 - Solo retiro en tienda: el cliente elige la tienda y su pedido está listo de 1 a 3 horas según cuánto y qué pidió (60 min + 10 por unidad desde la 4.ª + 15 por producto distinto desde el 3.º + 20 si hay calzado + 20 si hay tecnología). Código de retiro de 6 caracteres. No hay envíos a domicilio.
-- Dos formas de pago: en efectivo en la tienda al retirar ( el pago queda Pendiente y pasa a Aprobado al marcar el pedido como Retirado) o con tarjeta en línea. Pago con tarjeta simulado (sin dinero real): acepta Visa, Mastercard, American Express, Diners Club, Discover, JCB, UnionPay y Maestro; reconoce la marca por los primeros dígitos, revisa la cantidad de dígitos de cada marca y el número con Luhn, la fecha y el CVV (3 dígitos). Solo se guardan la marca y los últimos 4 dígitos. Cada pago queda en la tabla PAGO.
+- Dos formas de pago: en efectivo en la tienda al retirar ( el pago queda Pendiente y pasa a Aprobado al marcar el pedido como Retirado) o con tarjeta en línea. Pago con tarjeta simulado (sin dinero real): acepta todas las tarjetas (Visa, Mastercard, American Express, Diners Club, Discover, JCB, UnionPay y Maestro); reconoce la marca por los primeros dígitos, revisa la cantidad de dígitos de cada marca y el número con Luhn, la fecha y el CVV (3 dígitos). Solo se guardan la marca y los últimos 4 dígitos. Cada pago queda en la tabla PAGO.
 - Orden de pedido imprimible con lo que el cliente debe retirar y el código para identificar su pedido.
 - Correo de compra con el detalle de lo pedido y la factura en PDF adjunta, y correo al cliente cada vez que cambia el estado de su pedido, con botón para ver su pedido. Salen desde el Gmail de la tienda (función de Supabase `correo-compra`); si falla, EmailJS envía una copia sin el PDF. Llegan a cualquier correo (Gmail, Outlook, Hotmail, etc.).
 - Factura en PDF (jsPDF) con los datos del cliente (nombre, cédula, dirección, celular y correo), productos, IVA y total; también se descarga desde la orden de pedido. Lleva la nota «Documento sin validez tributaria: no está autorizado por el SRI».
@@ -25,7 +25,7 @@ Proyecto de la asignatura **Interacción Humano Computador** (Ingeniería en Sis
 - Administrador: pedidos (cambiar estado; al cancelar se devuelve el stock y se anula el pago), productos (crear, editar, ocultar y borrar, con subida de fotos) y pagos recibidos.
 - Stock en vivo para el administrador (página Stock): existencias por talla, última reducción (stock anterior → nuevo, pedido y hora) y todos los movimientos; se actualiza sola cada 15 segundos. Un trigger de la base registra cada cambio en MOVIMIENTO_STOCK (venta, cancelación, ajuste).
 - Cada factura tiene su propio número secuencial (001-001-000000001, …) que nunca se repite.
-- Fotos de productos en alta resolución (1600 × 1600) con imágenes responsivas: cada pantalla descarga el WebP justo (600, 1000 o 1600 px) según su tamaño y densidad.
+- Fotos de productos en alta resolución (1600 × 1200, formato 4:3, tres vistas por producto) con imágenes responsivas: cada pantalla descarga el WebP justo (600, 1000 o 1600 px) según su tamaño y densidad.
 - Compras seguras ante concurrencia: el stock se descuenta con bloqueo por fila en una sola transacción y cada intento de pago tiene una clave única para no duplicar pedidos.
 - Carrito y favoritos guardados en la base (tablas CARRITO y FAVORITO): con la cuenta se ven iguales en la computadora y en el celular. Sin sesión se guardan en el navegador (localStorage) y se suman a la cuenta al ingresar.
 - Mis pedidos y el panel del administrador muestran la foto de cada producto pedido. Favoritos tiene un botón para agregar todos al carrito (pide la talla si hace falta).
@@ -121,7 +121,7 @@ bd/25_catalogo_final.sql         Catálogo final de 90 productos (21 calzado de 
                                  implementos y 20 de entrenamiento); la categoría 2 se llama «Tecnología e implementos»
 bd/26_reglas_producto.sql        Reglas del producto también en la base (código, nombre, descripción, precio y fotos)
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
-bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner
+bd/modelo_powerdesigner.sql      Modelo actual (15 tablas) para File > Reverse Engineer > Database en PowerDesigner (DBMS PostgreSQL)
 ```
 
 ## Herramientas

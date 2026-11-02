@@ -7,14 +7,21 @@ import numpy as np
 ANCHO, ALTO = 1600, 1200
 
 def blanquear(im):
+    """Lleva el fondo claro (blanco o gris muy claro de estudio) a blanco puro, con transición suave."""
     a = np.asarray(im.convert('RGB')).astype(np.float32)
-    m = a.min(axis=2)
-    t = np.clip((m - 232) / (247 - 232), 0, 1)[..., None]
+    m, M = a.min(axis=2), a.max(axis=2)
+    borde = np.concatenate([m[:8].ravel(), m[-8:].ravel(), m[:, :8].ravel(), m[:, -8:].ravel()])
+    fondo = float(np.percentile(borde, 60))           # tono del fondo según los bordes
+    alto = min(250.0, max(fondo - 3, 236.0))
+    bajo = alto - 12
+    t = np.clip((m - bajo) / (alto - bajo), 0, 1)
+    t *= np.clip(1 - (M - m - 6) / 14, 0, 1)          # solo tonos grises (sin color)
+    t = t[..., None]
     return Image.fromarray((a * (1 - t) + 255 * t).round().astype(np.uint8))
 
 def recortar_contenido(im, margen=0.04):
     a = np.asarray(im)
-    mask = a.min(axis=2) < 245
+    mask = a.min(axis=2) < 248
     ys, xs = np.where(mask)
     if not len(xs):
         return im

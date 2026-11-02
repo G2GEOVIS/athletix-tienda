@@ -11,8 +11,8 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 PAGINAS = [
     # archivo, pantalla, título, descripción
-    ('index.html', '', 'ATHLETIX | Tienda deportiva en línea', 'Tienda deportiva en línea de calzado, tecnología deportiva y equipo de entrenamiento. Compra en línea y retira en tienda.'),
-    ('productos.html', 'productos', 'Productos | ATHLETIX', 'Catálogo de ATHLETIX: calzado, tecnología deportiva y equipo de entrenamiento.'),
+    ('index.html', '', 'ATHLETIX | Tienda deportiva en línea', 'Tienda deportiva en línea de calzado, tecnología e implementos deportivos y equipo de entrenamiento. Compra en línea y retira en tienda.'),
+    ('productos.html', 'productos', 'Productos | ATHLETIX', 'Catálogo de ATHLETIX: calzado, tecnología e implementos deportivos y equipo de entrenamiento.'),
     ('producto.html', 'producto', 'Producto | ATHLETIX', 'Detalle del producto: fotos, tallas, ficha técnica y opiniones de compradores.'),
     ('carrito.html', 'carrito', 'Carrito | ATHLETIX', 'Revisa los productos de tu carrito antes de comprar.'),
     ('login.html', 'ingresar', 'Iniciar sesión | ATHLETIX', 'Ingresa a tu cuenta de ATHLETIX.'),

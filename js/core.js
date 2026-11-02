@@ -223,7 +223,12 @@ const ivaCarrito = () => redondear(subtotalCarrito() * CONFIG.iva);
 const totalCarrito = () => redondear(subtotalCarrito() + ivaCarrito());
 const fecha = (iso) => new Date(iso).toLocaleDateString('es-EC', { day: 'numeric', month: 'long', year: 'numeric' });
 const fechaHora = (iso) => new Date(iso).toLocaleString('es-EC', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-const nombreCliente = () => (estado.cliente ? estado.cliente.nombres.split(' ')[0] : '');
+// Primer nombre del cliente; si entró con Google y aún no completa su perfil, el nombre que entrega Google
+const nombreCliente = () => {
+  if (estado.cliente) return estado.cliente.nombres.split(' ')[0];
+  const m = (estado.sesion && estado.sesion.user.user_metadata) || {};
+  return String(m.given_name || m.nombres || m.full_name || m.name || '').trim().split(/\s+/)[0].replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ'-]/g, '').slice(0, 20);
+};
 const correoSesion = () => (estado.sesion ? estado.sesion.user.email : '');
 const stockDe = (p, talla) => (p.stock ? (p.stock[talla || 'U'] ?? 0) : 10);
 
@@ -449,9 +454,24 @@ function activarAtajosCorreo(raiz) {
   });
 }
 /* Valida un campo al salir de él (después del primer intento), sin molestar mientras se escribe */
+// Si se sale del campo tocando un botón, el mensaje se actualiza DESPUÉS del toque: así el botón no se mueve
+// bajo el dedo (sin esto, en celular el primer toque en «Guardar» se perdía al desaparecer un mensaje de error).
+let punteroPresionado = false;
+document.addEventListener('pointerdown', () => { punteroPresionado = true; }, true);
+document.addEventListener('pointerup', () => { setTimeout(() => { punteroPresionado = false; }, 0); }, true);
+document.addEventListener('pointercancel', () => { punteroPresionado = false; }, true);
+function despuesDelToque(fn) {
+  if (!punteroPresionado) { fn(); return; }
+  let hecho = false;
+  const una = () => { if (!hecho) { hecho = true; setTimeout(fn, 0); } };
+  document.addEventListener('pointerup', una, { once: true, capture: true });
+  setTimeout(una, 1200);
+}
 function validarAlSalir(form, id, regla) {
   const input = $('#' + id, form);
-  input.addEventListener('blur', () => { if (input.value || input.getAttribute('aria-invalid')) marcarError(form, id, regla(input.value)); });
+  input.addEventListener('blur', () => {
+    despuesDelToque(() => { if (input.isConnected && (input.value || input.getAttribute('aria-invalid'))) marcarError(form, id, regla(input.value)); });
+  });
 }
 /* Filtra lo que no corresponde DESPUÉS de escribir (evento input).
    Así funcionan mayúsculas, Alt Gr, Alt + números, pegar y dictado: nunca se bloquea una tecla. */

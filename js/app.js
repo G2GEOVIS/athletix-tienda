@@ -127,7 +127,7 @@ function renderCuenta() {
     zona.innerHTML = `<a class="cuenta__boton" href="login.html" data-ruta="ingresar">${icono('usuario')}<span class="cuenta__nombre-largo">Ingresar</span></a>`;
     return;
   }
-  const nombre = estado.cliente ? nombreCliente() : 'Mi cuenta';
+  const nombre = nombreCliente() || 'Mi cuenta';
   zona.innerHTML = `
     <button class="cuenta__boton" type="button" aria-expanded="false" aria-controls="menu-cuenta">
       ${icono('usuario')}<span class="cuenta__nombre cuenta__nombre-largo">Hola, ${esc(nombre)}</span>${icono('chevronAbajo')}

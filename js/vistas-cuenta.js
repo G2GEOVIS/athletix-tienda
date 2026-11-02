@@ -309,13 +309,24 @@ function vistaVerificaCorreo() {
   };
 }
 
+/* Nombre que entrega Google: usa nombre y apellido por separado si vienen; si no, separa el nombre completo
+   (4 o más palabras: dos nombres y el resto apellidos; si no, un nombre y el resto apellidos).
+   Solo deja letras, espacios, apóstrofo y guion, igual que el formulario. */
+function nombreDesdeGoogle(meta) {
+  const limpio = (t) => String(t || '').replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+  if (meta.given_name || meta.family_name) return { nombres: limpio(meta.given_name), apellidos: limpio(meta.family_name) };
+  const partes = limpio(meta.full_name || meta.name).split(' ').filter(Boolean);
+  const corte = partes.length >= 4 ? 2 : 1;
+  return { nombres: partes.slice(0, corte).join(' '), apellidos: partes.slice(corte).join(' ') };
+}
+
 /* ======================= Completar perfil (si faltan datos al primer ingreso) ======================= */
 function vistaCompletarPerfil(partes, params) {
   if (!estado.sesion) { ir('login.html'); return null; }
   if (estado.cliente) { ir('perfil.html'); return null; }
   const meta = estado.sesion.user.user_metadata || {};
-  const [nombreG, ...apellidoG] = String(meta.full_name || meta.name || '').split(' ');
-  const v = { nombres: meta.nombres || nombreG || '', apellidos: meta.apellidos || apellidoG.join(' '), cedula: meta.cedula || '', telefono: meta.telefono || '', direccion: meta.direccion || '' };
+  const google = nombreDesdeGoogle(meta);
+  const v = { nombres: meta.nombres || google.nombres, apellidos: meta.apellidos || google.apellidos, cedula: meta.cedula || '', telefono: meta.telefono || '', direccion: meta.direccion || '' };
   const volver = volverSeguro(params.get('volver') || leerVolverPendiente());
   return {
     titulo: 'Completa tu perfil',

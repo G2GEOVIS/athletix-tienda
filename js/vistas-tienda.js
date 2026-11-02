@@ -6,7 +6,7 @@ function vistaInicio() {
   const destacado = producto('vx');
   const cats = [
     ['calzado', 'Calzado', 'Para entrenar y competir', 'sf', 'Ver calzado'],
-    ['tecnologia', 'Tecnología', 'Relojes, sensores y audio', 'pt', 'Ver tecnología'],
+    ['tecnologia', 'Tecnología e implementos', 'Relojes, sensores, audio e hidratación', 'pt', 'Ver tecnología e implementos'],
     ['entrenamiento', 'Entrenamiento', 'Fuerza, velocidad y agilidad', 'fl', 'Ver entrenamiento']
   ];
   return {
@@ -49,18 +49,131 @@ function vistaInicio() {
 }
 
 /* ======================= Catálogo y búsqueda ======================= */
-const PALABRAS_VACIAS = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'para', 'y', 'con', 'en', 'un', 'una', 'por', 'a']);
+const PALABRAS_VACIAS = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'para', 'y', 'con', 'en', 'un', 'una', 'unos', 'unas', 'por', 'a', 'al', 'o', 'que', 'mi', 'me', 'quiero', 'busco', 'necesito', 'algo', 'tipo', 'marca', 'color', 'talla', 'precio', 'deporte', 'deportivo', 'deportiva', 'deportivos', 'deportivas']);
+
+/* Buscador: entiende sinónimos y palabras de uso común en Ecuador, ignora tildes y mayúsculas
+   y tolera errores de escritura (una o dos letras de diferencia). */
+const SINONIMOS = [
+  ['zapatilla', 'zapatillas', 'zapato', 'zapatos', 'tenis', 'teni', 'calzado', 'sneaker', 'sneakers', 'championes'],
+  ['trail', 'montana', 'montaña', 'sendero', 'senderismo', 'monte', 'cerro', 'trekking'],
+  ['reloj', 'relojes', 'smartwatch', 'watch', 'pulsera'],
+  ['audifonos', 'audifono', 'auriculares', 'auricular', 'cascos', 'headphones', 'earbuds', 'musica', 'audio'],
+  ['botella', 'termo', 'tomatodo', 'cantimplora', 'hidratacion', 'hidratar'],
+  ['cinturon', 'correa', 'canguro', 'rinonera', 'riñonera'],
+  ['chaleco', 'vest', 'mochila'],
+  ['gafas', 'lentes', 'anteojos', 'gafa', 'lente'],
+  ['plantillas', 'plantilla', 'insoles', 'suela'],
+  ['camara', 'video', 'gopro', 'grabar'],
+  ['anillo', 'ring', 'sortija'],
+  ['masaje', 'masajeador', 'pistola', 'recuperacion', 'relajar'],
+  ['linterna', 'frontal', 'lampara', 'luz', 'led', 'noche'],
+  ['rodillera', 'rodilla'],
+  ['secador', 'secadora', 'secar'],
+  ['banda', 'pecho', 'pulso', 'cardiaco', 'cardio', 'frecuencia', 'corazon'],
+  ['sensor', 'potencia', 'medidor'],
+  ['alarma', 'seguridad', 'silbato'],
+  ['top', 'sujetador', 'brasier', 'sosten', 'bra'],
+  ['pesas', 'pesa', 'mancuerna', 'mancuernas', 'peso', 'lastre', 'kettlebell'],
+  ['ligas', 'liga', 'elastico', 'elasticos', 'elasticas', 'tubos'],
+  ['cuerda', 'soga', 'comba', 'saltar', 'saltador'],
+  ['balon', 'pelota', 'bola', 'medicinal'],
+  ['rodillo', 'foam', 'roller', 'miofascial'],
+  ['cajon', 'caja', 'box', 'pliometrico', 'saltos'],
+  ['vallas', 'valla', 'obstaculos', 'obstaculo'],
+  ['conos', 'cono', 'escalera', 'agilidad', 'picas'],
+  ['tacos', 'arrancadores', 'bloques', 'salida'],
+  ['cronometro', 'cronometraje', 'fotoceldas'],
+  ['caminadora', 'trotadora', 'treadmill'],
+  ['trineo', 'sled', 'arrastre', 'empuje'],
+  ['paracaidas', 'arnes'],
+  ['abdominal', 'abdomen', 'abdominales', 'core', 'rueda'],
+  ['tabla', 'equilibrio', 'balance', 'bosu'],
+  ['mujer', 'mujeres', 'dama', 'damas', 'femenino', 'chica', 'chicas', 'ella'],
+  ['hombre', 'hombres', 'caballero', 'caballeros', 'masculino', 'chico', 'chicos', 'el'],
+  ['tecnologia', 'implementos', 'implemento', 'gadget', 'electronico'],
+  ['entrenamiento', 'gimnasio', 'gym', 'ejercicio', 'fitness', 'equipo'],
+  ['barato', 'baratos', 'economico', 'economicos', 'oferta'],
+  ['rosa', 'rosado', 'fucsia', 'pink'], ['negro', 'negra', 'black'], ['blanco', 'blanca', 'white'], ['azul', 'celeste', 'marino', 'blue'],
+  ['rojo', 'roja', 'red', 'coral'], ['verde', 'lima', 'menta', 'oliva', 'neon'], ['amarillo', 'amarilla', 'limon'], ['gris', 'grafito', 'plateado'],
+  ['morado', 'morada', 'lila', 'lavanda', 'violeta', 'purpura'], ['naranja', 'anaranjado', 'salmon', 'durazno']
+].map((g) => g.map(normalizar));
+const GRUPO_DE = new Map();
+SINONIMOS.forEach((g, i) => g.forEach((w) => { if (!GRUPO_DE.has(w)) GRUPO_DE.set(w, i); }));
+function grupoDe(w) {
+  const s = singular(w);
+  if (GRUPO_DE.has(w)) return GRUPO_DE.get(w);
+  if (GRUPO_DE.has(s)) return GRUPO_DE.get(s);
+  if (w.length < 5) return undefined;
+  const tope = w.length >= 8 ? 2 : 1;
+  for (const [x, g] of GRUPO_DE) if (x.length >= 4 && distancia(w, x, tope) <= tope) return g;
+  return undefined;
+}
+const singular = (w) => (w.length > 4 && w.endsWith('es') ? w.slice(0, -2) : w.length > 3 && w.endsWith('s') ? w.slice(0, -1) : w);
+
+/* Distancia de edición con tope (para tolerar errores de escritura sin hacer lenta la búsqueda) */
+function distancia(a, b, tope) {
+  if (Math.abs(a.length - b.length) > tope) return tope + 1;
+  let previa = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const fila = [i]; let menor = i;
+    for (let j = 1; j <= b.length; j++) {
+      fila[j] = Math.min(previa[j] + 1, fila[j - 1] + 1, previa[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      menor = Math.min(menor, fila[j]);
+    }
+    if (menor > tope) return tope + 1;
+    previa = fila;
+  }
+  return previa[b.length];
+}
+
+/* Qué tan bien coincide una palabra buscada con las palabras de un producto (0 = nada) */
+function coincidencia(w, { voces, desc }, conErrores) {
+  const s = singular(w);
+  let mejor = 0;
+  // Una palabra que solo aparece en la descripción cuenta menos
+  if (desc.has(w) || desc.has(s)) mejor = 1;
+  for (const voz of voces) {
+    if (voz === w || voz === s) return 3;
+    if (s.length >= 3 && voz.startsWith(s)) mejor = Math.max(mejor, 2.5);
+    else if (voz.length >= 4 && w.startsWith(voz)) mejor = Math.max(mejor, 2);
+    else if (conErrores && w.length >= 5 && voz.length >= 4) {
+      const tope = w.length >= 8 ? 2 : 1;
+      if (Math.min(distancia(w, voz, tope), distancia(s, voz, tope)) <= tope) mejor = Math.max(mejor, 1.5);
+    }
+  }
+  // Sinónimo: "tenis" encuentra zapatillas, "cascos" encuentra audífonos, etc. (también con un error de escritura)
+  const grupo = conErrores ? grupoDe(w) : (GRUPO_DE.has(w) ? GRUPO_DE.get(w) : GRUPO_DE.get(s));
+  if (mejor < 2 && grupo !== undefined && SINONIMOS[grupo].some((x) => voces.includes(x) || voces.includes(singular(x)))) mejor = Math.max(mejor, 2);
+  return mejor;
+}
+
+const vocesDe = new WeakMap();
+function vocesProducto(p) {
+  if (!vocesDe.has(p)) {
+    const partir = (t) => normalizar(t).split(/[^a-z0-9ñ]+/).filter(Boolean);
+    const voces = [...new Set(partir([p.nombre, CATEGORIAS[p.categoria], p.publico || 'unisex', p.claves.join(' '), (p.ficha || []).map((f) => f[1]).join(' '), (p.caracteristicas || []).join(' ')].join(' ')))];
+    vocesDe.set(p, { voces, desc: new Set(partir(p.descripcion || '').filter((w) => w.length > 3)) });
+  }
+  return vocesDe.get(p);
+}
+
 function buscar(lista, consulta) {
-  const palabras = normalizar(consulta).split(/[^a-z0-9ñ]+/).filter((w) => w && !PALABRAS_VACIAS.has(w)).slice(0, 8);
+  // "10kg" se lee como "10 kg"
+  const palabras = normalizar(consulta).replace(/(\d)([a-zñ])/g, '$1 $2').replace(/([a-zñ])(\d)/g, '$1 $2')
+    .split(/[^a-z0-9ñ]+/).filter((w) => w && !PALABRAS_VACIAS.has(w)).slice(0, 8);
   if (!palabras.length) return lista;
-  return lista.filter((p) => {
-    const texto = normalizar([p.nombre, CATEGORIAS[p.categoria], p.publico || '', p.claves.join(' ')].join(' '));
-    const voces = texto.split(/[^a-z0-9ñ]+/);
-    return palabras.every((w) => {
-      const variantes = [w, w.replace(/es$/, ''), w.replace(/s$/, '')].filter((v) => v.length >= 3);
-      return variantes.some((v) => voces.some((voz) => voz.startsWith(v)));
-    });
+  // Se toleran errores de escritura solo en las palabras que no aparecen tal cual en ningún producto
+  // (así "addidas" encuentra Adidas, pero "salomon" no se confunde con el color salmón)
+  const conErrores = palabras.map((w) => !lista.some((p) => coincidencia(w, vocesProducto(p), false) > 0));
+  const puntuados = lista.map((p) => {
+    const voces = vocesProducto(p);
+    const notas = palabras.map((w, i) => coincidencia(w, voces, conErrores[i]));
+    return { p, todas: notas.every((n) => n > 0), total: notas.reduce((a, b) => a + b, 0) };
   });
+  // Primero los productos que tienen todas las palabras; si ninguno, los que tienen alguna
+  let elegidos = puntuados.filter((x) => x.todas);
+  if (!elegidos.length) elegidos = puntuados.filter((x) => x.total > 0);
+  return elegidos.sort((a, b) => b.total - a.total).map((x) => x.p);
 }
 
 const RANGOS = {
@@ -103,7 +216,7 @@ function tarjetaProducto(p) {
         ${agotado ? '<span class="etiqueta etiqueta--azul tarjeta-producto__etiqueta">Agotado</span>' : (p.etiqueta ? `<span class="etiqueta tarjeta-producto__etiqueta">${p.etiqueta}</span>` : '')}
         <div class="tarjeta-producto__cuerpo">
           <h2 class="tarjeta-producto__nombre"><a href="producto.html?id=${p.id}">${esc(p.nombre)}</a></h2>
-          <p class="texto-suave">${etiquetaCategoria(p).replace('Tecnología deportiva', 'Tecnología')}</p>
+          <p class="texto-suave">${etiquetaCategoria(p)}</p>
           ${calificacionHtml(p)}
           <div class="tarjeta-producto__pie">
             <p class="precio">${dinero(p.precio)}</p>
@@ -168,7 +281,7 @@ function vistaProductos(partes, params) {
           <form class="filtros__cuerpo" id="filtros-cuerpo">
             <fieldset class="grupo-filtro grupo-filtro--categoria">
               <legend>Categoría</legend>
-              <div class="grupo-filtro__opciones">${radio('cat', 'todas', 'Todas', f.cat)}${radio('cat', 'calzado', 'Calzado', f.cat)}${radio('cat', 'tecnologia', 'Tecnología deportiva', f.cat)}${radio('cat', 'entrenamiento', 'Entrenamiento', f.cat)}</div>
+              <div class="grupo-filtro__opciones">${radio('cat', 'todas', 'Todas', f.cat)}${radio('cat', 'calzado', 'Calzado', f.cat)}${radio('cat', 'tecnologia', 'Tecnología e implementos', f.cat)}${radio('cat', 'entrenamiento', 'Entrenamiento', f.cat)}</div>
             </fieldset>
             <button class="filtros__abrir" type="button" aria-expanded="false" aria-controls="filtros-mas"><span>${icono('filtro')}<span id="texto-filtros">${textoBotonFiltros(f.cat)}</span><span class="filtros__resumen" id="filtros-resumen">${resumenFiltros(f)}</span></span>${icono('chevronAbajo')}</button>
             <div class="filtros__mas" id="filtros-mas">

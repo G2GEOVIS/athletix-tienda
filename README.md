@@ -117,6 +117,8 @@ bd/23_catalogo_nuevo.sql         Catálogo final: nombre, descripción, ficha, p
 bd/24_blindaje.sql               Valida cada línea del carrito en crear_pedido; sin registros dobles (nombre de producto y
                                  correo únicos sin importar mayúsculas); tope de largo en reseñas y de stock
 bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
+bd/25_catalogo_final.sql         Catálogo final de 90 productos (21 calzado de hombre, 20 de mujer, 29 de tecnología e
+                                 implementos y 20 de entrenamiento); la categoría 2 se llama «Tecnología e implementos»
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner
 ```
@@ -128,6 +130,7 @@ herramientas/generar_paginas.py   Crea cada página desde plantilla.html, agrega
                                   js/version.js con la versión del sitio (si el navegador mezcla una página guardada
                                   con archivos nuevos, la página se recarga una sola vez con la versión al día)
 herramientas/catalogo.py          Catálogo: foto de origen, vistas (recortes), nombre, precio, descripción y ficha
+herramientas/entrenamiento_nuevo.py  Los 20 productos de entrenamiento (se suman al catálogo)
 herramientas/fotos_catalogo.py    Prepara las fotos: vista completa y acercamientos, 1600 x 1200 en JPG y WebP 600/1000/1600
 herramientas/aplicar_catalogo.py  Pasa el catálogo a js/datos.js y genera bd/23_catalogo_nuevo.sql
 ```

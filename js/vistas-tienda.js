@@ -831,7 +831,7 @@ function vistaCarrito() {
             <button class="boton boton--principal boton--bloque" type="button" id="continuar-compra">Continuar con la compra</button>
             <a class="boton boton--secundario boton--bloque" href="productos.html">${icono('izquierda')}Seguir comprando</a>
             <div style="text-align:center;margin-top:.5rem"><button class="boton-icono" type="button" id="vaciar">${icono('basura')}Vaciar carrito</button></div>
-            <p class="texto-suave" style="margin-top:1rem;display:flex;gap:.5rem">${icono('candado')}Paga con cualquier tarjeta (Visa, Mastercard, American Express, Diners y más) o en efectivo al retirar.</p>`)}
+            <p class="texto-suave" style="margin-top:1rem;display:flex;gap:.5rem">${icono('candado')}Aceptamos todas las tarjetas, o paga en efectivo al retirar.</p>`)}
         </div>`}
     </div>`,
     montar(main) {

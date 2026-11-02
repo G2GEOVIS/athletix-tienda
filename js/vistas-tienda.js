@@ -5,7 +5,7 @@
 function vistaInicio() {
   const destacado = producto('vx');
   const cats = [
-    ['calzado', 'Calzado', 'Para correr y para montaña', 'sf', 'Ver calzado'],
+    ['calzado', 'Calzado', 'Para entrenar y competir', 'sf', 'Ver calzado'],
     ['tecnologia', 'Tecnología', 'Relojes, sensores y audio', 'pt', 'Ver tecnología'],
     ['entrenamiento', 'Entrenamiento', 'Fuerza, velocidad y agilidad', 'fl', 'Ver entrenamiento']
   ];
@@ -18,10 +18,10 @@ function vistaInicio() {
         <div>
           <span class="hero__etiqueta">NUEVO · CARRERA 2026</span>
           <h1 class="hero__titulo" id="hero-titulo">Vuela en cada kilómetro</h1>
-          <p class="hero__texto">${esc(destacado.nombre)}: espuma RebotePlus y placa de propulsión para tus ritmos más rápidos.</p>
+          <p class="hero__texto">${esc(destacado.nombre)}: espuma FF Turbo+ y placa de carbono para tus ritmos más rápidos.</p>
           <a class="boton boton--naranja" href="producto.html?id=vx">Comprar ${esc(destacado.nombre)} ${icono('derecha')}</a>
         </div>
-        <div class="hero__imagen"><img src="${img(destacado)}" alt="Zapatilla ${esc(destacado.nombre)} en blanco, azul y naranja" width="500" height="500"></div>
+        <div class="hero__imagen"><img src="${img(destacado)}" alt="Par de zapatillas ${esc(destacado.nombre)} en rojo y naranja" width="800" height="600"></div>
       </div>
     </section>
 
@@ -40,7 +40,7 @@ function vistaInicio() {
       <div class="categorias__grilla">
         ${cats.map(([c, t, d, foto, ver]) => `
           <a class="tarjeta-categoria" href="productos.html?cat=${c}">
-            <img src="img/productos/${foto}-1.jpg" alt="" width="500" height="500" loading="lazy">
+            <img src="img/productos/${foto}-1.jpg" alt="" width="800" height="600" loading="lazy">
             <div class="tarjeta-categoria__texto"><h3>${t}</h3><p>${d}</p><span class="enlace-flecha">${ver} ${icono('derecha')}</span></div>
           </a>`).join('')}
       </div>
@@ -84,10 +84,10 @@ function filtrar(params) {
   const q = (params.get('q') || '').slice(0, 80);
   let lista = buscar(PRODUCTOS.filter((p) => p.activo !== false), q);
   if (cat !== 'todas') lista = lista.filter((p) => p.categoria === cat);
-  // El género es un atributo del producto: calzado y tecnología son de Hombre o de Mujer.
-  // Entrenamiento es para todos (Unisex), así que ahí el género no filtra.
-  const usaGenero = cat !== 'entrenamiento';
-  if (usaGenero && pub !== 'todos') lista = lista.filter((p) => (p.publico || 'Unisex') === pub);
+  // El género solo existe en el calzado (Hombre o Mujer). Tecnología y entrenamiento son para todos,
+  // así que con un género elegido se siguen mostrando y solo se filtra el calzado.
+  const usaGenero = usaFiltroGenero(cat);
+  if (usaGenero && pub !== 'todos') lista = lista.filter((p) => p.categoria !== 'calzado' || p.publico === pub);
   lista = lista.filter(RANGOS[precio][1]);
   if (ORDENES[orden][1]) lista = [...lista].sort(ORDENES[orden][1]);
   return { lista, cat, pub: usaGenero ? pub : 'todos', precio, orden, q };
@@ -98,7 +98,7 @@ function tarjetaProducto(p) {
   return `
     <li>
       <article class="tarjeta-producto">
-        <div class="tarjeta-producto__imagen"><img src="${img(p)}" alt="" width="500" height="500" loading="lazy"></div>
+        <div class="tarjeta-producto__imagen"><img src="${img(p)}" alt="" width="800" height="600" loading="lazy"></div>
         ${botonFavorito(p, 'tarjeta-producto__favorito')}
         ${agotado ? '<span class="etiqueta etiqueta--azul tarjeta-producto__etiqueta">Agotado</span>' : (p.etiqueta ? `<span class="etiqueta tarjeta-producto__etiqueta">${p.etiqueta}</span>` : '')}
         <div class="tarjeta-producto__cuerpo">
@@ -127,6 +127,10 @@ function htmlResultados(f) {
   return `<ul class="grilla-productos">${f.lista.map(tarjetaProducto).join('')}</ul>`;
 }
 
+/* El filtro de género se muestra en «Todas» y en «Calzado»; en tecnología y entrenamiento solo queda el precio */
+function usaFiltroGenero(cat) { return cat === 'todas' || cat === 'calzado'; }
+const textoBotonFiltros = (cat) => (usaFiltroGenero(cat) ? 'Género y precio' : 'Precio');
+
 function tituloCatalogo(f) {
   if (f.q) return `Resultados para "${esc(f.q)}"`;
   if (f.cat !== 'todas') return CATEGORIAS[f.cat];
@@ -136,7 +140,7 @@ function tituloCatalogo(f) {
 /* Lo elegido en género y precio, para verlo en el celular sin abrir el panel */
 function resumenFiltros(f) {
   const partes = [];
-  if (f.pub && f.pub !== 'todos' && f.cat !== 'entrenamiento') partes.push(f.pub);
+  if (f.pub && f.pub !== 'todos' && usaFiltroGenero(f.cat)) partes.push(f.pub);
   if (f.precio && f.precio !== 'todos') partes.push(RANGOS[f.precio][0]);
   return partes.length ? partes.join(' · ') : 'Todos';
 }
@@ -166,10 +170,10 @@ function vistaProductos(partes, params) {
               <legend>Categoría</legend>
               <div class="grupo-filtro__opciones">${radio('cat', 'todas', 'Todas', f.cat)}${radio('cat', 'calzado', 'Calzado', f.cat)}${radio('cat', 'tecnologia', 'Tecnología deportiva', f.cat)}${radio('cat', 'entrenamiento', 'Entrenamiento', f.cat)}</div>
             </fieldset>
-            <button class="filtros__abrir" type="button" aria-expanded="false" aria-controls="filtros-mas"><span>${icono('filtro')}<span>Género y precio</span><span class="filtros__resumen" id="filtros-resumen">${resumenFiltros(f)}</span></span>${icono('chevronAbajo')}</button>
+            <button class="filtros__abrir" type="button" aria-expanded="false" aria-controls="filtros-mas"><span>${icono('filtro')}<span id="texto-filtros">${textoBotonFiltros(f.cat)}</span><span class="filtros__resumen" id="filtros-resumen">${resumenFiltros(f)}</span></span>${icono('chevronAbajo')}</button>
             <div class="filtros__mas" id="filtros-mas">
-              <fieldset class="grupo-filtro" id="grupo-publico" ${f.cat === 'entrenamiento' ? 'hidden' : ''}>
-                <legend>Género</legend>
+              <fieldset class="grupo-filtro" id="grupo-publico" ${usaFiltroGenero(f.cat) ? '' : 'hidden'}>
+                <legend>Género del calzado</legend>
                 <div class="grupo-filtro__opciones">${radio('pub', 'todos', 'Todos', f.pub)}${radio('pub', 'Hombre', 'Hombre', f.pub)}${radio('pub', 'Mujer', 'Mujer', f.pub)}</div>
               </fieldset>
               <fieldset class="grupo-filtro">
@@ -201,15 +205,16 @@ function vistaProductos(partes, params) {
         const d = new FormData(form);
         const cat = d.get('cat');
         if (cat !== 'todas') p.set('cat', cat);
-        if (cat !== 'entrenamiento' && d.get('pub') !== 'todos') p.set('pub', d.get('pub'));
+        if (usaFiltroGenero(cat) && d.get('pub') !== 'todos') p.set('pub', d.get('pub'));
         if (d.get('precio') !== 'todos') p.set('precio', d.get('precio'));
         const orden = $('#orden', main).value;
         if (orden !== 'relevancia') p.set('orden', orden);
         history.replaceState(null, '', 'productos.html' + (p.toString() ? '?' + p : ''));
         const f2 = filtrar(p);
-        // En entrenamiento se oculta el género y se vuelve a "Todos"
+        // En tecnología y entrenamiento se oculta el género y se vuelve a "Todos"
         const grupoGenero = $('#grupo-publico', main);
-        grupoGenero.hidden = f2.cat === 'entrenamiento';
+        grupoGenero.hidden = !usaFiltroGenero(f2.cat);
+        $('#texto-filtros', main).textContent = textoBotonFiltros(f2.cat);
         if (grupoGenero.hidden) $('input[name=pub][value=todos]', grupoGenero).checked = true;
         $('#resultados', main).innerHTML = htmlResultados(f2);
         $('#titulo-catalogo', main).innerHTML = tituloCatalogo(f2);
@@ -256,12 +261,12 @@ function vistaProducto(partes) {
       <div class="detalle">
         <section class="galeria" aria-label="Fotos del producto">
           <div class="galeria__principal">
-            <img id="foto-principal" src="${img(p, 1)}" alt="${esc(p.nombre)}, ${p.vistas[0]}" width="500" height="500">
+            <img id="foto-principal" src="${img(p, 1)}" alt="${esc(p.nombre)}, ${p.vistas[0]}" width="800" height="600">
             <button class="galeria__flecha galeria__flecha--anterior" type="button" data-paso="-1" aria-label="Foto anterior">${icono('chevronIzq')}</button>
             <button class="galeria__flecha galeria__flecha--siguiente" type="button" data-paso="1" aria-label="Foto siguiente">${icono('chevronDer')}</button>
           </div>
           <ul class="galeria__miniaturas">
-            ${p.vistas.map((_, i) => i + 1).map((v) => `<li><button class="galeria__miniatura" type="button" data-vista="${v}" aria-label="Ver ${p.vistas[v - 1]}" ${v === 1 ? 'aria-current="true"' : ''}><img src="${img(p, v)}" alt="" width="500" height="500" loading="lazy"></button></li>`).join('')}
+            ${p.vistas.map((_, i) => i + 1).map((v) => `<li><button class="galeria__miniatura" type="button" data-vista="${v}" aria-label="Ver ${p.vistas[v - 1]}" ${v === 1 ? 'aria-current="true"' : ''}><img src="${img(p, v)}" alt="" width="800" height="600" loading="lazy"></button></li>`).join('')}
           </ul>
         </section>
 
@@ -740,10 +745,15 @@ function vistaCarrito() {
           anunciar(`${p.nombre}: ${plural(linea.cantidad, 'unidad', 'unidades')}. Total ${dinero(totalCarrito())}.`);
         }
         if (accion === 'eliminar') {
-          estado.carrito.splice(i, 1);
+          const quitada = estado.carrito.splice(i, 1)[0];
           guardarCarrito(); actualizarContador();
           rerenderCarrito('[data-accion="eliminar"]', '#continuar-compra');
-          anunciar(`Quitaste ${p.nombre} del carrito.`);
+          // Control y libertad del usuario: se puede deshacer
+          aviso(`Quitaste ${p.nombre} del carrito.`, 'ok', { texto: 'Deshacer', fn: () => {
+            estado.carrito.splice(Math.min(i, estado.carrito.length), 0, quitada);
+            guardarCarrito(); actualizarContador(); render();
+            anunciar(`${p.nombre} volvió a tu carrito.`);
+          } });
         }
         if (accion === 'talla') abrirCambioTalla(i);
       });
@@ -767,7 +777,7 @@ function itemCarrito(linea, i) {
   const max = stockDe(p, linea.talla);
   return `
     <li class="item-carrito">
-      <a class="item-carrito__imagen" href="producto.html?id=${p.id}" tabindex="-1" aria-hidden="true"><img src="${img(p)}" alt="" width="500" height="500"></a>
+      <a class="item-carrito__imagen" href="producto.html?id=${p.id}" tabindex="-1" aria-hidden="true"><img src="${img(p)}" alt="" width="800" height="600"></a>
       <div>
         <p class="texto-suave" style="font-size:.85rem">${CATEGORIAS[p.categoria]}</p>
         <h2 class="item-carrito__nombre"><a href="producto.html?id=${p.id}">${esc(p.nombre)}</a></h2>

@@ -66,12 +66,19 @@ const Api = (() => {
     if (m.includes('same password') || m.includes('should be different')) return 'La nueva contraseña debe ser diferente a la actual.';
     if (m.includes('jwt') || m.includes('not authenticated') || m.includes('inicia sesión') || m.includes('iniciar sesión')) return 'Tu sesión terminó. Vuelve a iniciar sesión.';
     if (m.includes('ak_metodo_pago_cliente')) return 'Ya tienes guardada esta tarjeta.';
-    if (m.includes('ckc_prd_genero_categoria')) return 'Calzado y tecnología deben ser de Hombre o de Mujer; entrenamiento es Unisex.';
+    if (m.includes('ckc_prd_genero_categoria')) return 'El calzado debe ser de Hombre o de Mujer; tecnología y entrenamiento son Unisex (para todos).';
     if (m.includes('fk_producto_detallepedido') || (m.includes('foreign key') && m.includes('detalle_pedido'))) return 'Este producto ya tiene ventas registradas: no se puede borrar. Ocúltalo para que no se muestre en la tienda.';
     if (m.includes('pk_producto') && m.includes('duplicate')) return 'Ya existe un producto con ese código.';
     if (m.includes('row-level security') && m.includes('storage')) return 'Solo el administrador puede subir fotos.';
     if (m.includes('payload too large') || m.includes('exceeded the maximum')) return 'La foto pesa demasiado (máximo 3 MB).';
     if (m.includes('pk_resena')) return 'Ya dejaste una reseña de este producto. Puedes editarla.';
+    if (m.includes('ak_producto_nombre')) return 'Ya existe un producto con ese nombre. Usa otro nombre.';
+    if (m.includes('ak_cliente_correo_minusculas')) return 'Ya existe una cuenta con este correo.';
+    if (m.includes('ckc_res_comentario_max')) return 'Tu reseña puede tener hasta 1000 caracteres.';
+    if (m.includes('ckc_res_estrellas')) return 'Elige de 1 a 5 estrellas.';
+    if (m.includes('ckc_pta_cantidad')) return 'El stock debe ser un número entre 0 y 100000.';
+    if (m.includes('ckc_cli_nombres') || m.includes('ckc_cli_apellidos')) return 'Escribe nombres y apellidos solo con letras.';
+    if (m.includes('ckc_cli_celular')) return 'El número de celular no es válido.';
     // Mensajes propios de la base de datos (ya vienen en español)
     const propio = String((error && error.message) || '');
     if (/^[A-ZÁÉÍÓÚ¿¡]/.test(propio) && /[áéíóúñ]|\b(el|la|de|para|debes|no)\b/i.test(propio)) return propio;

@@ -47,6 +47,23 @@ def con_version(m):
     ruta = m.group(2)
     huella = hashlib.sha1((RAIZ / ruta).read_bytes()).hexdigest()[:8]
     return f'{m.group(1)}{ruta}?v={huella}"'
+# Versión del sitio: huella de todos los archivos propios (cambia con cualquier cambio publicado).
+# js/version.js la compara con la de la página: si el navegador juntó una página guardada con archivos
+# nuevos, recarga una sola vez la versión al día, así nunca se mezclan versiones.
+archivos = sorted(set(re.findall(r'(?:src|href)="((?:js|css)/[^"?]+)"', plantilla)) - {'js/version.js'})
+VERSION = hashlib.sha1(b''.join((RAIZ / a).read_bytes() for a in archivos)).hexdigest()[:10]
+(RAIZ / 'js' / 'version.js').write_text(
+    "/* ATHLETIX · Versión publicada (la escribe herramientas/generar_paginas.py; no editar a mano) */\n"
+    f"window.VERSION_SITIO = '{VERSION}';\n"
+    "(function () {\n"
+    "  var meta = document.querySelector('meta[name=\"version-sitio\"]');\n"
+    "  var pagina = meta && meta.content;\n"
+    "  if (!pagina || pagina === window.VERSION_SITIO) return;\n"
+    "  var marca = 'recarga-' + window.VERSION_SITIO;\n"
+    "  try { if (sessionStorage.getItem(marca)) return; sessionStorage.setItem(marca, '1'); } catch (e) { return; }\n"
+    "  var u = new URL(location.href); u.searchParams.set('v', window.VERSION_SITIO); location.replace(u.toString());\n"
+    "})();\n", encoding='utf-8')
+plantilla = plantilla.replace('{{VERSION}}', VERSION)
 plantilla = re.sub(r'((?:src|href)=")((?:js|css)/[^"?]+)"', con_version, plantilla)
 for archivo, pantalla, titulo, descripcion in PAGINAS:
     html = (plantilla.replace('{{TITULO}}', titulo)
@@ -54,3 +71,4 @@ for archivo, pantalla, titulo, descripcion in PAGINAS:
                      .replace('{{PAGINA}}', pantalla))
     (RAIZ / archivo).write_text(html, encoding='utf-8')
     print('generada', archivo)
+print('versión del sitio:', VERSION)

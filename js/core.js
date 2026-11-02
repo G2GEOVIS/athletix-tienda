@@ -287,18 +287,27 @@ function anunciar(texto) {
   setTimeout(() => { zona.textContent = texto; }, 60);
 }
 let temporizadorAviso;
-function aviso(texto, tipo = 'ok') {
+/* Aviso flotante. Con "accion" muestra un botón (por ejemplo «Deshacer»); mientras el mouse o el foco
+   están sobre el aviso no se cierra, para que haya tiempo de usarlo. */
+function aviso(texto, tipo = 'ok', accion = null) {
   const caja = $('#aviso-flotante');
   caja.textContent = texto;
   caja.dataset.tipo = tipo;
+  if (accion) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'aviso-flotante__accion'; b.textContent = accion.texto;
+    b.addEventListener('click', () => { caja.hidden = true; accion.fn(); });
+    caja.append(' ', b);
+  }
   caja.hidden = false;
   clearTimeout(temporizadorAviso);
-  temporizadorAviso = setTimeout(() => { caja.hidden = true; }, tipo === 'error' ? 6000 : 3500);
+  const cerrar = () => { temporizadorAviso = setTimeout(() => { if (!caja.matches(':hover, :focus-within')) caja.hidden = true; else cerrar(); }, accion ? 8000 : tipo === 'error' ? 6000 : 3500); };
+  cerrar();
 }
 /* Va a otra página de la tienda. Si hay un aviso en pantalla, se muestra también en la página siguiente. */
 function ir(destino) {
   const caja = $('#aviso-flotante');
-  if (caja && !caja.hidden) guardarTemporal('aviso-pendiente', { texto: caja.textContent, tipo: caja.dataset.tipo });
+  if (caja && !caja.hidden && !caja.querySelector('button')) guardarTemporal('aviso-pendiente', { texto: caja.textContent, tipo: caja.dataset.tipo });
   const actual = location.pathname.split('/').pop() + location.search;
   if (actual === destino || (destino === 'index.html' && actual === '')) render(); else location.href = destino;
 }
@@ -357,9 +366,20 @@ function campoClave({ id, etiqueta, ayuda = '', autocomplete = 'current-password
         <input id="${id}" name="${id}" type="password" maxlength="72" required aria-required="true" autocomplete="${autocomplete}" aria-describedby="${ayuda ? id + '-ayuda ' : ''}${id}-error" autocapitalize="off" spellcheck="false">
         <button class="campo-clave__boton" type="button" data-ver-clave="${id}" aria-pressed="false" aria-controls="${id}">${icono('ojo')}<span>Mostrar</span><span class="solo-lector"> contraseña</span></button>
       </div>
+      <p class="campo__mayus" id="${id}-mayus" role="status" hidden>${icono('alerta')}<span>Bloq Mayús está activado: la contraseña distingue mayúsculas y minúsculas.</span></p>
       <p class="campo__error" id="${id}-error" hidden>${icono('alerta')}<span></span></p>
     </div>`;
 }
+/* Aviso de Bloq Mayús en las contraseñas (prevención de errores) */
+function revisarMayus(e) {
+  if (!e.target || !e.target.closest || !e.target.closest('.campo-clave') || typeof e.getModifierState !== 'function') return;
+  const aviso = document.getElementById(e.target.id + '-mayus');
+  if (aviso) aviso.hidden = !e.getModifierState('CapsLock');
+}
+document.addEventListener('keydown', revisarMayus);
+document.addEventListener('keyup', revisarMayus);
+document.addEventListener('focusout', (e) => { const a = e.target && e.target.id && document.getElementById(e.target.id + '-mayus'); if (a) a.hidden = true; });
+
 function activarVerClave(raiz) {
   raiz.addEventListener('click', (e) => {
     const b = e.target.closest('[data-ver-clave]');

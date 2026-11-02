@@ -111,11 +111,29 @@ bd/18_pago_en_tienda.sql         Pago en la tienda (PAGO.pag_forma, estado Pendi
 bd/19_movimientos_y_factura.sql  MOVIMIENTO_STOCK (trigger que registra cada cambio de stock) y número de factura propio (seq_factura)
 bd/20_clientes_extranjeros.sql   Clientes de otros países: cli_pais, cli_tipo_documento (Cédula o Pasaporte) y celular internacional
 bd/21_tallas_mujer.sql           Todo el calzado de mujer con tallas 36, 36.5, 37, 37.5, 38, 38.5, 39 y 40
-| `22_calzado_athletix.sql` | Las 20 zapatillas pasan a diseño propio ATHLETIX: nombre, descripción, ficha y fotos nuevas (lateral, interior, frontal). |
+bd/22_calzado_athletix.sql       Nombres sin marcas para 20 zapatillas (reemplazado por el script 23)
+bd/23_catalogo_nuevo.sql         Catálogo final: nombre, descripción, ficha, precio y 3 vistas por producto según su foto;
+                                 tecnología y entrenamiento para todos (el género solo existe en el calzado)
+bd/24_blindaje.sql               Valida cada línea del carrito en crear_pedido; sin registros dobles (nombre de producto y
+                                 correo únicos sin importar mayúsculas); tope de largo en reseñas y de stock
 bd/migracion_mis_tablas.sql      Paso de la base anterior a la actual (ya aplicado)
 bd/historial/             Scripts anteriores de la base (se conservan como respaldo)
 bd/modelo_powerdesigner.sql      Script para File > Reverse Engineer en PowerDesigner
 ```
+
+## Herramientas
+
+```
+herramientas/generar_paginas.py   Crea cada página desde plantilla.html, agrega ?v=<huella> a cada JS/CSS y escribe
+                                  js/version.js con la versión del sitio (si el navegador mezcla una página guardada
+                                  con archivos nuevos, la página se recarga una sola vez con la versión al día)
+herramientas/catalogo.py          Catálogo: foto de origen, vistas (recortes), nombre, precio, descripción y ficha
+herramientas/fotos_catalogo.py    Prepara las fotos: vista completa y acercamientos, 1600 x 1200 en JPG y WebP 600/1000/1600
+herramientas/aplicar_catalogo.py  Pasa el catálogo a js/datos.js y genera bd/23_catalogo_nuevo.sql
+```
+
+Las librerías externas están copiadas en `js/vendor/` con su versión fija (supabase-js 2, EmailJS, jsPDF),
+así el sitio no depende de que un CDN cambie de versión.
 
 ## Accesibilidad
 

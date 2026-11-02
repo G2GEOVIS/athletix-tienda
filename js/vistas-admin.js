@@ -272,10 +272,10 @@ async function vistaAdminProducto(partes, params) {
       const form = $('#form-producto', main);
       activarEnlacesError(form);
       const listaT = $('#lista-tallas', form), listaF = $('#lista-fotos', form);
-      // Género según la categoría: calzado y tecnología son de Hombre o Mujer; entrenamiento es Unisex
+      // Género según la categoría: el calzado es de Hombre o Mujer; tecnología y entrenamiento son Unisex (para todos)
       const ajustarGenero = () => {
         const cat = $('#categoria', form).value, sel = $('#publico', form);
-        [...sel.options].forEach((o) => { o.disabled = (cat === 'entrenamiento') !== (o.value === 'Unisex'); o.hidden = o.disabled; });
+        [...sel.options].forEach((o) => { o.disabled = (cat !== 'calzado') !== (o.value === 'Unisex'); o.hidden = o.disabled; });
         if (sel.selectedOptions[0].disabled) sel.value = [...sel.options].find((o) => !o.disabled).value;
       };
       $('#categoria', form).addEventListener('change', ajustarGenero);

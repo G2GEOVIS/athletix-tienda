@@ -238,7 +238,8 @@ function activarDatosPersonales(form) {
     }
   });
 }
-const limpiarNombre = (t) => t.trim().replace(/\s+/g, ' ').replace(/(^|[ '-])([a-záéíóúüñ])/g, (m, a, b) => a + b.toUpperCase());
+// Nombres con mayúscula inicial aunque se escriban con Bloq Mayús o todo en minúsculas (ANA pérez → Ana Pérez)
+const limpiarNombre = (t) => t.trim().replace(/\s+/g, ' ').toLocaleLowerCase('es').replace(/(^|[ '-])([a-záéíóúüñ])/g, (m, a, b) => a + b.toUpperCase());
 function leerDatosPersonales(form) {
   const ced = $('#cedula', form);
   const pais = paisDelFormulario(form);

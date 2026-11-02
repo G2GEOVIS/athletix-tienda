@@ -272,7 +272,7 @@ const icono = (n, clase = '') => `<svg class="${clase}" viewBox="0 0 24 24" aria
 function estrellas(valor) {
   const llenas = Math.round(valor);
   let html = '<span class="estrellas" aria-hidden="true">';
-  for (let i = 1; i <= 5; i++) html += `<svg viewBox="0 0 24 24" class="${i <= llenas ? '' : 'vacia'}">${ICONOS.estrella}</svg>`;
+  for (let i = 1; i <= 5; i++) html += `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="${i <= llenas ? '' : 'vacia'}">${ICONOS.estrella}</svg>`;
   return html + '</span>';
 }
 function calificacionHtml(p) {

@@ -107,7 +107,7 @@ async function cerrarSesion() {
   clearInterval(vigilanciaPedidos);
   guardarTemporal('tienda', null);
   renderCuenta();
-  aviso('Cerraste sesión.');
+  avisoSesion('salida', 'Cerraste sesión', 'Tu carrito y tus favoritos quedan guardados para cuando vuelvas a ingresar.');
   ir('index.html');
 }
 
@@ -246,7 +246,7 @@ const ARCHIVOS = { '': 'index.html', productos: 'productos.html', producto: 'pro
   registro: 'registro.html', 'verifica-correo': 'confirmar-correo.html', 'completar-perfil': 'completar-perfil.html', recuperar: 'recuperar.html',
   'nueva-clave': 'nueva-clave.html', retiro: 'retiro.html', pago: 'pago.html', confirmacion: 'confirmacion.html', pedidos: 'pedidos.html',
   perfil: 'perfil.html', admin: 'admin.html', ayuda: 'ayuda.html', orden: 'orden.html',
-  'admin-productos': 'admin-productos.html', 'admin-producto': 'admin-producto.html', 'admin-pagos': 'admin-pagos.html', 'admin-stock': 'admin-stock.html', favoritos: 'favoritos.html' };
+  'admin-productos': 'admin-productos.html', 'admin-producto': 'admin-producto.html', 'admin-pagos': 'admin-pagos.html', 'admin-stock': 'admin-stock.html', favoritos: 'favoritos.html', 'quienes-somos': 'quienes-somos.html' };
 
 const VISTAS = {
   '': vistaInicio,
@@ -271,7 +271,8 @@ const VISTAS = {
   'admin-stock': vistaAdminStock,
   orden: vistaOrden,
   favoritos: vistaFavoritos,
-  ayuda: vistaAyuda
+  ayuda: vistaAyuda,
+  'quienes-somos': vistaQuienesSomos
 };
 
 let primeraCarga = true;
@@ -316,6 +317,8 @@ async function render() {
 
   try { if (resultado.montar) resultado.montar(main, params); } catch (error) { console.error(error); }
   window.scrollTo(0, 0);
+  if (partes[0] === 'productos') { recordarCatalogo(); restaurarCatalogo(); }
+  recordarPagina();
   if (!primeraCarga) {
     const titulo = $('h1', main);
     if (titulo) { titulo.setAttribute('tabindex', '-1'); titulo.focus({ preventScroll: true }); }
@@ -371,6 +374,7 @@ async function iniciar() {
   vigilarFotos();
   actualizarContador();
   renderCuenta();
+  mostrarAvisoSesionPendiente();
   const regreso = revisarEnlaceDeRegreso();
 
   if (!Api.disponible()) {
@@ -407,7 +411,8 @@ async function iniciar() {
     guardarTemporal('correo-pendiente', null);
     const volver = leerVolverPendiente();
     const conGoogle = (estado.sesion.user.app_metadata || {}).provider === 'google';
-    aviso(estado.cliente ? `¡Bienvenido, ${nombreCliente()}!` + (conGoogle ? '' : ' Tu correo está confirmado.') : (conGoogle ? '¡Ingresaste con Google! Antes de tu primera compra te pediremos tu cédula y celular.' : '¡Correo confirmado! Antes de tu primera compra te pediremos tus datos.'));
+    if (estado.cliente) avisoSesion('entrada', `Iniciaste sesión, ${nombreCliente()}`, conGoogle ? 'Entraste con tu cuenta de Google.' : 'Tu correo quedó confirmado.');
+    else avisoSesion('entrada', conGoogle ? 'Iniciaste sesión con Google' : 'Correo confirmado: iniciaste sesión', 'Antes de tu primera compra te pediremos tu cédula y celular.');
     if (!estado.cliente) { const d = destinoSinPerfil(volver); if (d !== 'index.html') { ir(d); return; } }
     guardarVolverPendiente(null);
     const destino = destinoTrasIngreso(volver);

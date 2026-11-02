@@ -325,6 +325,7 @@ function vistaProductos(partes, params) {
         const orden = $('#orden', main).value;
         if (orden !== 'relevancia') p.set('orden', orden);
         history.replaceState(null, '', 'productos.html' + (p.toString() ? '?' + p : ''));
+        recordarCatalogo();
         const f2 = filtrar(p);
         // En tecnología y entrenamiento se oculta el género y se vuelve a "Todos"
         const grupoGenero = $('#grupo-publico', main);
@@ -760,7 +761,7 @@ function mostrarProductoAgregado(p, talla, agregadas) {
       <dt>Subtotal</dt><dd>${dinero(subtotalCarrito())}</dd>
     </dl>
     <div class="dialogo__botones">
-      <a class="boton boton--secundario" href="productos.html" id="seguir-comprando">Seguir comprando</a>
+      <a class="boton boton--secundario seguir-comprando" href="${urlCatalogo()}" id="seguir-comprando">Seguir comprando</a>
       <a class="boton boton--principal" href="carrito.html">${icono('carrito')}Ver carrito</a>
     </div>`, { alAbrir: (d) => $('#seguir-comprando', d).focus() });
 }
@@ -829,7 +830,7 @@ function vistaCarrito() {
           </section>
           ${resumenPedido(`
             <button class="boton boton--principal boton--bloque" type="button" id="continuar-compra">Continuar con la compra</button>
-            <a class="boton boton--secundario boton--bloque" href="productos.html">${icono('izquierda')}Seguir comprando</a>
+            <a class="boton boton--secundario boton--bloque seguir-comprando" href="${urlCatalogo()}">${icono('izquierda')}Seguir comprando</a>
             <div style="text-align:center;margin-top:.5rem"><button class="boton-icono" type="button" id="vaciar">${icono('basura')}Vaciar carrito</button></div>
             <p class="texto-suave" style="margin-top:1rem;display:flex;gap:.5rem">${icono('candado')}Aceptamos todas las tarjetas, o paga en efectivo al retirar.</p>`)}
         </div>`}
@@ -998,7 +999,7 @@ function agregarFavoritosAlCarrito(lista) {
       <h2 class="dialogo__titulo" id="dialogo-titulo"><span class="icono-ok">${icono(n ? 'check' : 'info')}</span>${n ? `Agregamos ${plural(n, 'producto', 'productos')} al carrito` : 'No se agregó ningún producto'}</h2>
       <p>${n ? `Tienes ${plural(unidadesCarrito(), 'unidad', 'unidades')} en tu carrito · Subtotal ${dinero(subtotalCarrito())}.` : 'No hay stock disponible de tus favoritos o ya tienes en el carrito todo lo disponible.'}${extra}</p>
       <div class="dialogo__botones">
-        <a class="boton boton--secundario" href="productos.html">Seguir comprando</a>
+        <a class="boton boton--secundario seguir-comprando" href="${urlCatalogo()}">Seguir comprando</a>
         <a class="boton boton--principal" href="carrito.html">${icono('carrito')}Ver carrito</a>
       </div>`, { alAbrir: (d) => $('a.boton--principal', d).focus() });
   };

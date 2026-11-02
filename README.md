@@ -68,6 +68,7 @@ admin-producto.html      Crear o editar un producto (?id=código)
 admin-pagos.html         Pagos recibidos (administrador)
 favoritos.html           Mis favoritos (guardados en el navegador)
 ayuda.html               Centro de ayuda
+quienes-somos.html       Quiénes somos: historia, misión, visión, valores y tiendas (con enlace a Google Maps)
 404.html                 Página no encontrada
 
 plantilla.html           Base común de todas las páginas

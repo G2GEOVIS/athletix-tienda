@@ -358,7 +358,7 @@ async function vistaConfirmacion(partes, params) {
           <a class="boton boton--principal" href="orden.html?pedido=${p.id}">${icono('documento')}Ver orden de pedido</a>
           <a class="boton boton--secundario" href="pedidos.html">${icono('paquete')}Ver mis pedidos</a>
         </div>
-        <a class="boton boton--texto boton--bloque" style="margin-top:.75rem" href="productos.html">Seguir comprando</a>
+        <a class="boton boton--texto boton--bloque seguir-comprando" style="margin-top:.75rem" href="${urlCatalogo()}">Seguir comprando</a>
       </div>
     </div>`
   };

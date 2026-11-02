@@ -118,6 +118,30 @@ function leerTemporal(clave) {
   try { return JSON.parse(sessionStorage.getItem(clave)); } catch (e) { return null; }
 }
 
+/* ======================= Seguir comprando ======================= */
+// Se recuerda el último catálogo que vio la persona (categoría, género, precio, orden y búsqueda) y hasta
+// dónde bajó, para que «Seguir comprando» la devuelva ahí y no a todos los productos.
+function recordarCatalogo() {
+  if ((location.pathname.split('/').pop() || '') !== 'productos.html') return;
+  const p = new URLSearchParams(location.search); p.delete('v');
+  guardarTemporal('catalogo-ultimo', p.toString() ? '?' + p : '');
+}
+function urlCatalogo() { return 'productos.html' + (leerTemporal('catalogo-ultimo') || ''); }
+window.addEventListener('pagehide', () => {
+  if ((location.pathname.split('/').pop() || '') === 'productos.html') guardarTemporal('catalogo-scroll', Math.round(window.scrollY));
+});
+// Los enlaces «Seguir comprando» (clase seguir-comprando) piden volver a la misma altura del catálogo
+document.addEventListener('click', (e) => {
+  const a = e.target.closest && e.target.closest('a.seguir-comprando');
+  if (a) guardarTemporal('catalogo-volver', true);
+});
+function restaurarCatalogo() {
+  if (!leerTemporal('catalogo-volver')) return;
+  guardarTemporal('catalogo-volver', null);
+  const y = Number(leerTemporal('catalogo-scroll')) || 0;
+  if (y > 0) requestAnimationFrame(() => window.scrollTo(0, y));
+}
+
 /* ======================= Volver después de iniciar sesión ======================= */
 // Solo se vuelve a páginas de la propia tienda (nunca a un enlace externo ni a las páginas de ingreso)
 const NO_VOLVER = /^(login|registro|recuperar|completar-perfil|nueva-clave|confirmar-correo|cambiar-clave|404)\.html/;
@@ -136,13 +160,27 @@ function guardarVolverPendiente(v) {
 function leerVolverPendiente() {
   try { const x = JSON.parse(localStorage.getItem('athletix-volver')); return x && Date.now() - x.t < 2 * 3600 * 1000 ? volverSeguro(x.v) : ''; } catch (e) { return ''; }
 }
-// Al iniciar sesión se va a la portada (inicio de la tienda). Solo si venía de algo que pedía la sesión
-// (seguir con la compra, una página de su cuenta o el enlace de reseña de un correo) se vuelve ahí.
+// Última página de la tienda que vio la persona. Al iniciar sesión o crear la cuenta se vuelve ahí, aunque
+// haya entrado por «Ingresar» del encabezado. Si estaba en su carrito con productos, sigue con la compra.
+function recordarPagina() {
+  const p = new URLSearchParams(location.search); p.delete('v');
+  const v = volverSeguro((location.pathname.split('/').pop() || 'index.html') + (p.toString() ? '?' + p : ''));
+  if (v) guardarTemporal('ultima-pagina', v);
+}
+function paginaPrevia() {
+  const v = volverSeguro(leerTemporal('ultima-pagina'));
+  if (/^carrito\.html/.test(v) && estado.carrito.length) return 'retiro.html';
+  return v;
+}
+// Al iniciar sesión se vuelve a donde estaba (seguir con la compra, una página de su cuenta, el catálogo
+// con su filtro o el enlace de reseña de un correo); si no hay a dónde, a la portada.
 // Si todavía no completó su perfil (por ejemplo, entró con Google por primera vez): se le pide solo cuando lo necesita
-// (al comprar o al ver su cuenta); si no venía de ahí, va a la portada y completa el perfil al hacer su primera compra.
+// (al comprar o al ver su cuenta); si no, vuelve a donde estaba y completa el perfil en su primera compra.
+const PIDE_PERFIL = /^(retiro|pago|confirmacion|pedidos|perfil|metodos-pago|orden)\.html/;
 function destinoSinPerfil(volver) {
   const v = volverSeguro(volver);
-  return v ? conVolver('completar-perfil.html', v) : 'index.html';
+  if (!v) return 'index.html';
+  return PIDE_PERFIL.test(v) || /[?&]resenar=1/.test(v) ? conVolver('completar-perfil.html', v) : v;
 }
 function destinoTrasIngreso(volver) {
   const v = volverSeguro(volver);
@@ -312,16 +350,47 @@ function aviso(texto, tipo = 'ok', accion = null) {
   const cerrar = () => { temporizadorAviso = setTimeout(() => { if (!caja.matches(':hover, :focus-within')) caja.hidden = true; else cerrar(); }, accion ? 8000 : tipo === 'error' ? 6000 : 3500); };
   cerrar();
 }
-/* Va a otra página de la tienda. Si hay un aviso en pantalla, se muestra también en la página siguiente. */
+/* Aviso de sesión: más grande que el aviso normal, con ícono, arriba de la página. Sale una sola vez,
+   al iniciar sesión (tipo 'entrada') o al cerrarla (tipo 'salida'), y se puede cerrar con su botón. */
+let temporizadorSesion;
+function avisoSesion(tipo, titulo, detalle = '') {
+  const caja = $('#aviso-sesion');
+  if (!caja) return;
+  caja.dataset.tipo = tipo;
+  caja.innerHTML = `<span class="aviso-sesion__icono">${icono(tipo === 'salida' ? 'salir' : 'usuario')}</span>
+    <div class="aviso-sesion__texto"><p class="aviso-sesion__titulo">${esc(titulo)}</p>${detalle ? `<p class="aviso-sesion__detalle">${esc(detalle)}</p>` : ''}</div>
+    <button class="aviso-sesion__cerrar" type="button" aria-label="Cerrar aviso">×</button>`;
+  $('.aviso-sesion__cerrar', caja).addEventListener('click', () => { caja.hidden = true; });
+  caja.hidden = false;
+  // El aviso normal no se muestra encima del de sesión
+  const normal = $('#aviso-flotante'); if (normal) normal.hidden = true;
+  clearTimeout(temporizadorSesion);
+  const cerrar = () => { temporizadorSesion = setTimeout(() => { if (!caja.matches(':hover, :focus-within')) caja.hidden = true; else cerrar(); }, 6000); };
+  cerrar();
+}
+/* Va a otra página de la tienda. Si hay un aviso en pantalla, se muestra también en la página siguiente.
+   Solo se guarda cuando de verdad se cambia de página; si se queda en la misma, el aviso ya se está viendo
+   (antes se guardaba igual y volvía a salir más tarde en otra página, por ejemplo «Cerraste sesión» al ingresar). */
 function ir(destino) {
+  const actual = location.pathname.split('/').pop() + location.search;
+  const mismaPagina = actual === destino || (destino === 'index.html' && actual === '');
+  if (mismaPagina) { render(); return; }
   const caja = $('#aviso-flotante');
   if (caja && !caja.hidden && !caja.querySelector('button')) guardarTemporal('aviso-pendiente', { texto: caja.textContent, tipo: caja.dataset.tipo });
-  const actual = location.pathname.split('/').pop() + location.search;
-  if (actual === destino || (destino === 'index.html' && actual === '')) render(); else location.href = destino;
+  const sesion = $('#aviso-sesion');
+  if (sesion && !sesion.hidden) {
+    guardarTemporal('aviso-sesion', { tipo: sesion.dataset.tipo, titulo: $('.aviso-sesion__titulo', sesion).textContent, detalle: ($('.aviso-sesion__detalle', sesion) || {}).textContent || '' });
+  }
+  location.href = destino;
 }
 function mostrarAvisoPendiente() {
   const a = leerTemporal('aviso-pendiente');
   if (a) { guardarTemporal('aviso-pendiente', null); aviso(a.texto, a.tipo); }
+}
+// El aviso de sesión pendiente se muestra apenas abre la página siguiente (no espera al catálogo) y se borra
+function mostrarAvisoSesionPendiente() {
+  const a = leerTemporal('aviso-sesion');
+  if (a) { guardarTemporal('aviso-sesion', null); avisoSesion(a.tipo, a.titulo, a.detalle); }
 }
 
 /* ======================= Diálogo reutilizable ======================= */

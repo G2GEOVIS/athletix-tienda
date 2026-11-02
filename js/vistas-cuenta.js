@@ -18,7 +18,7 @@ function activarGoogle(main, volver) {
 
 /* ======================= Ingresar ======================= */
 function vistaIngresar(partes, params) {
-  const volver = volverSeguro(params.get('volver'));
+  const volver = volverSeguro(params.get('volver')) || paginaPrevia();
   if (estado.sesion) { ir(estado.cliente ? destinoTrasIngreso(volver) : destinoSinPerfil(volver)); return null; }
   return {
     titulo: 'Inicia sesión',
@@ -62,7 +62,8 @@ function vistaIngresar(partes, params) {
           return;
         }
         await alIniciarSesion(r.datos.session);
-        aviso(estado.cliente ? `Hola, ${nombreCliente()}. Iniciaste sesión.` : 'Iniciaste sesión. Antes de tu primera compra te pediremos tu cédula y celular.');
+        if (estado.cliente) avisoSesion('entrada', `Iniciaste sesión, ${nombreCliente()}`, `Entraste con ${correoSesion()}.`);
+        else avisoSesion('entrada', 'Iniciaste sesión', 'Antes de tu primera compra te pediremos tu cédula y celular.');
         if (!estado.cliente) { ir(destinoSinPerfil(volver)); return; }
         ir(destinoTrasIngreso(volver));
       });
@@ -82,7 +83,7 @@ function mostrarReenviar(zona, correo) {
 
 /* ======================= Registro ======================= */
 function vistaRegistro(partes, params) {
-  const volver = volverSeguro(params.get('volver'));
+  const volver = volverSeguro(params.get('volver')) || paginaPrevia();
   if (estado.sesion) { ir(estado.cliente ? destinoTrasIngreso(volver) : destinoSinPerfil(volver)); return null; }
   return {
     titulo: 'Crea tu cuenta',
@@ -302,7 +303,8 @@ function vistaVerificaCorreo() {
         guardarTemporal('correo-pendiente', null);
         const volver = leerVolverPendiente();
         guardarVolverPendiente(null);
-        aviso(estado.cliente ? '¡Correo confirmado! Tu perfil quedó guardado.' : '¡Correo confirmado! Completa tu perfil.');
+        if (estado.cliente) avisoSesion('entrada', `Iniciaste sesión, ${nombreCliente()}`, 'Tu correo quedó confirmado y tu perfil está guardado.');
+        else avisoSesion('entrada', 'Correo confirmado: iniciaste sesión', 'Completa tu perfil para seguir.');
         ir(estado.cliente ? destinoTrasIngreso(volver) : destinoSinPerfil(volver));
       }, 3000);
     }

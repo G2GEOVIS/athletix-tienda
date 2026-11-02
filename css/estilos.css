@@ -674,6 +674,25 @@ select, textarea { font: inherit; color: inherit; }
 .aviso-flotante[data-tipo="error"] { background: #7A2E00; }
 .aviso-flotante__accion { margin-left: .75rem; padding: .3rem .75rem; min-height: 2.25rem; border-radius: .4rem; border: 2px solid currentColor; background: transparent; color: inherit; font-weight: 700; cursor: pointer; }
 .aviso-flotante__accion:hover { background: rgba(255, 255, 255, .15); }
+/* Aviso de sesión: tarjeta grande arriba, verde al entrar y azul marino al salir */
+.aviso-sesion {
+  position: fixed; top: calc(var(--alto-encabezado, 4.5rem) + .75rem); left: 50%; transform: translateX(-50%); z-index: 95;
+  display: flex; align-items: center; gap: .9rem; width: min(30rem, calc(100vw - 2rem));
+  padding: 1rem 1rem 1rem 1.1rem; border-radius: var(--radio-sm); box-shadow: 0 12px 32px rgba(11, 31, 58, .28);
+  background: var(--verde); color: var(--blanco); animation: aviso-sesion-entra .25s ease-out;
+}
+.aviso-sesion[hidden] { display: none; }
+.aviso-sesion[data-tipo="salida"] { background: var(--blanco); color: var(--azul); border: 2px solid var(--azul); }
+.aviso-sesion[data-tipo="salida"] .aviso-sesion__icono { background: var(--gris); }
+.aviso-sesion[data-tipo="salida"] .aviso-sesion__cerrar:hover { background: var(--gris); }
+.aviso-sesion__icono { flex: none; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: rgba(255, 255, 255, .18); }
+.aviso-sesion__icono svg { width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.aviso-sesion__texto { flex: 1; min-width: 0; }
+.aviso-sesion__titulo { font-family: var(--fuente-titulo); font-weight: 800; font-size: 1.35rem; line-height: 1.15; }
+.aviso-sesion__detalle { margin-top: .2rem; font-size: .95rem; opacity: .95; overflow-wrap: anywhere; }
+.aviso-sesion__cerrar { flex: none; align-self: flex-start; width: 2.75rem; height: 2.75rem; margin: -.4rem -.4rem 0 0; border: 0; border-radius: 50%; background: transparent; color: inherit; font-size: 1.6rem; line-height: 1; cursor: pointer; }
+.aviso-sesion__cerrar:hover { background: rgba(255, 255, 255, .15); }
+@keyframes aviso-sesion-entra { from { opacity: 0; transform: translate(-50%, -.5rem); } to { opacity: 1; transform: translate(-50%, 0); } }
 
 /* Banner sin conexión */
 .banner-conexion { background: #FFF4EA; border-bottom: 2px solid var(--naranja); padding-block: .6rem; font-weight: 600; }
@@ -850,7 +869,7 @@ fieldset.panel { margin: 0; min-width: 0; }
 
 /* ===== Impresión de la orden de pedido ===== */
 @media print {
-  .encabezado, .pie, .saltar, .no-imprimir, .aviso-flotante, #banner-conexion { display: none !important; }
+  .encabezado, .pie, .saltar, .no-imprimir, .aviso-flotante, .aviso-sesion, #banner-conexion { display: none !important; }
   body { background: #fff; }
   .pagina { padding: 0 !important; }
   .panel { box-shadow: none; border: 0; }
@@ -944,3 +963,25 @@ fieldset.panel { margin: 0; min-width: 0; }
 .cuenta__menu { min-width: 15rem; width: max-content; max-width: min(22rem, calc(100vw - 2rem)); }
 .cuenta__quien strong, .cuenta__quien span { overflow-wrap: normal; word-break: normal; }
 .cuenta__quien span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; display: block; }
+
+/* ======================= Quiénes somos ======================= */
+.quienes__bloque { margin-top: 2.5rem; }
+.quienes__bloque > p { margin-top: .75rem; line-height: 1.7; max-width: 60rem; }
+.quienes__grilla { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); margin-top: 2.5rem; }
+.quienes__grilla h2 { font-family: var(--fuente-titulo); font-weight: 800; font-size: 1.6rem; margin-block: .75rem .4rem; }
+.quienes__grilla p, .quienes__lista li { line-height: 1.6; }
+.quienes__icono { display: inline-grid; place-items: center; width: 3rem; height: 3rem; border-radius: 50%; background: #E6F4F2; color: var(--verde); }
+.quienes__icono svg, .quienes__tiendas h3 svg { width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.quienes__lista { padding-left: 1.1rem; display: grid; gap: .4rem; }
+.quienes__categorias, .quienes__tiendas { list-style: none; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); margin-top: 1rem; }
+.quienes__categorias a { display: flex; flex-direction: column; gap: .2rem; min-height: 5rem; justify-content: center; color: var(--texto); text-decoration: none; border: 1px solid var(--borde-fuerte); }
+.quienes__categorias a strong { font-family: var(--fuente-titulo); font-size: 1.35rem; font-weight: 800; }
+.quienes__categorias a span { color: var(--texto-suave); text-decoration: underline; }
+.quienes__categorias a:hover { box-shadow: var(--sombra); }
+.quienes__tiendas h3 { display: flex; align-items: center; gap: .5rem; font-size: 1.15rem; margin-bottom: .4rem; }
+.quienes__tiendas h3 svg { color: var(--verde); flex: none; }
+.quienes__tiendas p { margin-bottom: .3rem; }
+.quienes__tiendas .enlace-flecha { margin-top: .4rem; text-decoration: underline; }
+.quienes__tiendas .enlace-flecha svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-width: 2; }
+.quienes__nota { margin-top: 2.5rem; }
+.quienes__nota h2 { font-size: 1.2rem; margin-bottom: .4rem; }

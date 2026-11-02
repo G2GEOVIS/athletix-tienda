@@ -36,6 +36,7 @@ PAGINAS = [
     ('orden.html', 'orden', 'Orden de pedido | ATHLETIX', 'Orden de pedido con el código de retiro y los productos.'),
     ('favoritos.html', 'favoritos', 'Mis favoritos | ATHLETIX', 'Productos que guardaste como favoritos.'),
     ('ayuda.html', 'ayuda', 'Centro de ayuda | ATHLETIX', 'Preguntas frecuentes sobre compras, pagos, retiro y reseñas.'),
+    ('quienes-somos.html', 'quienes-somos', 'Quiénes somos | ATHLETIX', 'Conoce ATHLETIX: nuestra historia, misión, visión, valores y las tiendas donde retiras tus pedidos.'),
     ('404.html', '404', 'Página no encontrada | ATHLETIX', 'La página que buscas no existe.'),
 ]
 

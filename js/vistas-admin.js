@@ -499,6 +499,78 @@ function vistaAyuda() {
   };
 }
 
+/* ======================= Quiénes somos ======================= */
+async function vistaQuienesSomos() {
+  // Las tiendas se leen de la base (las mismas donde se retira el pedido); si no responde, la sección no se muestra
+  const rt = await cargarTiendas();
+  const tiendas = rt.error ? [] : estado.tiendas;
+  const activos = PRODUCTOS.filter((p) => p.activo !== false);
+  const cuantos = (c) => activos.filter((p) => p.categoria === c).length;
+  const mapa = (t) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${t.nombre} ${t.direccion} ${t.ciudad || ''}`)}`;
+  return {
+    titulo: 'Quiénes somos',
+    seccion: 'quienes-somos',
+    html: `
+    <div class="contenedor pagina quienes">
+      <h1 class="titulo-pagina">Quiénes somos</h1>
+      <p class="subtitulo cabecera-pagina">ATHLETIX es una tienda deportiva ecuatoriana. Vendemos en línea y entregamos en nuestras tiendas de Quito y Guayaquil, sin costo de envío.</p>
+
+      <section class="quienes__bloque" aria-labelledby="q-historia">
+        <h2 class="titulo-seccion" id="q-historia">Nuestra historia</h2>
+        <p>Empezamos con una idea sencilla: que comprar calzado y equipo deportivo no te haga perder tiempo. Eliges en la web, pagas con tarjeta o al retirar, y en una a tres horas tu pedido te espera en la tienda que escogiste. Te avisamos por correo en cada paso, así no tienes que estar preguntando.</p>
+      </section>
+
+      <div class="quienes__grilla">
+        <section class="panel" aria-labelledby="q-mision">
+          <span class="quienes__icono">${icono('escudo')}</span>
+          <h2 id="q-mision">Misión</h2>
+          <p>Acercar a cada deportista el calzado, la tecnología y el equipo que necesita, con precios claros, compra fácil y retiro rápido en tienda.</p>
+        </section>
+        <section class="panel" aria-labelledby="q-vision">
+          <span class="quienes__icono">${icono('grafico')}</span>
+          <h2 id="q-vision">Visión</h2>
+          <p>Ser la tienda deportiva en línea de referencia en Ecuador, reconocida por una experiencia de compra accesible para todas las personas.</p>
+        </section>
+        <section class="panel" aria-labelledby="q-valores">
+          <span class="quienes__icono">${icono('estrella')}</span>
+          <h2 id="q-valores">Valores</h2>
+          <ul class="quienes__lista">
+            <li><strong>Honestidad:</strong> el precio que ves es el que pagas, con el IVA indicado.</li>
+            <li><strong>Opiniones reales:</strong> solo opina quien compró el producto.</li>
+            <li><strong>Accesibilidad:</strong> la tienda se usa con teclado, lector de pantalla y celular.</li>
+          </ul>
+        </section>
+      </div>
+
+      <section class="quienes__bloque" aria-labelledby="q-ofrecemos">
+        <h2 class="titulo-seccion" id="q-ofrecemos">Qué vendemos</h2>
+        <ul class="quienes__categorias">
+          ${Object.entries(CATEGORIAS).map(([c, t]) => `<li><a class="panel panel--gris" href="productos.html?cat=${c}"><strong>${t}</strong><span>${plural(cuantos(c), 'producto', 'productos')}</span></a></li>`).join('')}
+        </ul>
+      </section>
+
+      ${tiendas.length ? `
+      <section class="quienes__bloque" aria-labelledby="q-tiendas">
+        <h2 class="titulo-seccion" id="q-tiendas">Nuestras tiendas</h2>
+        <p class="texto-suave">Aquí retiras tus pedidos. Lleva tu cédula o pasaporte y tu número de pedido.</p>
+        <ul class="quienes__tiendas">
+          ${tiendas.map((t) => `<li class="panel">
+            <h3>${icono('tienda')}${esc(t.nombre)}</h3>
+            <p>${esc(t.direccion)}${t.ciudad ? `, ${esc(t.ciudad)}` : ''}</p>
+            ${t.horario ? `<p class="texto-suave">${esc(t.horario)}</p>` : ''}
+            <a class="enlace-flecha" href="${mapa(t)}" target="_blank" rel="noopener">${icono('ubicacion')}Ver en el mapa<span class="solo-lector"> (se abre en otra pestaña)</span></a>
+          </li>`).join('')}
+        </ul>
+      </section>` : ''}
+
+      <div class="panel panel--gris quienes__nota">
+        <h2>Sobre este sitio</h2>
+        <p>ATHLETIX es un prototipo hecho para la materia Interacción Humano Computador de la PUCE. Los pagos son simulados: no se cobra dinero real. Si tienes dudas, revisa el <a href="ayuda.html">Centro de ayuda</a> o escríbenos a <a href="mailto:geovannymorocho621@gmail.com?subject=Consulta%20ATHLETIX">geovannymorocho621@gmail.com</a>.</p>
+      </div>
+    </div>`
+  };
+}
+
 function vistaNoEncontrada() {
   return {
     titulo: 'Página no encontrada',

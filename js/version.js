@@ -1,5 +1,5 @@
 /* ATHLETIX · Versión publicada (la escribe herramientas/generar_paginas.py; no editar a mano) */
-window.VERSION_SITIO = 'e74801d20a';
+window.VERSION_SITIO = '996a588dfb';
 (function () {
   var meta = document.querySelector('meta[name="version-sitio"]');
   var pagina = meta && meta.content;
